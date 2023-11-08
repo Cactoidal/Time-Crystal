@@ -30,3 +30,7 @@ I think this can be done using Chainlink Functions.  I've done some research on 
 When generating randomness, consensus is a big problem for the Functions DON.  If every node just uses Math.random(), they'll all generate different values.  By using a shared, secret AES key as the initial CSPRNG key, and passing the same seed to every node, I can guarantee that they'll all end up with the same pseudorandom values, while preventing on-chain observers from predicting what that pseudorandomness will be.
 
 Anyway, I suspect there will be problems in implementation (for example, to be secure, AES keys also need new initialization vectors every time they encrypt something), but my goal is to get this working first.  Let's get started.
+
+___
+
+While working, I realized that at least for this application, I don't actually need to encrypt the secret output and put it back on-chain.  Because the seed is public, the DON can simply reconstruct the entire secret whenever necessary.  This means the "saved secret" can be considerably larger than I originally thought. 
