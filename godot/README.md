@@ -40,3 +40,10 @@ Furthermore, I shouldn't need to use a secondary PRNG function like Xorshift, be
 As for the iv problem, maybe there is a more elegant solution, but for now I'll have users supply an array of 16 integers between 0 and 255, and have the contract validate the contents of the array and check whether it has already been used.  This way it's impossible for the same iv to be used twice, and the iv can be easily generated client-side.
 
 With that, the basic idea of on-chain "secret randomness" seems to be working.  What exactly I'll use it for, I'm not quite sure yet, but I think a use will become apparent later.
+
+Here is a diagram of the mechanism, here used for a simple guessing game:
+
+
+![diagram1](https://github.com/Cactoidal/Time-Crystal/assets/115384394/48b13495-9499-4ea9-a133-fa663d7aab1d)
+
+
