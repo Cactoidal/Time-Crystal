@@ -34,3 +34,5 @@ Anyway, I suspect there will be problems in implementation (for example, to be s
 ___
 
 While working, I realized that at least for this application, I don't actually need to encrypt the secret output and put it back on-chain.  Because the seed is public, the DON can simply reconstruct the entire secret whenever necessary.  This means the "saved secret" can be considerably larger than I originally thought, I only need to use one "inner key", and I don't need to expose any ciphertext whatsoever.
+
+Furthermore, I shouldn't need to use a secondary PRNG function like Xorshift, because I can convert the pseudorandom bytes produced by the CSPRNG key into an integer, and just operate on the integer directly.
