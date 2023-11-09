@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.20;
 
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
@@ -41,7 +41,8 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
   struct encryptParams {
     uint seed;
-    uint iv;
+    uint nonce;
+    string counter;
   }
   
   mapping (address => bool) public inSession;
@@ -53,25 +54,43 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
   mapping (address => bytes) public returnedSecret;
 
-  uint public ivCounter = 1;
+  uint public nonceCounter = 1;
   mapping (bytes32 => requestType) public pendingRequests;
   mapping (uint => bool) public usedSeeds;
+  mapping (string => bool) usedCounters;
 
+  // Validate user-supplied counter
+  function getCounter(uint[16] memory _counter) internal returns(string memory counter) {
+        counter = "";
+        for (uint i = 0; i < 16; i++) {
+            require (_counter[i] >= 0 && _counter[i] <= 255);
+            counter = string.concat(counter, Strings.toString(_counter[i]));
+            if (i < 15) {
+                counter = string.concat(counter, ",");
+            }
+        require (usedCounters[counter] == false);
+        usedCounters[counter] = true;
+        }
+        return counter;
+    }
 
-   // Initialize session by mapping seed and iv
+   // Initialize session by mapping seed, nonce, and counter
   function initializeSession(
-    uint _seed
+    uint _seed,
+    uint[16] memory _counter
   ) external {
     require (_seed > 22646721157554672332427423894789798297842898279);
     require (usedSeeds[_seed] == false);
     require (inSession[msg.sender] == false);
+    string memory counter = getCounter(_counter);
     usedSeeds[_seed] = true;
     inSession[msg.sender] = true;
 
     encryptParams memory newParams;
     newParams.seed = _seed;
-    newParams.iv = ivCounter;
-    ivCounter++;
+    newParams.nonce = nonceCounter;
+    nonceCounter++;
+    newParams.counter = counter;
 
     sessions[msg.sender].push(newParams);
     
@@ -90,7 +109,8 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
     string[] memory args = new string[](2);
     args[0] = Strings.toString(currParams.seed);
-    args[1] = Strings.toString(currParams.iv);
+    args[1] = Strings.toString(currParams.nonce);
+    args[2] = currParams.counter;
 
     req.setArgs(args);
     //req.setBytesArgs([]);
