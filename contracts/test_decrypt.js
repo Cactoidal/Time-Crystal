@@ -17,24 +17,23 @@ const csprngKey = await crypto.subtle.importKey(
     ["encrypt", "decrypt"],
   );
 
-
 // placeholder for VRF seed
 const plainText = args[0]
 
-// placeholder for ivCounter
-const iv = 1;
+// from nonceCounter
+const iv = parseInt(args[1])
 
-// placeholder for counterCounter
-// a single digit shift will change the output
-// just need to get 16 bytes somehow
-let counter = Uint8Array.from([
-    228, 133,  40, 200, 195,
-    163,  63,  15, 179, 253,
-    192,  76, 145,  89,  64,
-    104
-  ])
+// from user-supplied Counter
+let rawCounter = args[2]
 
-// placeholder for length
+var counterArray = rawCounter.split(",")
+
+for (let i = 0; i < 16; i++) {
+    counterArray[i] = parseInt(counterArray[i])
+}
+
+const counter = Uint8Array.from(counterArray)
+
 const length = 32;
 
 // Generate raw pseudorandom bytes
