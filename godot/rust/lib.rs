@@ -10,6 +10,8 @@ use futures::Future;
 use serde_json::json;
 use hex::*;
 use openssl::rand::rand_bytes;
+use openssl::rsa::{Rsa, Padding};
+use openssl::rsa::RsaRef;
 
 
 thread_local! {
@@ -104,10 +106,52 @@ return_string
 }
 
 #[method]
-fn test_bytes() {
-    let mut buf = [0; 16];
-    rand_bytes(&mut buf).unwrap();
+fn test_encrypt() -> GodotString {
+    let mut key = [0; 16];
+    rand_bytes(&mut key).unwrap();
+    //godot_print!("{:?}", buf);
+    //let hex_key = hex::encode(key);
+
+    let raw_pem = "-----BEGIN PUBLIC KEY-----
+    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvOkgKoC7DhwKMQ9b6m2d
+    DJSyiCj3oj1kBcm3tgH8fUnX2hlm0ND+cplxeipnUxhXfsMbOEECE1oywiyi8dja
+    rvLI8vS0hDV7wEF8tSEyubMfhWULQ5JqlgUI4aKjR2U9nShRN6qQNdEyS9tc74KH
+    5MgwoMwo4BbMpQaJPcgulN+kYzx9ipsH17+ErXzLGodhSwZXiftec/T1qUaJlTYx
+    +ue0ZF4EZBfhtviNCzPygokxrlHbEmwmeaa4PJzBc9sWV8chaUarzlYrR+ViD3u+
+    4i6tLsMLRHf3DGcQGh/voM3zQPt2Wy/un2IlbM9QSbJfQmBbV5H/CR8fJ/wyjgo6
+    dQIDAQAB
+-----END PUBLIC KEY-----";
+
+    let public_key = Rsa::public_key_from_pem(raw_pem.as_bytes()).unwrap();
+
+    //let data = b"foobar";
+    //let data = hex_key.as_bytes();
+    godot_print!("{:?}", "before");
+    //godot_print!("{:?}", data);
+    let mut buf = vec![0; public_key.size() as usize];
     godot_print!("{:?}", buf);
+    let encrypted_len = public_key.public_encrypt(&key, &mut buf, Padding::PKCS1_OAEP).unwrap();
+    godot_print!("{:?}", "after");
+    godot_print!("{:?}", buf);
+    let return_string = openssl::base64::encode_block(&buf);
+    //let return_string = format!("{:?}", buf);
+    return_string.into()
+}
+
+#[method]
+fn test_rsa() -> GodotString {
+    let rsa = Rsa::generate(2048).unwrap();
+    let data = b"foobar";
+    let mut buf = vec![0; rsa.size() as usize];
+    let encrypted_len = rsa.public_encrypt(data, &mut buf, Padding::PKCS1).unwrap();
+    //"buf" is filled with the encrypted bytes
+    godot_print!("{:?}", "message");
+    godot_print!("{:?}", buf);
+    godot_print!("{:?}", "private key");
+    godot_print!("{:?}", RsaRef::private_key_to_der(&rsa));
+    //godot_print!("{:?}", RsaRef::public_key_to_pem(&rsa));
+    let return_string: GodotString = format!{"{:?}", RsaRef::private_key_to_der(&rsa)}.into();
+    return_string
 }
 
 
