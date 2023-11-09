@@ -36,3 +36,7 @@ ___
 While working, I realized that at least for this application, I don't actually need to encrypt the secret output and put it back on-chain.  Because the seed is public, the DON can simply reconstruct the entire secret whenever necessary.  This means the "saved secret" can be considerably larger than I originally thought, I only need to use one "inner key", and I don't need to expose any ciphertext whatsoever.
 
 Furthermore, I shouldn't need to use a secondary PRNG function like Xorshift, because I can convert the pseudorandom bytes produced by the CSPRNG key into an integer, and just operate on the integer directly.
+
+As for the iv problem, maybe there is a more elegant solution, but for now I'll have users supply an array of 16 integers between 0 and 255, and have the contract validate the contents of the array and check whether it has already been used.  This way it's impossible for the same iv to be used twice, and the iv can be easily generated client-side.
+
+With that, the basic idea of on-chain "secret randomness" seems to be working.  What exactly I'll use it for, I'm not quite sure yet, but I think a use will become apparent later.
