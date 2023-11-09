@@ -1,7 +1,7 @@
 ## Day 1
 Fall has arrived, and with it, another Chainlink hackathon.  Very excited to get started.  I'll be making a brand new game using these [GodotRust-Ethers-rs](https://github.com/Cactoidal/GodotRustEthers-rs) tools.
 
-In the interim I've [fixed the laggy transaction problem](https://github.com/Cactoidal/GodotEthersV2), which means games can now freely poll an RPC node and submit transactions without briefly freezing.  So the UX should be much improved.
+In the interim I've [fixed the laggy transaction problem](https://github.com/Cactoidal/GodotEthersV2), which means games can now freely poll an RPC node and submit transactions without freezing.  So the UX should be much improved.
 
 I have many ideas I'd like to try, although I'm not quite sure yet how they'll come together into a game.  My goal for the hackathon is to make a _fun_ game, which uses Chainlink Functions in some capacity, and potentially other services.  Bots are really the primary obstacle to making sustainable web3 games, so it would be nice to experiment with some anti-bot features as well.
 
