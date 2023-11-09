@@ -46,4 +46,44 @@ Here is a diagram of the mechanism, here used for a simple guessing game:
 
 ![diagram1](https://github.com/Cactoidal/Time-Crystal/assets/115384394/48b13495-9499-4ea9-a133-fa663d7aab1d)
 
+## Day 2
+
+Before I continue, I feel I should mention a major weakness of the above idea.  While the "inner key" prevents _almost_ everyone from knowing the secret randomness, there is one person who is still able to decipher it: me!
+
+Since I uploaded the key to the DON gateway, I know what it is, and I could use it to gain knowledge of any secret value given its seed and iv.  
+
+Fortunately, I think the solution should be straightforward.  AES keys are just 16 random bytes.  After the contract has been deployed, a special Functions job could ask each node to generate some random bytes and upload them to the DON gateway.  The full key could then be reconstituted later during requests.
+
+I would create this job now, but I don't think the gateway is set up in such a way that it will work.  For now, I will simulate the idea by uploading parts of the inner key, and combining those parts during requests.
+
+### Oracle Key Exchange
+
+Now that I've tried generating secret randomness, I want to look at the problem of key exchange.
+
+In a typical key exchange, two parties swap some public information and use this info to individually generate the same shared secret.  That shared secret can then be used to encrypt and decrypt sensitive material that only those parties can now share.
+
+Secrets can already be shared with Chainlink Functions using this technique.  The DON's public key is available on-chain, with which a user can generate an ephemeral secret key.  The user encrypts their secrets with this key, and gives it to the DON along with their own public key, which allows the DON to access the secrets when performing requests.
+
+This is easy enough to use as a developer, but a bit harder for users.  The DON gateway, for example, requires the user to subscribe and provide a LINK balance before they can upload secrets.  This protects the gateway from spam.
+
+There is also the "remote secret", which can be uploaded anywhere, and the DON just needs a URL to access it.  This is more flexible, but it forces reliance on a third party to host the secret.
+
+Key exchange could perhaps happen entirely on-chain, but there are some problems.  Not only would the Functions DON need to generate a new keypair every time someone wants to do an exchange, it would need to post the public key on-chain every time, which in most cases will be much larger than the current 32 byte return limit.
+
+The DON would also need to "remember" the keypair long enough to generate the shared secret with the user, and perform the exchange of the sensitive material.
+
+I think these are obstacles that can be overcome (or obviated by some other method of secret-exchange), but for now, I will get around this problem by simply using an RSA keypair I've uploaded to the DON.
+
+Here's how this will work:
+
+1) the Function DON's public RSA key will be available on-chain, or in the game code.
+
+2) the user will generate an AES key locally, encrypt it with the DON's public RSA key, and post the encrypted AES key on-chain.
+
+3) the DON now has the ability to either decrypt secret messages sent by the user, or encrypt secret messages and send them to the user.
+
+Like the weakness I mentioned above, since I'm the one uploading the RSA key, I could decrypt any passed message.
+
+Ultimately I just want to demonstrate the principle of secret exchange between users and the DON, and how it could be used in games.  The messages in my example will not be especially sensitive, just being game data.  But in the future, this mechanism would need to be replaced by a more secure secret-exchanging method.
+
 
