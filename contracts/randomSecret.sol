@@ -107,7 +107,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
     encryptParams memory currParams = sessions[msg.sender][sessionIndex[msg.sender]];
 
-    string[] memory args = new string[](2);
+    string[] memory args = new string[](3);
     args[0] = Strings.toString(currParams.seed);
     args[1] = Strings.toString(currParams.nonce);
     args[2] = currParams.counter;
