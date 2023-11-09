@@ -92,3 +92,14 @@ I've realized it's best to start working in Godot and Rust now, since the triang
 
 It's not quite time to make my first calls to Chainlink Functions from Godot, but soon!
 
+___
+
+It took some wrestling, but I was finally able to load a public RSA key into Rust, encrypt 16 bytes, send the encrypted bytes to javascript, import the private RSA key into javascript, decrypt the bytes, and use them to generate an AES key.  Success!
+
+I want to reiterate that this is a demo, and this kind of system would need an extensive audit to ascertain whether this kind of key exchange can be done in a secure way.  If I have time, I'd like to try experimenting with ECDH instead of RSA.  To a certain extent I'm limited by what the deno std library can do (it would be interesting to try CRYSTALS-Kyber, for instance).  
+
+It seems, strangely, that the openssl rust crate uses the SHA-1 hash for its RSA-OAEP padding.  I only get decryption errors in javascript if I try to use a different hash; only SHA-1 seems to work.  This is not acceptable for a secure application, and it seems odd that this crate still uses it.  Maybe I'm making a mistake, and there's a way to change the hash function that I'm missing.
+
+But in any case, the demo now works, and I can proceed to the next phase: making an interface in Godot.
+
+
