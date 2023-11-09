@@ -86,4 +86,9 @@ Like the weakness I mentioned above, since I'm the one uploading the RSA key, I 
 
 Ultimately I just want to demonstrate the principle of secret exchange between users and the DON, and how it could be used in games.  The messages in my example will not be especially sensitive, just being game data.  But in the future, this mechanism would need to be replaced by a more secure secret-exchanging method.
 
+___
+
+I've realized it's best to start working in Godot and Rust now, since the triangle of gdscript/Rust <-> Solidity <-> javascript all needs to be interoperable for the game to work.  There's a peculiarity in the RSA key format expected by the deno std library, which I'll need to figure out.  Godot needs to encrypt secrets with the public key, and the Functions DON needs to be able to read it.
+
+It's not quite time to make my first calls to Chainlink Functions from Godot, but soon!
 
