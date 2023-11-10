@@ -305,9 +305,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "bytes",
+				"internalType": "string",
 				"name": "_key",
-				"type": "bytes"
+				"type": "string"
 			}
 		],
 		"name": "registerPlayerKey",
@@ -408,14 +408,14 @@
 	{
 		"inputs": [
 			{
-				"internalType": "bytes",
+				"internalType": "string",
 				"name": "_message",
-				"type": "bytes"
+				"type": "string"
 			},
 			{
-				"internalType": "bytes",
+				"internalType": "string",
 				"name": "_iv",
-				"type": "bytes"
+				"type": "string"
 			}
 		],
 		"name": "sendDONMessage",
