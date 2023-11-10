@@ -102,4 +102,14 @@ It seems, strangely, that the openssl rust crate uses the SHA-1 hash for its RSA
 
 But in any case, the demo now works, and I can proceed to the next phase: making an interface in Godot.
 
+## Day 3
+
+It may not look like much quite yet:
+
+<img width="875" alt="godot2" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/2b8dd3dd-d3b7-400f-a9fc-22e4cfd91d2a">
+
+I'm happy to report that I've made my first successful call to Chainlink Functions from Godot.  After registering an encrypted AES key, I can now send an encrypted message to Functions, which will decrypt my AES key, decrypt the message, and return it on-chain.  The most recent returned message is printed in the lower right.  Took me some time to remember to use AbiDecode to handle the response.
+
+I'm also pleased that I've implemented both the secret randomness and the oracle key exchange in relatively short order.  But now it's time to leverage these ideas for a more practical purpose.  This goes hand-in-hand with making a much cooler UI.
+
 
