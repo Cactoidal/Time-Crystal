@@ -112,4 +112,36 @@ I'm happy to report that I've made my first successful call to Chainlink Functio
 
 I'm also pleased that I've implemented both the secret randomness and the oracle key exchange in relatively short order.  But now it's time to leverage these ideas for a more practical purpose.  This goes hand-in-hand with making a much cooler UI.
 
+### Regarding Games
+
+The secret randomness idea allows the oracle to hide information from the player, which is conducive to a player versus oracle (PvO) game.  But it could also be used in a player versus player (PvP) context, when the randomness affects competing players.
+
+The key exchange allows players to hide information from one another, which is also very useful for PvP.
+
+I could imagine an implementation of Texas Hold 'Em using these ideas.  Players register for a game session, and a seed would be used to secretly generate the deck, then draw the community cards and hole cards.  Thanks to secret randomness, no one would know what the community cards are until the oracle reveals them, and thanks to the key exchange, every player would be able to receive their hole cards secretly, without knowing what any other player has in their hand.
+
+But I'm not a gambler, and I don't want to run a gambling parlor, so while that's a pretty clear example, I want to do something else.
+
+### Time Crystals
+
+<img width="825" alt="picture3" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/df249c24-5fcf-4be1-8917-fe5200dc94de">
+
+A time crystal is a state of matter where particles oscillate in a repeating pattern, without requiring any energy to continuously change.  A fascinating quantum phenomenon, and the inspiration for my working title.  Perhaps Chainlink Automation could be used somehow to mimic the oscillation of a time crystal.  
+
+Chainlink Functions, VRF, and Automation, used in a game with PvO and PvP elements.  I think I have some ideas.
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/01049fbd-33a0-4306-9b04-e8d5f01da0fa
+
+The crystal is an icosphere from Blender, and the animation is a rotation script combined with a shader.  
+
+Here's a tip I learned recently that really helps when trying to learn and work with shaders.  Regular Godot SpatialMaterials are really just shaders, and you can convert any SpatialMaterial into a block of shader code:
+
+<img width="204" alt="tip5" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/9837ebe1-2c1c-42e7-a57e-6dc7c87da1d3">
+
+Just click on the dropdown menu next to the material preview, and click "Convert to ShaderMaterial".  You can now experiment and see how Godot itself writes the parameters of your SpatialMaterials in shader code. 
+
+
+
+
+
 
