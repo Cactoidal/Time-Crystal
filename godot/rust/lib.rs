@@ -1,5 +1,5 @@
 use gdnative::{prelude::*, core_types::ToVariant};
-use ethers::{core::{abi::{struct_def::StructFieldType, AbiEncode}, types::*}, signers::*, providers::*, prelude::SignerMiddleware};
+use ethers::{core::{abi::{struct_def::StructFieldType, AbiEncode, AbiDecode}, types::*}, signers::*, providers::*, prelude::SignerMiddleware};
 use ethers_contract::{abigen};
 use ethers::core::types::transaction::eip2718::TypedTransaction;
 use std::{convert::TryFrom, sync::Arc};
@@ -13,6 +13,8 @@ use openssl::rand::rand_bytes;
 use openssl::rsa::{Rsa, Padding};
 use openssl::rsa::RsaRef;
 use openssl::symm::{encrypt, Cipher};
+use std::str::from_utf8;
+
 
 
 thread_local! {
@@ -452,6 +454,43 @@ NewFuture(Ok(()))
 }
 
 
+
+#[method]
+fn check_returned_message(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
+
+let vec = &key.to_vec();
+
+let keyset = &vec[..]; 
+
+let prewallet : LocalWallet = LocalWallet::from_bytes(&keyset).unwrap();
+    
+let wallet: LocalWallet = prewallet.with_chain_id(chain_id);
+
+let user_address = wallet.address();
+
+let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
+
+let contract_address: Address = time_crystal_address.to_string().parse().unwrap();
+
+let client = SignerMiddleware::new(provider, wallet);
+
+let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
+
+let calldata = contract.decrypted_message(user_address).calldata().unwrap();
+
+let return_string: GodotString = calldata.to_string().into();
+
+return_string
+
+}
+
+#[method]
+fn decode_hex_string (message: GodotString) -> GodotString {
+    let raw_hex: String = message.to_string();
+    let decoded: String = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GodotString = decoded.into();
+    return_string
+}
 
 
 
