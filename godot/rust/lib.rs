@@ -345,7 +345,9 @@ let mut encrypted_player_key = vec![0; public_rsa_key.size() as usize];
 
 let encrypted_len = public_rsa_key.public_encrypt(&aes_keyset, &mut encrypted_player_key, Padding::PKCS1_OAEP).unwrap();
 
-let calldata = contract.register_player_key(encrypted_player_key.into()).calldata().unwrap();
+let base64_player_key = openssl::base64::encode_block(&encrypted_player_key);
+
+let calldata = contract.register_player_key(base64_player_key).calldata().unwrap();
 
 let tx = Eip1559TransactionRequest::new()
     .from(user_address)
@@ -416,7 +418,11 @@ let ciphertext = encrypt(
     Some(&iv),
     data).unwrap();
 
-let calldata = contract.send_don_message(ciphertext.into(), iv.into()).calldata().unwrap();
+
+let base64_iv = openssl::base64::encode_block(&iv);
+let base64_ciphertext = openssl::base64::encode_block(&ciphertext);
+
+let calldata = contract.send_don_message(base64_ciphertext, base64_iv).calldata().unwrap();
 
 let tx = Eip1559TransactionRequest::new()
     .from(user_address)
