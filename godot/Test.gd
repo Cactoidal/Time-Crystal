@@ -10,7 +10,7 @@ var sepolia_id = 11155111
 var sepolia_rpc = "https://ethereum-sepolia.publicnode.com"
 #var sepolia_rpc = "https://endpoints.omniatech.io/v1/eth/sepolia/public"
 
-var time_crystal_contract = "0x4F32123A2Bae554C77966835607C6a50fe04583d"
+var time_crystal_contract = "0x6ED5B20D2159BF20D311f0bF3E850C7737C09Da2"
 
 var signed_data = ""
 
@@ -32,6 +32,7 @@ func _ready():
 	check_aes_key()
 	get_address()
 	get_balance()
+	check_message()
 
 func _process(delta):
 	if confirmation_timer > 0:
@@ -205,7 +206,34 @@ func send_message():
 	file2.close()
 	TimeCrystal.send_don_message(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, aes_key, message, self)
 
+func check_message():
+	var http_request = HTTPRequest.new()
+	$HTTP.add_child(http_request)
+	http_request_delete_tx_read = http_request
+	http_request.connect("request_completed", self, "check_message_attempted")
+	
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	var calldata = TimeCrystal.check_returned_message(content, sepolia_id, time_crystal_contract, sepolia_rpc)
+	
+	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
+	
+	var error = http_request.request(sepolia_rpc, 
+	[], 
+	true, 
+	HTTPClient.METHOD_POST, 
+	JSON.print(tx))
 
+
+func check_message_attempted(result, response_code, headers, body):
+	
+	var get_result = parse_json(body.get_string_from_ascii())
+
+	if response_code == 200:
+		var raw_response = get_result.duplicate()["result"]
+		$Return.text = TimeCrystal.decode_hex_string(raw_response)
 
 
 
