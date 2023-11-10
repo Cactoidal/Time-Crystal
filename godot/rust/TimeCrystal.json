@@ -159,13 +159,19 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "donId",
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "decryptedMessage",
 		"outputs": [
 			{
-				"internalType": "bytes32",
+				"internalType": "bytes",
 				"name": "",
-				"type": "bytes32"
+				"type": "bytes"
 			}
 		],
 		"stateMutability": "view",
@@ -173,12 +179,12 @@
 	},
 	{
 		"inputs": [],
-		"name": "encrypt_source",
+		"name": "donId",
 		"outputs": [
 			{
-				"internalType": "string",
+				"internalType": "bytes32",
 				"name": "",
-				"type": "string"
+				"type": "bytes32"
 			}
 		],
 		"stateMutability": "view",
@@ -241,9 +247,9 @@
 				"type": "uint256"
 			},
 			{
-				"internalType": "uint256[16]",
+				"internalType": "uint8[16]",
 				"name": "_counter",
-				"type": "uint256[16]"
+				"type": "uint8[16]"
 			}
 		],
 		"name": "initializeSession",
@@ -294,6 +300,19 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "_key",
+				"type": "bytes"
+			}
+		],
+		"name": "registerPlayerKey",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -381,6 +400,37 @@
 				"internalType": "enum FunctionsRequest.Location",
 				"name": "",
 				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "_message",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes",
+				"name": "_iv",
+				"type": "bytes"
+			}
+		],
+		"name": "sendDONMessage",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "send_source",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
 			}
 		],
 		"stateMutability": "view",
