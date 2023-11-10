@@ -57,7 +57,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   mapping (uint => bool) public usedSeeds;
   mapping (string => bool) usedCounters;
 
-  mapping (address => bytes) registeredKeys;
+  mapping (address => string) registeredKeys;
   mapping (address => bool) playerKeyRegistered;
 
   mapping (address => bytes) public decryptedMessage;
@@ -138,32 +138,33 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   }
 
 
-// if bytes doesn't work, go back to base64 strings
+
 //              KEY EXCHANGE             // 
 
-    //supply encrypted key as bytes
-    function registerPlayerKey(bytes calldata _key) public {
+    //supply encrypted key as base64 string
+    function registerPlayerKey(string calldata _key) public {
         //require (     keccak256(abi.encode(registeredKeys[msg.sender])) == keccak256(abi.encode(""))      );
         require (playerKeyRegistered[msg.sender] == false);
         playerKeyRegistered[msg.sender] = true;
         registeredKeys[msg.sender] = _key;
     }
 
-    //send encrypted message and iv as bytes
-    function sendDONMessage (bytes calldata _message, bytes calldata _iv) external {
+    
+    //supply encrypted message and iv as base64 strings
+    function sendDONMessage (string calldata _message, string calldata _iv) external {
     require (playerKeyRegistered[msg.sender] == true);
     FunctionsRequest.Request memory req;
     req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, send_source);
     req.secretsLocation = secretsLocation;
     req.encryptedSecretsReference = encryptedSecretsReference;
 
-    bytes[] memory args = new bytes[](3);
+    string[] memory args = new string[](3);
     args[0] = registeredKeys[msg.sender];
     args[1] = _iv;
     args[2] = _message;
 
-    //req.setArgs(args);
-    req.setBytesArgs(args);
+    req.setArgs(args);
+    //req.setBytesArgs(args);
 
     s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
     requestIdbyRequester[s_lastRequestId] = msg.sender;
