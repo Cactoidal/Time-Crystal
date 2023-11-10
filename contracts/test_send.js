@@ -26,16 +26,16 @@ const decryption_key = await crypto.subtle.importKey(
   );
 
   // encrypted message (key) from godot
-//const binaryDerEncrypt = atob(args[0]);
+const binaryPlayerKey = atob(args[0]);
   // convert from a binary string to an ArrayBuffer
- // const binaryDerEncryptBytes = str2ab(binaryDerEncrypt);
+  const binaryPlayerKeyBytes = str2ab(binaryPlayerKey);
 
 //  console.log(binaryDerEncryptBytes)
 
 const decBuffer = await crypto.subtle.decrypt(
   { name: "RSA-OAEP" },
   decryption_key,
-  args[0],
+  binaryPlayerKeyBytes,
 );
 
 
@@ -48,10 +48,20 @@ const playerKey = await crypto.subtle.importKey(
 );
 
 
+const binaryIv = atob(args[1]);
+  // convert from a binary string to an ArrayBuffer
+  const binaryIvBytes = str2ab(binaryIv);
+
+  const binaryMessage = atob(args[2]);
+  // convert from a binary string to an ArrayBuffer
+  const binaryMessageBytes= str2ab(binaryMessage);
+
+
+
 const decodedMessage = await crypto.subtle.decrypt(
-  { name: "AES-CBC", iv: args[1] },
+  { name: "AES-CBC", iv: binaryIvBytes },
   playerKey,
-  args[2],
+  binaryMessageBytes,
 );
 
 
