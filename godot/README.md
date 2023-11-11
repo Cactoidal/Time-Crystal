@@ -162,7 +162,7 @@ Why would you want to play a negative card?  Because it will make "scoring" or "
 
 I'm considering an economic element, where players compete to empower their own "nodes".  An empowered node is eligible to potentially earn passive rewards, but it can be attacked by other players.  A successful attack will drain the power from a node, and allow the winning player to empower their own node instead.  It's up to the node-runner to build defenses that will keep their node online.
 
-So, in addition to the "main gameplay" (which is not quite fully formed yet), there will potentially be sub-games for managing your "deck", managing your paramecia, and managing your node.  There could also potentially be "regions", or some kind of map, where players can establish a dominion with their node.  We'll see how far I get!
+So, in addition to the "main gameplay" (which is not quite fully formed yet), there will potentially be sub-games for managing your "deck", managing your paramecia, and managing your node.  There could also potentially be "regions", or some kind of map, where players can establish a dominion with their node.
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/c6cb3ac5-074f-4da6-80fa-9a7a4ee24b12
 
