@@ -7,7 +7,6 @@ var user_LINK_balance = "0"
 var sepolia_id = 11155111
 
 var sepolia_rpc = "https://ethereum-sepolia.publicnode.com"
-#var sepolia_rpc = "https://endpoints.omniatech.io/v1/eth/sepolia/public"
 
 var rpc_list
 
@@ -23,6 +22,9 @@ var tx_function_name = ""
 
 var menu_open = false
 
+#placeholder
+var main_screen = load("res://MainScreen.tscn")
+
 func _ready():
 	$PlayButton.connect("pressed", self, "attempt_play")
 	$OptionsButton.connect("pressed", self, "open_options_menu") 
@@ -31,7 +33,7 @@ func _ready():
 	$MenuBackground/GasFaucetButton.connect("pressed", self, "open_faucet")
 	$MenuBackground/LINKFaucetButton.connect("pressed", self, "open_chainlink_faucet")
 	$MenuBackground/CancelButton.connect("pressed", self, "close_menu")
-	#$PlayWarning/Proceed.connect("pressed", self, "start_game")
+	$PlayWarning/Proceed.connect("pressed", self, "fade")
 	$PlayWarning/GoBack.connect("pressed", self, "close_menu")
 	$OptionsMenu/Default.connect("pressed", self, "default_rpc")
 	$OptionsMenu/Save.connect("pressed", self, "set_rpc")
@@ -41,9 +43,31 @@ func _ready():
 	get_rpc()
 	get_address()
 	get_balance()
-	
-#func _process(delta):
-#	pass
+
+var fadeout = false
+var fadepause = 0
+var fadein = false
+var switched_to_main = false
+func _process(delta):
+	if fadeout == true:
+		$Fadeout.color.a += delta
+		if $Fadeout.color.a >= 1:
+			fadeout = false
+			fadepause = 1
+	if fadepause > 0:
+		fadepause -= delta
+		if fadepause >= 0:
+			fadepause = 0
+			start_game()
+	if fadein == true:
+		$Fadeout.color.a -= delta
+		if $Fadeout.color.a <= 0:
+			fadein = false
+			switched_to_main = true
+		
+		
+				
+		
 
 
 func check_keystore():
@@ -119,6 +143,7 @@ func open_options_menu():
 func open_gas_menu():
 	if menu_open == false:
 		menu_open = true
+		get_balance()
 		$MenuOverlay.visible = true
 		$MenuBackground.visible = true
 		$MenuBackground/GasBalance.visible = true
@@ -155,8 +180,18 @@ func open_faucet():
 
 func open_chainlink_faucet():
 	OS.shell_open("https://faucets.chain.link")
-	
-	
+
+func fade():
+	fadeout = true
+
+func start_game():
+	for child in get_children():
+		if child != $Fadeout:
+			child.queue_free()
+	var new_main = main_screen.instance()
+	add_child(new_main)
+	move_child(new_main, 0)
+	fadein = true
 
 # # #    BLOCKCHAIN INTERACTION    # # # 
 
@@ -198,10 +233,12 @@ func get_balance_attempted(result, response_code, headers, body):
 	
 
 func begin_register_key():
+	#if tx_ongoing == false
 	tx_function_name = "register_key"
 	get_tx_count()
 
 func begin_send_message():
+	#if tx_ongoing == false
 	tx_function_name = "send_message"
 	get_tx_count()
 
