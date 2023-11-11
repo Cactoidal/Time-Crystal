@@ -140,6 +140,34 @@ Here's a tip I learned recently that really helps when trying to learn and work 
 
 Just click on the dropdown menu next to the material preview, and click "Convert to ShaderMaterial".  You can now experiment and see how Godot itself writes the parameters of your SpatialMaterials in shader code. 
 
+## Day 4
+
+The game mechanics are still forming.  What I know for sure is that the game will take place in 3D space, with freedom of movement between challenges, and the challenges themselves will be interfaces with smart contracts powered by Chainlink services.
+
+Using the work I've done with secrets and key exchange, there are two core mechanics I definitely want to include:
+
+1) The oracle knows the player's "inventory", and whenever a challenge begins, the oracle will assemble a secret, randomized "deck" from this inventory, from which it will fairly draw items/cards.  A random set of these items will make up the player's "hand" during the challenge, and as the challenge progresses, the oracle will play further items/cards from the secret deck.
+
+2) While playing a challenge, you will encounter what are essentially bots (for now I'm calling them "paramecia") that have been "programmed" by other players.  These paramecia will be encrypted, and registered with the Functions DON to ensure they follow a specific format.  If approved, they will be able to attack you while you are doing a challenge.  Each paramecium will have its own decryption key, which will be passed to you whenever you are attacked.
+
+There are a few other considerations I want to keep in mind.  First is the latency problem, where the player will be stuck with considerable downtime if they have to wait for transactions to settle after every single move.  To get around this, my idea is to have two independent states of play (or "boards") during a challenge, between which the player can switch their attention.
+
+I'd also like to make player decisions fairly complex, with multiple inputs requiring careful consideration, to further reduce the impact of transaction times.  Finally, I'd like to design the game such that there should always be a "pending effect" waiting to be revealed, such that once the player submits their move, there is already something ready to happen next.
+
+There will definitely be loot in the game, obtained from successfully clearing a challenge.  Losing to a paramecium means its owner gets the loot instead.  The "loot table" upon which the player rolls will depend on some kind of threshold, either score-based or from some kind of "trick-taking" system with challenges that, if completed, make the player eligible for certain loot.
+
+Every "card" will have a positive or negative effect; when the oracle plays cards, it will choose randomly to play the positive or negative.  Player cards also have this duality, but the player can choose which one they want to use when they play the card.
+
+Why would you want to play a negative card?  Because it will make "scoring" or "trick-taking" easier, at the cost of your "survivability".  So there is a risk-balancing element.  Play safe, with lesser rewards, or carefully manage risk, and win better prizes.
+
+I'm considering an economic element, where players compete to empower their own "nodes".  An empowered node is eligible to potentially earn passive rewards, but it can be attacked by other players.  A successful attack will drain the power from a node, and allow the winning player to empower their own node instead.  It's up to the node-runner to build defenses that will keep their node online.
+
+So, in addition to the "main gameplay" (which is not quite fully formed yet), there will potentially be sub-games for managing your "deck", managing your paramecia, and managing your node.  There could also potentially be "regions", or some kind of map, where players can establish a dominion with their node.  We'll see how far I get!
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/c6cb3ac5-074f-4da6-80fa-9a7a4ee24b12
+
+The visual component of the game is taking shape.
+
 
 
 
