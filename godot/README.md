@@ -170,7 +170,9 @@ The visual component of the game is taking shape.
 
 A quick mock-up of the "main screen", with art generated using Stable Diffusion.  I'll do another pass later once more of the game is built:
 
-https://github.com/Cactoidal/Time-Crystal/assets/115384394/c78c221a-4f66-4f9e-85cb-5ca5debca53b
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/d6a06cc4-207a-4711-85b7-cd2b2d19acec
+
+
 
 
 
