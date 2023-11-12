@@ -190,7 +190,7 @@ Nodes will probably work similarly, where the defending player will define certa
 
 I should mention here the economics of the game.  Since so many actions cost LINK, the game contracts need to be self-sufficient.  Therefore, whenever a player wants to start a game session, they will first spend some fixed amount of LINK to cover the costs.
 
-And loot.  Both Paramecium and Node parts can drop from winning games, and can be used to construct strong Parameciums or better defenses.
+And loot.  Both Paramecium and Node parts can drop from winning games, and can be used to construct stronger Paramecia or better defenses.
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/e42689b9-18ff-4532-94d6-2b21a03d3b2d
 
