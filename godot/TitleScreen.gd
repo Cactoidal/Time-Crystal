@@ -26,6 +26,7 @@ var exiting = false
 #placeholder
 var main_screen = load("res://MainScreen.tscn")
 var game_world = load("res://World.tscn")
+var trick_game = load("res://TrickTaking.tscn")
 
 var destination
 
@@ -212,6 +213,17 @@ func embark():
 	var new_world = game_world.instance()
 	add_child(new_world)
 	move_child(new_world, 0)
+	fadein = true
+
+func teleport():
+	$World/Player.global_transform.origin = Vector3(0,0,0)
+	fadein = true
+
+func start_trick_game():
+	var new_game = trick_game.instance()
+	add_child(new_game)
+	var children_length = get_children().size()
+	move_child(new_game, children_length - 2)
 	fadein = true
 
 # # #    BLOCKCHAIN INTERACTION    # # # 
