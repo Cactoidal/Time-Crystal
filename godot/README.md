@@ -172,6 +172,31 @@ A quick mock-up of the "main screen", with art generated using Stable Diffusion.
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/d6a06cc4-207a-4711-85b7-cd2b2d19acec
 
+___
+
+After a lot of thought and discussion with my teammate, I'm leaning toward a "trick-taking" game.  Perhaps I'm using the term incorrectly, but by "trick" I mean a certain configuration of cards, which will score points when constructed in the field of play.
+
+Every time you play a session, there will be two independent game boards, the spaces of the boards will be randomized, as will your hands.  Your objective is to strategically build tricks.  Tricks are built by linking cards together along connected spaces. There will be an interplay between the type of space, the connections between spaces, and the characteristics of cards.
+
+In addition, I'm thinking there will be two tiers of cards, which will be organized into two separate decks.  The "minor" deck is used to bulld tricks on the board, while the "major" deck will contain cards with global effects or powerful abilities.  "Major" cards will be played randomly by the oracle, in either the positive or negative position.  
+
+The exception will be the "lead card", which is a "major" card chosen by the player before the game begins, and which is played on turn 0.  There will be some strategy in building a "minor deck" that riffs on the effect of whichever "lead card" you've chosen.
+
+Finally, once the procedural game has concluded, the session will proceed into a final phase: fighting a randomly selected Paramecium.  Paramecia will be built according to certain rules, where the Paramecium-builder defines a custom board configuration and specifies certain target tricks.
+
+It's up to the player to construct these tricks during the Paramecium round, or face defeat.  So while building tricks during the procedural game, the player needs to manage their resources to be ready for whatever Paramecium they might face. 
+
+Nodes will probably work similarly, where the defending player will define certain boards and tricks as a final defense gating access to their Node.  The difference is that node players can have multiple layers of defense, increasing the difficulty (and cost) of an attack against their Node.
+
+I should mention here the economics of the game.  Since so many actions cost LINK, the game contracts need to be self-sufficient.  Therefore, whenever a player wants to start a game session, they will first spend some fixed amount of LINK to cover the costs.
+
+And loot.  Both Paramecium and Node parts can drop from winning games, and can be used to construct strong Parameciums or better defenses.
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/e42689b9-18ff-4532-94d6-2b21a03d3b2d
+
+We have now entered a world of three dimensions.
+
+
 
 
 
