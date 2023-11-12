@@ -186,7 +186,7 @@ Finally, once the procedural game has concluded, the session will proceed into a
 
 It's up to the player to construct these tricks during the Paramecium round, or face defeat.  So while building tricks during the procedural game, the player needs to manage their resources to be ready for whatever Paramecium they might face. 
 
-Nodes will probably work similarly, where the defending player will define certain boards and tricks as a final defense gating access to their Node.  The difference is that node players can have multiple layers of defense, increasing the difficulty (and cost) of an attack against their Node.
+Nodes will probably work similarly, where the defending player will define certain boards and tricks as a final defense gating access to their Node.  The difference is that Node players can have multiple layers of defense, increasing the difficulty (and cost) of an attack against their Node.
 
 I should mention here the economics of the game.  Since so many actions cost LINK, the game contracts need to be self-sufficient.  Therefore, whenever a player wants to start a game session, they will first spend some fixed amount of LINK to cover the costs.
 
