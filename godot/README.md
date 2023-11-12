@@ -198,6 +198,8 @@ https://github.com/Cactoidal/Time-Crystal/assets/115384394/e42689b9-18ff-4532-94
 
 Let's build the game world.
 
+## Day 5
+
 After materializing into a level, the player will seek terminals to "hack", initiating the trick-taking game.  Winning will grant access to vaults containing loot, or paths leading to "inner terminals" guarding better rewards.
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/4af0aaea-f6ad-4f40-9f63-909df5b6fe7c
