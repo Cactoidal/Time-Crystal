@@ -192,6 +192,8 @@ I should mention here the economics of the game.  Since so many actions cost LIN
 
 And loot.  Both Paramecium and Node parts can drop from winning games, and can be used to construct stronger Paramecia or better defenses.
 
+The [Rainbow Shader by Exuin](https://godotshaders.com/shader/moving-rainbow-gradient/) below was obtained from [Godot Shaders](https://godotshaders.com):
+
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/e42689b9-18ff-4532-94d6-2b21a03d3b2d
 
 Let's build the game world.
