@@ -194,7 +194,7 @@ And loot.  Both Paramecium and Node parts can drop from winning games, and can b
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/e42689b9-18ff-4532-94d6-2b21a03d3b2d
 
-We have now entered a world of three dimensions.
+Let's build the game world.
 
 
 
