@@ -667,6 +667,12 @@ margin_bottom = 189.0
 margin_right = 40.0
 margin_bottom = 40.0
 
+[node name="Fadeout" type="ColorRect" parent="."]
+margin_right = 1042.0
+margin_bottom = 619.0
+mouse_filter = 2
+color = Color( 0, 0, 0, 0 )
+
 [connection signal="mouse_entered" from="PlayButton" to="." method="_on_PlayButton_mouse_entered"]
 [connection signal="mouse_entered" from="OptionsButton" to="." method="_on_OptionsButton_mouse_entered"]
 [connection signal="mouse_entered" from="GasButton" to="." method="_on_GasButton_mouse_entered"]

@@ -22,8 +22,12 @@ var tx_function_name = ""
 
 var menu_open = false
 
+var exiting = false
 #placeholder
 var main_screen = load("res://MainScreen.tscn")
+var game_world = load("res://World.tscn")
+
+var destination
 
 func _ready():
 	$PlayButton.connect("pressed", self, "attempt_play")
@@ -33,7 +37,7 @@ func _ready():
 	$MenuBackground/GasFaucetButton.connect("pressed", self, "open_faucet")
 	$MenuBackground/LINKFaucetButton.connect("pressed", self, "open_chainlink_faucet")
 	$MenuBackground/CancelButton.connect("pressed", self, "close_menu")
-	$PlayWarning/Proceed.connect("pressed", self, "fade")
+	$PlayWarning/Proceed.connect("pressed", self, "fade", ["start_game"])
 	$PlayWarning/GoBack.connect("pressed", self, "close_menu")
 	$OptionsMenu/Default.connect("pressed", self, "default_rpc")
 	$OptionsMenu/Save.connect("pressed", self, "set_rpc")
@@ -47,7 +51,8 @@ func _ready():
 var fadeout = false
 var fadepause = 0
 var fadein = false
-var switched_to_main = false
+
+var pending_action
 func _process(delta):
 	if fadeout == true:
 		$Fadeout.color.a += delta
@@ -58,12 +63,13 @@ func _process(delta):
 		fadepause -= delta
 		if fadepause >= 0:
 			fadepause = 0
-			start_game()
+			call(pending_action)
 	if fadein == true:
 		$Fadeout.color.a -= delta
 		if $Fadeout.color.a <= 0:
+			exiting = false
 			fadein = false
-			switched_to_main = true
+			
 		
 		
 				
@@ -166,11 +172,12 @@ func open_link_menu():
 		$MenuBackground/LINKFaucetButton.visible = true
 	
 func close_menu():
-	menu_open = false
-	$MenuOverlay.visible = false
-	$MenuBackground.visible = false
-	$PlayWarning.visible = false
-	$OptionsMenu.visible = false
+	if exiting == false:
+		menu_open = false
+		$MenuOverlay.visible = false
+		$MenuBackground.visible = false
+		$PlayWarning.visible = false
+		$OptionsMenu.visible = false
 
 func copy_address():
 	OS.set_clipboard(user_address)
@@ -181,8 +188,13 @@ func open_faucet():
 func open_chainlink_faucet():
 	OS.shell_open("https://faucets.chain.link")
 
-func fade():
-	fadeout = true
+func fade(action, params="None"):
+	if exiting == false:
+		exiting = true
+		pending_action = action
+		if params != "None":
+			destination = params
+		fadeout = true
 
 func start_game():
 	for child in get_children():
@@ -191,6 +203,15 @@ func start_game():
 	var new_main = main_screen.instance()
 	add_child(new_main)
 	move_child(new_main, 0)
+	fadein = true
+
+func embark():
+	for child in get_children():
+		if child != $Fadeout:
+			child.queue_free()
+	var new_world = game_world.instance()
+	add_child(new_world)
+	move_child(new_world, 0)
 	fadein = true
 
 # # #    BLOCKCHAIN INTERACTION    # # # 
