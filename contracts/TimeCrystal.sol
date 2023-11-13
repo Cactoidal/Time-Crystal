@@ -69,7 +69,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
     //temp
     string[3] public currentOpponent;
-    uint8 public currentTurn = 0;
+    uint8 public currentTurn = 1;
     string[] public opponentCards;
     string[] public playerCards;
     uint gameSeed;
@@ -170,7 +170,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     }
 
    function resetGame() public {
-        currentTurn = 0;
+        currentTurn = 1;
         string[] memory empty;
         opponentCards = empty;
         playerCards = empty;
@@ -196,17 +196,17 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
         returnedSecret[player] = response;
     }
     else if (pendingRequests[requestId] == requestType.START_GAME) {
-        (string memory playerCard1, string memory playerCard2, string memory playerCard3) = abi.decode(response, (string, string, string));
+        (string memory a, string memory b, string memory c) = abi.decode(response, (string, string, string));
         string[3] memory newCards;
-        newCards[0] = playerCard1;
-        newCards[1] = playerCard2;
-        newCards[2] = playerCard3;
+        newCards[0] = a;
+        newCards[1] = b;
+        newCards[2] = c;
         playerCards = newCards;
     }
     else if (pendingRequests[requestId] == requestType.TAKE_TURN) {
-        (string memory opponentCard, string memory playerCard) = abi.decode(response, (string, string));
-        opponentCards.push(opponentCard);
-        playerCards.push(playerCard);
+        (string memory a, string memory b) = abi.decode(response, (string, string));
+        opponentCards.push(a);
+        playerCards.push(b);
     }
     
     s_lastResponse = response;
