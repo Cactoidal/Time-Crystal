@@ -77,6 +77,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     string gameNonce = "1";
     string playerDeck;
 
+
     function registerPlayerDeck(string calldata _deck) public {
         playerDeck = _deck;
     }
@@ -84,6 +85,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     //RSA-encrypted AES key, AES-encrypted deck/logic, and the iv used to encrypt
     //all provided as base64 strings
     function registerOpponentDeck(string calldata _key, string calldata _deck, string calldata _iv) public {
+        
         string[3] memory newOpponent;
         newOpponent[0] = _key;
         newOpponent[1] = _deck;
@@ -93,8 +95,13 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
 
     //counter here is a base64 string
+    //seed will eventually come from VRF and be validated
+    //I will need to validate the counter later
     function startGame (uint _seed, string calldata _counter) external {
-
+    require (usedCounters[_counter] == false);
+    //require (usedSeeds[_seed] == false);
+    //usedSeeds[_seed] = true;
+    usedCounters[_counter] = true;
     FunctionsRequest.Request memory req;
     req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, send_source);
     req.secretsLocation = secretsLocation;
@@ -119,7 +126,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
   }
 
-    //seed and counter will eventually be replaced
     function progressGame (uint8 _action) external {
 
     FunctionsRequest.Request memory req;
@@ -128,7 +134,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     req.encryptedSecretsReference = encryptedSecretsReference;
 
     
-    string[] memory args = new string[](8);
+    string[] memory args = new string[](9);
     args[0] = playerCards[_action];
     args[1] = currentOpponent[0];
     args[2] = currentOpponent[1];
@@ -137,6 +143,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     args[5] = Strings.toString(gameSeed);
     args[6] = gameCounter;
     args[7] = gameNonce;
+    args[8] = playerDeck;
 
     playerCards[_action] = playerCards[playerCards.length - 1];
     playerCards.pop();
@@ -161,6 +168,12 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
         return opponentCards;
     }
 
+   function resetGame() public {
+        currentTurn = 0;
+        string[] memory empty;
+        opponentCards = empty;
+        playerCards = empty;
+    }
 
 
 
