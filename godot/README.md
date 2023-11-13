@@ -214,7 +214,7 @@ https://github.com/Cactoidal/Time-Crystal/assets/115384394/dbf2fd74-3515-44f6-a7
 
 Game mechanics are still under development.  I'm wondering if, rather than generic PvO "trick-taking challenges" that contain PvP elements at the end, I should instead refocus the game to be strictly adversarial.  As in, you have a "deck", your opponent has a "deck", and you're both trying to clobber each other.
 
-If you've played any kind of battle card game, you're familiar with the idea of building resources each turn and strategically deploying different types of cards to try and beat your opponent.  A big problem with PvP on the blockchain is the time delay between actions.  But what if your opponent, instead of being physically present, was instead a block of code?
+If you've played any kind of battle card game, you're familiar with the idea of building resources each turn and strategically deploying different types of cards to try and beat your opponent.  A big problem with PvP on the blockchain is the time delay between actions.  But what if your opponent, instead of being physically present, was instead a secret block of code?
 
 Here's the new idea.  An OPPONENT (vaguely based on the Paramecium or Node mentioned above) consists of a constructed deck and some programmed logic.  There will be a basic logic template, and this can be built upon with per-turn logic, global logic, and conditional logic (i.e. player has card x of type y on the field, so OPPONENT plays card z if card z is in hand, with target x).
 
