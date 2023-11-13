@@ -236,3 +236,21 @@ It's not visible here, but the good news is that the deck-shuffling and hand-dra
 
 While it's possible to just query the oracle for each value at a time, it's really not cost efficient.  Perhaps there's still something I can do with the raw bytes returned by the oracle.
 
+Indeed, since I can control the formatting of the bytes returned by the oracle, I can encode the card values at specific indices.  Here is some example code for splitting the player's hand from the returned bytes.  For now, each card is represented by 2 bytes, and there are 3 cards.  The cards are split out and typecast into strings.  
+
+```
+        string[3] memory newCards;
+        uint index = 0;
+        for (uint i = 0; i < 3; i++) {
+            bytes memory card = new bytes(2);
+            card[0] = response[index];
+            index += 1;
+            card[1] = response[index];
+            index += 1;
+            newCards[i] = string(card);
+        }
+        playerCards = newCards;
+```
+
+For example, if the oracle were to send the encoded bytes of string "671809", the playerCards variable would end up with the string array `["67","18","09"]`.
+
