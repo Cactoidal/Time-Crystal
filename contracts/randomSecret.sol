@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.20;
 
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
@@ -34,7 +34,9 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   enum requestType {
     SEND,
     RECEIVE,
-    DECRYPT
+    DECRYPT,
+    TAKE_TURN,
+    START_GAME
   }
 
   struct encryptParams {
@@ -149,6 +151,84 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
         registeredKeys[msg.sender] = _key;
     }
 
+    //temp
+    string[3] public currentOpponent;
+
+    function registerOpponentDeck(string calldata _key, string calldata _deck, string calldata _iv) public {
+        string[3] memory newOpponent;
+        newOpponent[0] = _key;
+        newOpponent[1] = _deck;
+        newOpponent[2] = _iv;
+        currentOpponent = newOpponent;
+    }
+
+
+     string[] public playerCards;
+
+    function startGame (uint _seed, uint8[16] calldata _counter) external {
+
+    FunctionsRequest.Request memory req;
+    req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, send_source);
+    req.secretsLocation = secretsLocation;
+    req.encryptedSecretsReference = encryptedSecretsReference;
+
+    string[] memory args = new string[](2);
+    args[5] = Strings.toString(_seed);
+    args[6] = getCounter(_counter);
+
+    req.setArgs(args);
+    //req.setBytesArgs(args);
+
+    s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
+    requestIdbyRequester[s_lastRequestId] = msg.sender;
+    pendingRequests[s_lastRequestId] = requestType.START_GAME;
+
+
+  }
+
+
+
+    //temp
+    uint8 public currentTurn = 0;
+    string[] public opponentCards;
+
+    function progressGame (uint8 _action, uint _seed, uint8[16] calldata _counter) external {
+
+    FunctionsRequest.Request memory req;
+    req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, send_source);
+    req.secretsLocation = secretsLocation;
+    req.encryptedSecretsReference = encryptedSecretsReference;
+
+    
+    string[] memory args = new string[](7);
+    args[0] = playerCards[_action];
+    args[1] = currentOpponent[0];
+    args[2] = currentOpponent[1];
+    args[3] = currentOpponent[2];
+    args[4] = Strings.toString(currentTurn);
+    args[5] = Strings.toString(_seed);
+    args[6] = getCounter(_counter);
+
+    playerCards[_action] = playerCards[playerCards.length - 1];
+    playerCards.pop();
+
+    currentTurn += 1;
+
+    req.setArgs(args);
+    //req.setBytesArgs(args);
+
+    s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
+    requestIdbyRequester[s_lastRequestId] = msg.sender;
+    pendingRequests[s_lastRequestId] = requestType.TAKE_TURN;
+
+
+  }
+
+
+
+
+
+
     
     //supply encrypted message and iv as base64 strings
     function sendDONMessage (string calldata _message, string calldata _iv) external {
@@ -196,6 +276,19 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
         inSession[player] = false;
         sessionIndex[player] += 1;
         returnedSecret[player] = response;
+    }
+    else if (pendingRequests[requestId] == requestType.START_GAME) {
+        (string memory playerCard1, string memory playerCard2, string memory playerCard3) = abi.decode(response, (string, string, string));
+        string[3] memory newCards;
+        newCards[0] = playerCard1;
+        newCards[1] = playerCard2;
+        newCards[2] = playerCard3;
+        playerCards = newCards;
+    }
+    else if (pendingRequests[requestId] == requestType.TAKE_TURN) {
+        (string memory opponentCard, string memory playerCard) = abi.decode(response, (string, string));
+        opponentCards.push(opponentCard);
+        playerCards.push(playerCard);
     }
     
     s_lastResponse = response;
