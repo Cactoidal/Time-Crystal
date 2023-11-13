@@ -75,21 +75,17 @@ for (var i = number_array.length - 1; i >= 0; i--) {
 // Generate output
 // Create a better randomness regeneration later
 var playerHandArray = []
-for (var k = 0; k < 4; k++) {
+for (var k = 0; k < 3; k++) {
     let picked = secret_value % deckLength
     playerHandArray.push(deckArray[picked])
     deckArray.splice(picked, 1)
     deckLength -= 1
 }
 
-let result = {
-    a: playerHandArray[0],
-    b: playerHandArray[1],
-    c: playerHandArray[2]
-}
+let result = (playerHandArray[0] + playerHandArray[1] + playerHandArray[2])
 //let return_string = playerHandArray[0].concat(",")
 //return_string = return_string.concat(playerHandArray[1])
 //return_string = return_string.concat(",")
 //return_string = return_string.concat(playerHandArray[2])
 
-return Functions.encodeString(JSON.stringify(result))
+return Functions.encodeString(result)
