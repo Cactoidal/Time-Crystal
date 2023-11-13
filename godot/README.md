@@ -208,9 +208,25 @@ I suppose floating tiles in space aren't really suggestive of terrestrial things
 
 In any case, it's not much of a vault if it can be opened with a simple click. It's time to draft what our game's board will look like. 
 
+___
 
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/dbf2fd74-3515-44f6-a779-a0d4a3080a37
 
+Game mechanics are still under development.  I'm wondering if, rather than generic PvO "trick-taking challenges" that contain PvP elements at the end, I should instead refocus the game to be strictly adversarial.  As in, you have a "deck", your opponent has a "deck", and you're both trying to clobber each other.
 
+If you've played any kind of battle card game, you're familiar with the idea of building resources each turn and strategically employing different types of cards to try and beat your opponent.  A big problem with PvP on the blockchain is the time delay between actions.  But what if your opponent, instead of being physically present, was instead a block of code?
+
+Here's the new idea.  An OPPONENT (vaguely based on the Paramecium or Node mentioned above) consists of a constructed deck and some programmed logic.  There will be a basic logic template, and this can be built upon with per-turn logic, global logic, and conditional logic (i.e. player has card of type x on the field, so OPPONENT plays card y if card y is in hand, with target x).
+
+This OPPONENT deck is registered by putting an RSA-encrypted AES key on-chain, along with the AES-encrypted deck+logic and the iv.  That OPPONENT can now be attacked by any player.  During play, the oracle will decrypt the OPPONENT deck, validate its contents, randomly shuffle its deck and draw secret cards, and compute the OPPONENT's action each turn based on the programmed logic.
+
+At no point is the full state of the OPPONENT deck ever public on-chain, and the only information conveyed publicly is the card the OPPONENT plays each turn, as determined by the oracle.  Given enough sessions, someone could figure out what the deck composition is, and get an idea for the logic, but the person managing the deck can always rewrite it and reupload it later.
+
+This way, we can have a secret encrypted state on-chain that is used to generate unpredictable gameplay, thanks to Chainlink Functions.
+
+My first task is to make the deck mechanism work.  For now, all cards will just be strings that have no other effect, and the game logic will just be "play a card each turn."  I'll build a system for registering an OPPONENT deck, then a simple framework for games.
+
+At this stage, the oracle's job will be just to randomly order both the OPPONENT deck and the PLAYER deck, deal the hands, and play cards from the OPPONENT hand in response to my plays.  It will need to track which cards have been played, and the current state of the board each turn.
 
 
 
