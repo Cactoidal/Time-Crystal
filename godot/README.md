@@ -236,5 +236,5 @@ It's not visible here, but the good news is that the deck-shuffling and hand-dra
 
 The issue here is the contract-oracle system needs to validate the game state.  I had planned to just push cards into arrays, manipulating the arrays whenever cards entered or exited the field, such that it would be impossible for a player to play cards they did not actually possess in their hand.
 
-While it's possible to just query the oracle for each value one at a time, it's really not cost-efficient.  I suppose I can just push the JSONs into an array, and the oracle can pull the array of JSONs and sort through them every turn.  The oracle step is already doing a lot of the work, and it would be better if I could do the validation on the contract side, but at the moment this seems like the most expedient solution.
+While it's possible to just query the oracle for each value one at a time, it's really not cost-efficient.  I suppose I can just push the JSONs into an array, and the oracle can pull the array of JSONs and sort through them every turn, validating the player's actions against them.  The oracle step is already doing a lot of the work, and it would be better if I could do the validation on the contract side, but at the moment this seems like the most expedient solution.
 
