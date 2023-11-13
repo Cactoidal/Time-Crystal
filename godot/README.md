@@ -228,5 +228,11 @@ My first task is to make the deck mechanism work.  For now, all cards will just 
 
 At this stage, the oracle's job will be just to randomly order both the OPPONENT deck and the PLAYER deck, deal the hands, and play cards from the OPPONENT hand in response to my plays.  It will need to track which cards have been played, and the current state of the board each turn.
 
+## Day 6
 
+<img width="1008" alt="11picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/c56d743c-188d-4e24-8c49-dc9ce38eaf3f">
+
+It's not visible here, but the good news is that the deck-shuffling and hand-drawing works.  The bad news is that returning multiple data values with Chainlink Functions does not seem to be possible.  You can return a _JSON_, but it's a string, not something that can be easily parsed and split on-chain.  Libraries exist that will do it, but that's something I want to avoid if I can.
+
+While it's possible to just query the oracle for each value at a time, it's really not cost efficient.  Perhaps there's still something I can do with the raw bytes returned by the oracle.
 
