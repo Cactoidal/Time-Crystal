@@ -162,7 +162,7 @@ for (var l = 0; l < args[9]; l++) {
 }
 
 var playerCard;
-for (var k = 0; k < 4 + args[9]; k++) {
+for (var k = 0; k < 3 + args[9]; k++) {
     let picked = secret_value % playerDeckLength
     playerDeckArray.splice(picked, 1)
     playerDeckLength -= 1
@@ -171,9 +171,6 @@ for (var k = 0; k < 4 + args[9]; k++) {
     }
 }
 
-let result = {
-    a: opponentCard,
-    b: playerCard
-}
-
-return Functions.encodeString(JSON.stringify(result))
+let result = opponentCard + playerCard
+  
+return Functions.encodeString(result)
