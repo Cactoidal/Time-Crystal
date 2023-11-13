@@ -718,11 +718,7 @@ let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clo
 
 let calldata = contract.get_player_cards().calldata().unwrap();
 
-let raw_hex: String = calldata.to_string();
-
-let decoded: Vec<String> = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
-
-let return_string: GodotString = format!("{:?}", decoded).into();
+let return_string: GodotString = calldata.to_string().into();
 
 return_string
 
@@ -750,11 +746,7 @@ let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clo
 
 let calldata = contract.get_opponent_cards().calldata().unwrap();
 
-let raw_hex: String = calldata.to_string();
-
-let decoded: Vec<String> = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
-
-let return_string: GodotString = format!("{:?}", decoded).into();
+let return_string: GodotString = calldata.to_string().into();
 
 return_string
 
