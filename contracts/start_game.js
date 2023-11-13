@@ -82,9 +82,14 @@ for (var k = 0; k < 4; k++) {
     deckLength -= 1
 }
 
-let return_string = playerHandArray[0].concat(",")
-return_string = return_string.concat(playerHandArray[1])
-return_string = return_string.concat(",")
-return_string = return_string.concat(playerHandArray[2])
+let result = {
+    a: playerHandArray[0],
+    b: playerHandArray[1],
+    c: playerHandArray[2]
+}
+//let return_string = playerHandArray[0].concat(",")
+//return_string = return_string.concat(playerHandArray[1])
+//return_string = return_string.concat(",")
+//return_string = return_string.concat(playerHandArray[2])
 
-return Functions.encodeString(return_string)
+return Functions.encodeString(JSON.stringify(result))
