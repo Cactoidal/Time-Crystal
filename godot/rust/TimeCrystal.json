@@ -146,6 +146,38 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "currentOpponent",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "currentTurn",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "decrypt_source",
 		"outputs": [
@@ -192,9 +224,28 @@
 	},
 	{
 		"inputs": [],
-		"name": "examineSecret",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"name": "getOpponentCards",
+		"outputs": [
+			{
+				"internalType": "string[]",
+				"name": "",
+				"type": "string[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getPlayerCards",
+		"outputs": [
+			{
+				"internalType": "string[]",
+				"name": "",
+				"type": "string[]"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -240,24 +291,6 @@
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_seed",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint8[16]",
-				"name": "_counter",
-				"type": "uint8[16]"
-			}
-		],
-		"name": "initializeSession",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [],
 		"name": "nonceCounter",
 		"outputs": [
@@ -265,6 +298,25 @@
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "opponentCards",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
 			}
 		],
 		"stateMutability": "view",
@@ -305,12 +357,67 @@
 	{
 		"inputs": [
 			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "playerCards",
+		"outputs": [
+			{
 				"internalType": "string",
-				"name": "_key",
+				"name": "",
 				"type": "string"
 			}
 		],
-		"name": "registerPlayerKey",
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint8",
+				"name": "_action",
+				"type": "uint8"
+			}
+		],
+		"name": "progressGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_key",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_deck",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_iv",
+				"type": "string"
+			}
+		],
+		"name": "registerOpponentDeck",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_deck",
+				"type": "string"
+			}
+		],
+		"name": "registerPlayerDeck",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -332,6 +439,13 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "resetGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -403,24 +517,6 @@
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_message",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_iv",
-				"type": "string"
-			}
-		],
-		"name": "sendDONMessage",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -505,12 +601,43 @@
 	{
 		"inputs": [
 			{
+				"internalType": "uint256",
+				"name": "_seed",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_counter",
+				"type": "string"
+			}
+		],
+		"name": "startGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "address",
 				"name": "to",
 				"type": "address"
 			}
 		],
 		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "_secrets",
+				"type": "bytes"
+			}
+		],
+		"name": "updateSecret",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
