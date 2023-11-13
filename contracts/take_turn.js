@@ -74,7 +74,7 @@ const opponentKey = await crypto.subtle.importKey(
 
 const decodedMessage = await crypto.subtle.decrypt(
   { name: "AES-CBC", iv: binaryIvBytes },
-  playerKey,
+  opponentKey,
   binaryOpponentDeckBytes,
 );
 
@@ -154,21 +154,21 @@ for (var i = number_array.length - 1; i >= 0; i--) {
 var opponentCard;
 for (var l = 0; l < args[9]; l++) {
     let picked2 = secret_value % opponentDeckLength
-    opponentDeckArray.splice(picked2, 1)
-    opponentDeckLength -= 1
     if ( l === args[9] - 1) {
         opponentCard = opponentDeckArray[picked2]
     }
+    opponentDeckArray.splice(picked2, 1)
+    opponentDeckLength -= 1
 }
 
 var playerCard;
 for (var k = 0; k < 3 + args[9]; k++) {
     let picked = secret_value % playerDeckLength
-    playerDeckArray.splice(picked, 1)
-    playerDeckLength -= 1
     if ( k === 3 + args[9]) {
         playerCard = playerDeckArray[picked]
     }
+    playerDeckArray.splice(picked, 1)
+    playerDeckLength -= 1
 }
 
 let result = opponentCard + playerCard
