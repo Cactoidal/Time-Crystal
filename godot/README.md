@@ -216,7 +216,7 @@ Game mechanics are still under development.  I'm wondering if, rather than gener
 
 If you've played any kind of battle card game, you're familiar with the idea of building resources each turn and strategically employing different types of cards to try and beat your opponent.  A big problem with PvP on the blockchain is the time delay between actions.  But what if your opponent, instead of being physically present, was instead a block of code?
 
-Here's the new idea.  An OPPONENT (vaguely based on the Paramecium or Node mentioned above) consists of a constructed deck and some programmed logic.  There will be a basic logic template, and this can be built upon with per-turn logic, global logic, and conditional logic (i.e. player has card of type x on the field, so OPPONENT plays card y if card y is in hand, with target x).
+Here's the new idea.  An OPPONENT (vaguely based on the Paramecium or Node mentioned above) consists of a constructed deck and some programmed logic.  There will be a basic logic template, and this can be built upon with per-turn logic, global logic, and conditional logic (i.e. player has card x of type y on the field, so OPPONENT plays card z if card z is in hand, with target x).
 
 This OPPONENT deck is registered by putting an RSA-encrypted AES key on-chain, along with the AES-encrypted deck+logic and the iv.  That OPPONENT can now be attacked by any player.  During play, the oracle will decrypt the OPPONENT deck, validate its contents, randomly shuffle its deck and draw secret cards, and compute the OPPONENT's action each turn based on the programmed logic.
 
