@@ -72,10 +72,16 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     uint8 public currentTurn = 1;
     string[] public opponentCards;
     string[] public playerCards;
-    uint gameSeed;
-    string gameCounter;
+    uint public gameSeed;
+    string public gameCounter;
     string gameNonce = "1";
-    string playerDeck;
+    string public playerDeck;
+
+    struct cardResponse {
+    string a;
+    string b;
+    string c;
+}
 
 
     function registerPlayerDeck(string calldata _deck) public {
@@ -98,10 +104,10 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     //seed will eventually come from VRF and be validated
     //I will need to validate the counter later
     function startGame (uint _seed, string calldata _counter) external {
-    require (usedCounters[_counter] == false);
+    //require (usedCounters[_counter] == false);
     //require (usedSeeds[_seed] == false);
     //usedSeeds[_seed] = true;
-    usedCounters[_counter] = true;
+    //usedCounters[_counter] = true;
     FunctionsRequest.Request memory req;
     req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, start_game_source);
     req.secretsLocation = secretsLocation;
@@ -178,35 +184,35 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
 
 
+
 //            REQUEST FULFILLMENT            //
 
-  // SEND: send encrypted message to DON
-  // RECEIVE: receive encrypted message from DON
-  // DECRYPT: decrypt secret randomness
-  function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
-    if (pendingRequests[requestId] == requestType.SEND) {
-        address player = requestIdbyRequester[requestId];
-        decryptedMessage[player] = response;
 
-    }
-    else if (pendingRequests[requestId] == requestType.DECRYPT) {
-        address player = requestIdbyRequester[requestId];
-        inSession[player] = false;
-        sessionIndex[player] += 1;
-        returnedSecret[player] = response;
-    }
-    else if (pendingRequests[requestId] == requestType.START_GAME) {
-        (string memory a, string memory b, string memory c) = abi.decode(response, (string, string, string));
+  function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
+    
+    if (pendingRequests[requestId] == requestType.START_GAME) {
         string[3] memory newCards;
-        newCards[0] = a;
-        newCards[1] = b;
-        newCards[2] = c;
+        uint index = 0;
+        for (uint i = 0; i < 3; i++) {
+            bytes memory card = new bytes(2);
+            card[0] = response[index];
+            index += 1;
+            card[1] = response[index];
+            index += 1;
+            newCards[i] = string(card);
+        }
         playerCards = newCards;
     }
+
     else if (pendingRequests[requestId] == requestType.TAKE_TURN) {
-        (string memory a, string memory b) = abi.decode(response, (string, string));
-        opponentCards.push(a);
-        playerCards.push(b);
+        bytes memory opponentCard = new bytes(2);
+        bytes memory playerCard = new bytes(2);
+        opponentCard[0] = response[0];
+        opponentCard[1] = response[1];
+        playerCard[0] = response[2];
+        playerCard[1] = response[3];
+        opponentCards.push(string(opponentCard));
+        playerCards.push(string(playerCard));
     }
     
     s_lastResponse = response;
