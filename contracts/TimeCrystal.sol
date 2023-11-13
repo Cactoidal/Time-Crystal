@@ -15,8 +15,8 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   bytes public s_lastResponse;
   bytes public s_lastError;
 
-  string public send_source;
-  string public decrypt_source;
+  string public start_game_source;
+  string public take_turn_source;
   FunctionsRequest.Location public secretsLocation;
   bytes encryptedSecretsReference;
   uint64 subscriptionId = 1600;
@@ -25,8 +25,8 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
   constructor(address router, bytes32 _donId, string memory _source,  string memory _source2, FunctionsRequest.Location _location, bytes memory _reference) FunctionsClient(router) ConfirmedOwner(msg.sender) {
     donId = _donId;
-    send_source = _source;
-    decrypt_source = _source2;
+    start_game_source = _source;
+    take_turn_source = _source2;
     secretsLocation = _location;
     encryptedSecretsReference = _reference;
   }
@@ -103,7 +103,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     //usedSeeds[_seed] = true;
     usedCounters[_counter] = true;
     FunctionsRequest.Request memory req;
-    req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, send_source);
+    req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, start_game_source);
     req.secretsLocation = secretsLocation;
     req.encryptedSecretsReference = encryptedSecretsReference;
     
@@ -129,7 +129,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     function progressGame (uint8 _action) external {
 
     FunctionsRequest.Request memory req;
-    req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, send_source);
+    req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, take_turn_source);
     req.secretsLocation = secretsLocation;
     req.encryptedSecretsReference = encryptedSecretsReference;
 
