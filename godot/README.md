@@ -232,7 +232,7 @@ At this stage, the oracle's job will be just to randomly order both the OPPONENT
 
 <img width="800" alt="11picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/30ebde87-c211-4166-b888-2ec633ec5d84">
 
-It's not visible here, but the good news is that the deck-shuffling and hand-drawing works.  The bad news is that returning multiple data values with Chainlink Functions does not seem to be possible.  You can return a _JSON_, but it's a string, not something that can be easily parsed and split on-chain.  Libraries exist that will do it, but that's something I want to avoid if I can.
+It's not visible here, but the good news is that the deck-shuffling and hand-dealing works.  The bad news is that returning multiple data values with Chainlink Functions does not seem to be possible.  You can return a _JSON_, but it's a string, not something that can be easily parsed and split on-chain.  Libraries exist that will do it, but that's something I want to avoid if I can.
 
 While it's possible to just query the oracle for each value at a time, it's really not cost efficient.  Perhaps there's still something I can do with the raw bytes returned by the oracle.
 
