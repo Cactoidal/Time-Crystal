@@ -93,8 +93,8 @@ var opponentDeckLength = opponentDeckArray.length;
 
 var playerDeckArray = []
 
-for (let j = 1; j < 11; j++) {
-    playerDeckArray.push(JSON.parse(args[8])[j.toString()]);
+for (let z = 1; z < 11; z++) {
+    playerDeckArray.push(JSON.parse(args[8])[z.toString()]);
 }
 
 var playerDeckLength = playerDeckArray.length;
@@ -150,24 +150,25 @@ for (var i = number_array.length - 1; i >= 0; i--) {
 // Generate output
 // Create a better randomness regeneration later
 
+let currentTurn = parseInt(args[4])
 
 var opponentCard;
-for (var l = 0; l < args[9]; l++) {
-    let picked2 = secret_value % opponentDeckLength
-    if ( l === args[9] - 1) {
-        opponentCard = opponentDeckArray[picked2]
+for (var l = 0; l < currentTurn; l++) {
+    let picked_card = secret_value % opponentDeckLength
+    if ( l === currentTurn - 1) {
+        opponentCard = opponentDeckArray[picked_card]
     }
-    opponentDeckArray.splice(picked2, 1)
+    opponentDeckArray.splice(picked_card, 1)
     opponentDeckLength -= 1
 }
 
 var playerCard;
-for (var k = 0; k < 3 + args[9]; k++) {
-    let picked = secret_value % playerDeckLength
-    if ( k === 3 + args[9]) {
-        playerCard = playerDeckArray[picked]
+for (var k = 0; k < 3 + currentTurn; k++) {
+    let picked_card = secret_value % playerDeckLength
+    if ( k === 2 + currentTurn) {
+        playerCard = playerDeckArray[picked_card]
     }
-    playerDeckArray.splice(picked, 1)
+    playerDeckArray.splice(picked_card, 1)
     playerDeckLength -= 1
 }
 
