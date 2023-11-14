@@ -140,7 +140,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     req.encryptedSecretsReference = encryptedSecretsReference;
 
     
-    string[] memory args = new string[](10);
+    string[] memory args = new string[](9);
     args[0] = playerCards[_action];
     args[1] = currentOpponent[0];
     args[2] = currentOpponent[1];
@@ -150,7 +150,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     args[6] = gameCounter;
     args[7] = gameNonce;
     args[8] = playerDeck;
-    args[9] = Strings.toString(currentTurn);
 
     playerCards[_action] = playerCards[playerCards.length - 1];
     playerCards.pop();
