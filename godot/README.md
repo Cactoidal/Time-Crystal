@@ -256,6 +256,6 @@ For example, if the oracle were to send the encoded bytes of string "671809", th
 
 <img width="800" alt="12picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/e12385b0-b3e1-428b-b622-c2c08ea4be0f">
 
-That took some wrangling.  But it now works.  Both the PLAYER and OPPONENT are dealt cards from secret decks known only to the oracle, the player may choose which card to play, and the OPPONENT plays a card it has drawn into its (invisisble) hand.
+That took some wrangling.  But it now works.  Both the PLAYER and OPPONENT are dealt cards from secret decks known only to the oracle, the player may choose which card to play each turn, and the OPPONENT plays cards it has drawn into its (invisisble) hand.
 
 Next up: increasing the complexity a bit.
