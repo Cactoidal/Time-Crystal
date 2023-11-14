@@ -230,7 +230,7 @@ At this stage, the oracle's job will be just to randomly order both the OPPONENT
 
 ## Day 6
 
-<img width="1008" alt="11picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/c56d743c-188d-4e24-8c49-dc9ce38eaf3f">
+<img width="800" alt="11picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/30ebde87-c211-4166-b888-2ec633ec5d84">
 
 It's not visible here, but the good news is that the deck-shuffling and hand-drawing works.  The bad news is that returning multiple data values with Chainlink Functions does not seem to be possible.  You can return a _JSON_, but it's a string, not something that can be easily parsed and split on-chain.  Libraries exist that will do it, but that's something I want to avoid if I can.
 
@@ -254,3 +254,8 @@ Indeed, since I can control the formatting of the bytes returned by the oracle, 
 
 For example, if the oracle were to send the encoded bytes of string "671809", the playerCards variable would end up with the string array `["67","18","09"]`.
 
+<img width="800" alt="12picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/e12385b0-b3e1-428b-b622-c2c08ea4be0f">
+
+That took some wrangling.  But it now works.  Both the PLAYER and OPPONENT are dealt cards from secret decks known only to the oracle, the player may choose which card to play, and the OPPONENT plays a card it has drawn into its (invisisble) hand.
+
+Next up: increasing the complexity a bit.
