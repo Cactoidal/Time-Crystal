@@ -10,7 +10,7 @@ var sepolia_rpc = "https://ethereum-sepolia.publicnode.com"
 
 var rpc_list
 
-var time_crystal_contract = "0x6ED5B20D2159BF20D311f0bF3E850C7737C09Da2"
+var time_crystal_contract = "0xd7e086238c038d386C8732C33aD087A17a5Dc819"
 
 var signed_data = ""
 
@@ -19,6 +19,7 @@ var gas_price
 var confirmation_timer = 0
 var tx_ongoing = false
 var tx_function_name = ""
+var tx_parameter = "None"
 
 var menu_open = false
 
@@ -26,7 +27,9 @@ var exiting = false
 #placeholder
 var main_screen = load("res://MainScreen.tscn")
 var game_world = load("res://World.tscn")
-var trick_game = load("res://TrickTaking.tscn")
+var card_game = load("res://CardGame.tscn")
+
+var game_board
 
 var destination
 
@@ -37,6 +40,7 @@ func _ready():
 	$LINKButton.connect("pressed", self, "open_link_menu")
 	$MenuBackground/GasFaucetButton.connect("pressed", self, "open_faucet")
 	$MenuBackground/LINKFaucetButton.connect("pressed", self, "open_chainlink_faucet")
+	$MenuBackground/CopyAddressButton.connect("pressed", self, "copy_address")
 	$MenuBackground/CancelButton.connect("pressed", self, "close_menu")
 	$PlayWarning/Proceed.connect("pressed", self, "fade", ["start_game"])
 	$PlayWarning/GoBack.connect("pressed", self, "close_menu")
@@ -53,6 +57,8 @@ var fadeout = false
 var fadepause = 0
 var fadein = false
 
+var check_cards_switch = false
+var check_cards_timer = 0
 var pending_action
 func _process(delta):
 	if fadeout == true:
@@ -70,7 +76,21 @@ func _process(delta):
 		if $Fadeout.color.a <= 0:
 			exiting = false
 			fadein = false
+	
+	
+	if confirmation_timer > 0:
+		confirmation_timer -= delta
+		if confirmation_timer < 0:
+			tx_ongoing = false
 			
+			check_cards_switch = true
+	
+	if check_cards_switch == true:
+		check_cards_timer -= delta
+		if check_cards_timer <= 0:
+			check_player_cards()
+			check_opponent_cards()
+			check_cards_timer = 16
 		
 		
 				
@@ -199,7 +219,7 @@ func fade(action, params="None"):
 
 func start_game():
 	for child in get_children():
-		if child != $Fadeout:
+		if child != $Fadeout && child != $HTTP:
 			child.queue_free()
 	var new_main = main_screen.instance()
 	add_child(new_main)
@@ -208,7 +228,7 @@ func start_game():
 
 func embark():
 	for child in get_children():
-		if child != $Fadeout:
+		if child != $Fadeout && child != $HTTP:
 			child.queue_free()
 	var new_world = game_world.instance()
 	add_child(new_world)
@@ -219,12 +239,24 @@ func teleport():
 	$World/Player.global_transform.origin = Vector3(0,0,0)
 	fadein = true
 
-func start_trick_game():
-	var new_game = trick_game.instance()
+func start_card_game():
+	var new_game = card_game.instance()
 	add_child(new_game)
 	var children_length = get_children().size()
 	move_child(new_game, children_length - 2)
+	game_board = new_game
+	new_game.ethers = self
 	fadein = true
+	
+	
+func start_transaction(function_name, param="None"):
+	if tx_ongoing == false:
+		tx_function_name = function_name
+		tx_parameter = param
+		tx_ongoing = true
+		get_tx_count()
+	else:
+		print("Transaction Ongoing")
 
 # # #    BLOCKCHAIN INTERACTION    # # # 
 
@@ -263,18 +295,6 @@ func get_balance_attempted(result, response_code, headers, body):
 		$MenuBackground/GasBalance.text = "CHECK RPC"
 	http_request_delete_balance.queue_free()
 	
-	
-
-func begin_register_key():
-	#if tx_ongoing == false
-	tx_function_name = "register_key"
-	get_tx_count()
-
-func begin_send_message():
-	#if tx_ongoing == false
-	tx_function_name = "send_message"
-	get_tx_count()
-
 
 func get_tx_count():
 	var http_request = HTTPRequest.new()
@@ -296,11 +316,12 @@ func get_tx_count_attempted(result, response_code, headers, body):
 	var get_result = parse_json(body.get_string_from_ascii())
 	
 	if response_code == 200:
-		$Send.text = "Confirming..."
+		#$Send.text = "Confirming..."
 		var count = get_result["result"].hex_to_int()
 		tx_count = count
 	else:
-		$MenuBackground/GasBalance.text = "CHECK RPC"
+		pass
+		#$MenuBackground/GasBalance.text = "CHECK RPC"
 	http_request_delete_count.queue_free()
 	estimate_gas()
 
@@ -328,14 +349,14 @@ func estimate_gas_attempted(result, response_code, headers, body):
 		var estimate = get_result["result"].hex_to_int()
 		gas_price = int(float(estimate) * 1.12)
 	else:
-		$MenuBackground/GasBalance.text = "CHECK RPC"
+		pass
+		#$MenuBackground/GasBalance.text = "CHECK RPC"
 	http_request_delete_gas.queue_free()
 	call(tx_function_name)
 
 
-
-
-func register_key():
+func register_opponent():
+	var deck = tx_parameter
 	var file = File.new()
 	file.open("user://aes", File.READ)
 	var aes_key = file.get_buffer(16)
@@ -343,11 +364,10 @@ func register_key():
 	file2.open("user://keystore", File.READ)
 	var content = file2.get_buffer(32)
 	file2.close()
-	TimeCrystal.register_player_key(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, aes_key, self)
+	TimeCrystal.register_opponent_deck(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, aes_key, deck, self)
 
-
-func send_message():
-	var message = $Message.text
+func register_player():
+	var deck = tx_parameter
 	var file = File.new()
 	file.open("user://aes", File.READ)
 	var aes_key = file.get_buffer(16)
@@ -355,19 +375,43 @@ func send_message():
 	file2.open("user://keystore", File.READ)
 	var content = file2.get_buffer(32)
 	file2.close()
-	TimeCrystal.send_don_message(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, aes_key, message, self)
+	TimeCrystal.register_player_deck(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, deck, self)
 
-func check_message():
+func start_new_card_game():
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	TimeCrystal.start_game(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, self)
+
+func reset_game():
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	TimeCrystal.reset_game(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, self)
+
+
+func play_card():
+	var card_index = tx_parameter
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	TimeCrystal.progress_game(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, int(card_index), self)
+
+
+func check_player_cards():
 	var http_request = HTTPRequest.new()
 	$HTTP.add_child(http_request)
 	http_request_delete_tx_read = http_request
-	http_request.connect("request_completed", self, "check_message_attempted")
+	http_request.connect("request_completed", self, "check_player_cards_attempted")
 	
 	var file = File.new()
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.check_returned_message(content, sepolia_id, time_crystal_contract, sepolia_rpc)
+	var calldata = TimeCrystal.get_player_cards(content, sepolia_id, time_crystal_contract, sepolia_rpc)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
@@ -377,14 +421,43 @@ func check_message():
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
 
-
-func check_message_attempted(result, response_code, headers, body):
+func check_player_cards_attempted(result, response_code, headers, body):
 	
 	var get_result = parse_json(body.get_string_from_ascii())
 
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
-		$Return.text = TimeCrystal.decode_hex_string(raw_response)
+		game_board.get_node("YourHand").text = "Your Hand:\n" + TimeCrystal.decode_array(raw_response)
+
+
+func check_opponent_cards():
+	var http_request = HTTPRequest.new()
+	$HTTP.add_child(http_request)
+	http_request_delete_tx_read = http_request
+	http_request.connect("request_completed", self, "check_opponent_cards_attempted")
+	
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	var calldata = TimeCrystal.get_opponent_cards(content, sepolia_id, time_crystal_contract, sepolia_rpc)
+	
+	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
+	
+	var error = http_request.request(sepolia_rpc, 
+	[], 
+	true, 
+	HTTPClient.METHOD_POST, 
+	JSON.print(tx))
+
+func check_opponent_cards_attempted(result, response_code, headers, body):
+	
+	var get_result = parse_json(body.get_string_from_ascii())
+
+	if response_code == 200:
+		var raw_response = get_result.duplicate()["result"]
+		game_board.get_node("OpponentCard").text = "Opponent Played:\n" + TimeCrystal.decode_array(raw_response)
+
 
 
 
@@ -416,7 +489,8 @@ func send_transaction_attempted(result, response_code, headers, body):
 		tx_ongoing = true
 		confirmation_timer = 8
 	else:
-		$Send.text = "TX ERROR"
+		pass
+		#$Send.text = "TX ERROR"
 	
 	http_request_delete_tx_write.queue_free()
 
