@@ -116,7 +116,7 @@ return_string
 
 #[method]
 #[tokio::main]
-async fn register_player_deck(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, _deck: GodotString, ui_node: Ref<Control>) -> NewFuture {
+async fn register_player_deck(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, _deck: GodotString, ui_node: Ref<Spatial>) -> NewFuture {
 
 let vec = &key.to_vec();
 
@@ -154,7 +154,7 @@ let typed_tx: TypedTransaction = TypedTransaction::Eip1559(tx.clone());
 let signature = wallet.sign_transaction(&typed_tx).await.unwrap();
 let signed_data = TypedTransaction::rlp_signed(&typed_tx, &signature);
 
-let node: TRef<Control> = unsafe { ui_node.assume_safe() };
+let node: TRef<Spatial> = unsafe { ui_node.assume_safe() };
 
 unsafe {
     node.call("set_signed_data", &[hex::encode(signed_data).to_variant()])
@@ -168,7 +168,7 @@ NewFuture(Ok(()))
 
 #[method]
 #[tokio::main]
-async fn register_opponent_deck(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, aes_key: PoolArray<u8>, _deck: GodotString, ui_node: Ref<Control>) -> NewFuture {
+async fn register_opponent_deck(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, aes_key: PoolArray<u8>, _deck: GodotString, ui_node: Ref<Spatial>) -> NewFuture {
 
 let vec = &key.to_vec();
 
@@ -244,7 +244,7 @@ let typed_tx: TypedTransaction = TypedTransaction::Eip1559(tx.clone());
 let signature = wallet.sign_transaction(&typed_tx).await.unwrap();
 let signed_data = TypedTransaction::rlp_signed(&typed_tx, &signature);
 
-let node: TRef<Control> = unsafe { ui_node.assume_safe() };
+let node: TRef<Spatial> = unsafe { ui_node.assume_safe() };
 
 unsafe {
     node.call("set_signed_data", &[hex::encode(signed_data).to_variant()])
@@ -257,12 +257,9 @@ NewFuture(Ok(()))
 
 
 
-
-
-
 #[method]
 #[tokio::main]
-async fn start_game(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, ui_node: Ref<Control>) -> NewFuture {
+async fn start_game(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, ui_node: Ref<Spatial>) -> NewFuture {
 
 let vec = &key.to_vec();
 
@@ -296,7 +293,7 @@ let tx = Eip1559TransactionRequest::new()
     .from(user_address)
     .to(contract_address) 
     .value(0)
-    .gas(200000)
+    .gas(800000)
     .max_fee_per_gas(_gas_fee)
     .max_priority_fee_per_gas(_gas_fee)
     .chain_id(chain_id)
@@ -308,7 +305,7 @@ let typed_tx: TypedTransaction = TypedTransaction::Eip1559(tx.clone());
 let signature = wallet.sign_transaction(&typed_tx).await.unwrap();
 let signed_data = TypedTransaction::rlp_signed(&typed_tx, &signature);
 
-let node: TRef<Control> = unsafe { ui_node.assume_safe() };
+let node: TRef<Spatial> = unsafe { ui_node.assume_safe() };
 
 unsafe {
     node.call("set_signed_data", &[hex::encode(signed_data).to_variant()])
@@ -321,7 +318,7 @@ NewFuture(Ok(()))
 
 #[method]
 #[tokio::main]
-async fn progress_game(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, card_index: u8, ui_node: Ref<Control>) -> NewFuture {
+async fn progress_game(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, card_index: u8, ui_node: Ref<Spatial>) -> NewFuture {
 
 let vec = &key.to_vec();
 
@@ -348,7 +345,7 @@ let tx = Eip1559TransactionRequest::new()
     .from(user_address)
     .to(contract_address) 
     .value(0)
-    .gas(200000)
+    .gas(900000)
     .max_fee_per_gas(_gas_fee)
     .max_priority_fee_per_gas(_gas_fee)
     .chain_id(chain_id)
@@ -360,7 +357,7 @@ let typed_tx: TypedTransaction = TypedTransaction::Eip1559(tx.clone());
 let signature = wallet.sign_transaction(&typed_tx).await.unwrap();
 let signed_data = TypedTransaction::rlp_signed(&typed_tx, &signature);
 
-let node: TRef<Control> = unsafe { ui_node.assume_safe() };
+let node: TRef<Spatial> = unsafe { ui_node.assume_safe() };
 
 unsafe {
     node.call("set_signed_data", &[hex::encode(signed_data).to_variant()])
@@ -447,6 +444,11 @@ fn decode_array (message: GodotString) -> GodotString {
     let decoded: Vec<String> = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
     let return_string: GodotString = format!("{:?}", decoded).into();
     return_string
+    //let query = json!({
+    //    "r": prequery.r,
+    //    "g": prequery.g,
+    //    "b": prequery.b
+    //});
 }
 
 
@@ -454,7 +456,7 @@ fn decode_array (message: GodotString) -> GodotString {
 
 #[method]
 #[tokio::main]
-async fn reset_game(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, ui_node: Ref<Control>) -> NewFuture {
+async fn reset_game(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, ui_node: Ref<Spatial>) -> NewFuture {
 
 let vec = &key.to_vec();
 
@@ -492,7 +494,7 @@ let typed_tx: TypedTransaction = TypedTransaction::Eip1559(tx.clone());
 let signature = wallet.sign_transaction(&typed_tx).await.unwrap();
 let signed_data = TypedTransaction::rlp_signed(&typed_tx, &signature);
 
-let node: TRef<Control> = unsafe { ui_node.assume_safe() };
+let node: TRef<Spatial> = unsafe { ui_node.assume_safe() };
 
 unsafe {
     node.call("set_signed_data", &[hex::encode(signed_data).to_variant()])
