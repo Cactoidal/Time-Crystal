@@ -234,7 +234,7 @@ At this stage, the oracle's job will be just to randomly order both the OPPONENT
 
 It's not visible here, but the good news is that the deck-shuffling and hand-dealing works.  The bad news is that returning multiple data values with Chainlink Functions does not seem to be possible.  You can return a _JSON_, but it's a string, not something that can be easily parsed and split on-chain.  Libraries exist that will do it, but that's something I want to avoid if I can.
 
-While it's possible to just query the oracle for each value at a time, it's really not cost efficient.  Perhaps there's still something I can do with the raw bytes returned by the oracle.
+While it's possible to just query the oracle for one value at a time, it's really not cost efficient.  Perhaps there's still something I can do with the raw bytes returned by the oracle.
 
 Indeed, since I can control the formatting of the bytes returned by the oracle, I can encode the card values at specific indices.  Here is some example code for splitting the player's hand from the returned bytes.  For now, each card is represented by 2 bytes, and there are 3 cards.  The cards are split out and typecast into strings.  
 
