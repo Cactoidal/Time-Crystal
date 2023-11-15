@@ -6,6 +6,7 @@ import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "ILogAutomation.sol";
 
 contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInterface {
   using FunctionsRequest for FunctionsRequest.Request;
@@ -35,27 +36,13 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInt
   }
 
   enum requestType {
-    SEND,
-    RECEIVE,
-    DECRYPT,
     TAKE_TURN,
     START_GAME
   }
-
-  struct encryptParams {
-    uint seed;
-    uint nonce;
-    string counter;
-  }
   
-  mapping (address => bool) public inSession;
 
-  mapping (address => uint) public sessionIndex;
-  mapping (address => encryptParams[]) public sessions;
 
   mapping (bytes32 => address) public requestIdbyRequester;
-
-  mapping (address => bytes) public returnedSecret;
 
   uint public nonceCounter = 1;
   mapping (bytes32 => requestType) public pendingRequests;
@@ -79,13 +66,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInt
     string public gameCounter;
     string gameNonce = "1";
     string public playerDeck;
-
-    struct cardResponse {
-    string a;
-    string b;
-    string c;
-}
-
 
     function registerPlayerDeck(string calldata _deck) public {
         playerDeck = _deck;
@@ -207,14 +187,16 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInt
     }
 
     else if (pendingRequests[requestId] == requestType.TAKE_TURN) {
-        bytes memory opponentCard = new bytes(2);
-        bytes memory playerCard = new bytes(2);
-        opponentCard[0] = response[0];
-        opponentCard[1] = response[1];
-        playerCard[0] = response[2];
-        playerCard[1] = response[3];
-        opponentCards.push(string(opponentCard));
-        playerCards.push(string(playerCard));
+
+        emit WaitingForUpkeep(requestIdbyRequester[requestId], response);
+        //bytes memory opponentCard = new bytes(2);
+        //bytes memory playerCard = new bytes(2);
+        //opponentCard[0] = response[0];
+        //opponentCard[1] = response[1];
+        //playerCard[0] = response[2];
+        //playerCard[1] = response[3];
+        //opponentCards.push(string(opponentCard));
+        //playerCards.push(string(playerCard));
     }
     
     s_lastResponse = response;
@@ -225,18 +207,61 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInt
 
 //  AUTOMATION AND GAMEPLAY VALIDATION  //
 
- function checkUpkeep(
-        bytes calldata
-    )
-        external
-        view
-        override
-        returns (bool upkeepNeeded, bytes memory performData)
-    {
+  enum cType {
+    CONSTRUCT,
+    CRYSTAL,
+    ORACLE
+  }
+
+  enum cardKeyword {
+    DESTROY,
+    DAMAGE1,
+    DAMAGE2,
+    REGENERATE2,
+    HEAL1,
+    SHIELD
+  }
+
+  struct cardTraits {
+    cType cardType;
+    uint8 attack;
+    uint8 defense;
+    cardKeyword traitA;
+    cardKeyword traitB;
+  }
+
+  mapping (uint => cardTraits) cards;
+
+  struct gameSession {
+    uint8 playerHealth;
+    uint8 opponentHealth;
+    uint8[] playerCards;
+    uint8[] opponentCards;
+  }
+
+  mapping (address => bool) inSession;
+  mapping (address => gameSession) currentSession;
+  mapping (address => bool) awaitingAutomation;
+
+
+  function checkLog(
+    Log calldata log,
+    bytes memory checkData
+  ) external pure returns (bool upkeepNeeded, bytes memory performData) {
+        bytes memory opponentCard = new bytes(2);
+        bytes memory playerCard = new bytes(2);
+        opponentCard[0] = log.topics[2][0];
+        opponentCard[1] = log.topics[2][1];
+        playerCard[0] = log.topics[2][3];
+        playerCard[1] = log.topics[2][4];
+        //opponentCards.push(string(opponentCard));
+        //playerCards.push(string(playerCard));
         upkeepNeeded = true;
-        performData = abi.encode("hello");
+        performData = abi.encode(string(opponentCard), string(playerCard));
         return (upkeepNeeded, performData);
-    }
+
+  }
+
 
     /**
      * @notice Called by Chainlink Automation Node to send funds to underfunded addresses
@@ -245,18 +270,13 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInt
     function performUpkeep(
         bytes calldata performData
     ) external override onlyKeeperRegistry {
-        string memory hello = abi.decode(performData, (string));
+        (string memory opponentCard, string memory playerCard) = abi.decode(performData, (string, string));
+        opponentCards.push(string(opponentCard));
+        playerCards.push(string(playerCard));
+        emit UpkeepFulfilled(performData);
     }
 
-    modifier onlyKeeperRegistry() {
-        if (msg.sender != s_keeperRegistryAddress) {
-            revert OnlyKeeperRegistry();
-        }
-        _;
-    }
-
-      error OnlyKeeperRegistry();
-
+ 
 
   /**
    * @notice Set the DON ID
@@ -280,8 +300,32 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInt
         s_keeperRegistryAddress = keeperRegistryAddress;
     }
 
+    modifier onlyKeeperRegistry() {
+        if (msg.sender != s_keeperRegistryAddress) {
+            revert OnlyKeeperRegistry();
+        }
+        _;
+    }
+
+    error OnlyKeeperRegistry();
+
+
 
 
   event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
+  event WaitingForUpkeep(address indexed _player, bytes indexed _gameData);
+  event UpkeepFulfilled(bytes indexed _performData);
+
+    //is this needed?
+   function checkUpkeep(
+        bytes calldata
+    )
+        external
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory performData)
+    {
+    }
+
   
 }
