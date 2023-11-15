@@ -259,3 +259,13 @@ For example, if the oracle were to send the encoded bytes of string "671809", th
 That took some wrangling.  But it now works.  Both the PLAYER and OPPONENT are dealt cards from secret decks known only to the oracle, the PLAYER may choose which card to play each turn, and the OPPONENT plays cards it has drawn into its (invisible) hand.
 
 Next up: increasing the complexity a bit.
+
+## Day 7
+
+"Positions" (spaces for individual cards on the game board) add significant complexity to the game logic, so I'm now leaning toward "zones", where cards are simply sorted into areas based on their type.
+
+Because the Functions oracle can only return 32 bytes at at a time, it probably won't be able to update the game's state each turn.  Therefore the contract must be responsible for validating gameplay.  All of the game data needs to be accessible on-chain and the per-turn computation logic must also be on-chain.
+
+I'll have to see how expensive this gets.  If it gets out of hand, I'll use Automation to reduce gas costs.
+
+I'm going to start with pre-made decks, and a pre-made OPPONENT logic template.
