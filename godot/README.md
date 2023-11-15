@@ -264,8 +264,10 @@ Next up: increasing the complexity a bit.
 
 "Positions" (spaces for individual cards on the game board) add significant complexity to the game logic, so I'm now leaning toward "zones", where cards are simply sorted into areas based on their type.
 
-Because the Functions oracle can only return 32 bytes at at a time, it probably won't be able to update the game's state each turn.  Therefore the contract must be responsible for validating gameplay.  All of the game data needs to be accessible on-chain and the per-turn computation logic must also be on-chain.
+Because the Functions oracle can only return 32 bytes at at a time, it probably won't be able to update the game's entire state each turn.  Therefore the contract must be responsible for validating gameplay.  All of the game data needs to be accessible on-chain and the per-turn computation logic must also be on-chain.
 
 I'll have to see how expensive this gets.  If it gets out of hand, I'll use Automation to reduce gas costs.
+
+The oracle's job is to act as a card-sorting machine.  It doesn't need to know what the cards actually do, it just needs to know which cards have been played, the secret composition of shuffled decks, and which cards to return to the contract.
 
 I'm going to start with pre-made decks, and a pre-made OPPONENT logic template.
