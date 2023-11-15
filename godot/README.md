@@ -290,4 +290,4 @@ While this should make gas manageable, it will also increase the waiting time be
 
 ___
 
-Log trigger is pretty cool.  Still have some bugs to work out in the actual outcome, but the event emitted by the Functions DON's callback successfully triggered the Automation DON.  It was almost instantaneous as well, which is very good news. 
+Log trigger is pretty cool.  Still have some bugs to work out in the actual outcome, but the event emitted by the Functions DON's callback successfully triggered the Automation DON.  It was pretty much instantaneous as well, which is very good news. 
