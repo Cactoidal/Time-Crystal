@@ -287,3 +287,7 @@ I don't think that's going to happen.  Which means it's time to try out the new 
 The Functions DON will commit its 32 bytes.  It will then be Automation's job to perform all of the work described above, encode the result into performData, and perform the upkeep as a trusted forwarder.
 
 While this should make gas manageable, it will also increase the waiting time between turns.  Hopefully the double-board idea will temper this somewhat.
+
+___
+
+Log trigger is pretty cool.  Still have some bugs to work out in the actual outcome, but the event emitted by the Functions DON's callback successfully triggered the Automation DON.  It was almost instantaneous as well, which is very good news. 
