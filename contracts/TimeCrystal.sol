@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
-import "@chainlink/contracts/src/v0.8/automation/interfaces/AutomationCompatibleInterface.sol";
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "ILogAutomation.sol";
+import "./ILogAutomation.sol";
 
-contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInterface {
+contract RemixTester is FunctionsClient, ConfirmedOwner {
   using FunctionsRequest for FunctionsRequest.Request;
 
   bytes32 public donId;
-  address private s_keeperRegistryAddress;
+  address private forwarder;
 
   bytes32 public s_lastRequestId;
   bytes public s_lastResponse;
@@ -26,13 +25,12 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInt
   uint32 callbackGasLimit = 300000;
   
 
-  constructor(address router, bytes32 _donId, string memory _source,  string memory _source2, FunctionsRequest.Location _location, bytes memory _reference, address _keeperRegistryAddress) FunctionsClient(router) ConfirmedOwner(msg.sender) {
+  constructor(address router, bytes32 _donId, string memory _source,  string memory _source2, FunctionsRequest.Location _location, bytes memory _reference) FunctionsClient(router) ConfirmedOwner(msg.sender) {
     donId = _donId;
     start_game_source = _source;
     take_turn_source = _source2;
     secretsLocation = _location;
     encryptedSecretsReference = _reference;
-    setKeeperRegistryAddress(_keeperRegistryAddress);
   }
 
   enum requestType {
@@ -254,8 +252,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInt
         opponentCard[1] = log.topics[2][1];
         playerCard[0] = log.topics[2][3];
         playerCard[1] = log.topics[2][4];
-        //opponentCards.push(string(opponentCard));
-        //playerCards.push(string(playerCard));
         upkeepNeeded = true;
         performData = abi.encode(string(opponentCard), string(playerCard));
         return (upkeepNeeded, performData);
@@ -263,16 +259,14 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInt
   }
 
 
-    /**
-     * @notice Called by Chainlink Automation Node to send funds to underfunded addresses
-     * @param performData The abi encoded list of addresses to fund
-     */
+//is forwarding enabled on testnet?
     function performUpkeep(
         bytes calldata performData
-    ) external override onlyKeeperRegistry {
+    ) external {
+       // require(msg.sender == forwarder);
         (string memory opponentCard, string memory playerCard) = abi.decode(performData, (string, string));
-        opponentCards.push(string(opponentCard));
-        playerCards.push(string(playerCard));
+        opponentCards.push(opponentCard);
+        playerCards.push(playerCard);
         emit UpkeepFulfilled(performData);
     }
 
@@ -290,24 +284,14 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInt
     encryptedSecretsReference = _secrets;
   }
 
-    /**
-     * @notice Sets the Chainlink Automation registry address
-     */
-    function setKeeperRegistryAddress(
-        address keeperRegistryAddress
+   
+    function setForwarderAddress(
+        address _forwarder
     ) public onlyOwner {
-        require(keeperRegistryAddress != address(0));
-        s_keeperRegistryAddress = keeperRegistryAddress;
+       forwarder = _forwarder;
     }
 
-    modifier onlyKeeperRegistry() {
-        if (msg.sender != s_keeperRegistryAddress) {
-            revert OnlyKeeperRegistry();
-        }
-        _;
-    }
 
-    error OnlyKeeperRegistry();
 
 
 
@@ -316,16 +300,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, AutomationCompatibleInt
   event WaitingForUpkeep(address indexed _player, bytes indexed _gameData);
   event UpkeepFulfilled(bytes indexed _performData);
 
-    //is this needed?
-   function checkUpkeep(
-        bytes calldata
-    )
-        external
-        view
-        override
-        returns (bool upkeepNeeded, bytes memory performData)
-    {
-    }
+
 
   
 }
