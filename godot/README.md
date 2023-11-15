@@ -258,8 +258,6 @@ For example, if the oracle were to send the encoded bytes of string "671809", th
 
 That took some wrangling.  But it now works.  Both the PLAYER and OPPONENT are dealt cards from secret decks known only to the oracle, the PLAYER may choose which card to play each turn, and the OPPONENT plays cards it has drawn into its (invisible) hand.
 
-Next up: increasing the complexity a bit.
-
 ## Day 7
 
 "Positions" (spaces for individual cards on the game board) add significant complexity to the game logic, so I'm now leaning toward "zones", where cards are simply sorted into areas based on their type.
