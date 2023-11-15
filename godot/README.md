@@ -269,3 +269,23 @@ I'll have to see how expensive this gets.  If it gets out of hand, I'll use Auto
 The oracle's job is to act as a card-sorting machine.  It doesn't need to know what the cards actually do, it just needs to know which cards have been played, the secret composition of shuffled decks, and which cards to return to the contract.
 
 I'm going to start with pre-made decks, and a pre-made OPPONENT logic template.
+
+## Day 8
+
+### 32 Bytes Versus the World
+
+Testing Chainlink Automation is on today's agenda.
+
+My intention is to allow players to play multiple cards and take multiple actions per turn.  Both the PLAYER and the OPPONENT need to operate under the same rules, which means the OPPONENT must be able to take the same number of actions as a PLAYER.  Those actions need to be encoded in 32 bytes using the method outlined above.
+
+Quite a bit of data needs to be encoded.  First there needs to be a lead byte, which will tell the contract how many OPPONENT actions have been encoded.  Then the actions must be 5 bytes each.  Not every action will require 5 bytes, but most will, and they all need to follow the same format.  Two bytes are the card id, two bytes are the card's target, and the last byte is the card's action.
+
+I can foresee a potential need for 6 bytes.  I'll find out during experimentation whether that will be the case.
+
+The contract will need to split out all of these actions, and the elements of those actions, compute the validity of every action, and update the game state.  And it will also need to deal the player's card.  All in 300,000 gas, which is the limit for Chainlink Functions.
+
+I don't think that's going to happen.  Which means it's time to try out the new features of Chainlink Automation.
+
+The Functions DON will commit its 32 bytes.  It will then be Automation's job to perform all of the work described above, encode the result into upkeepParams, and perform the upkeep as a trusted forwarder.
+
+While this should make gas manageable, it will also increase the waiting time between turns.  I suppose this was always going to be a slow-paced game.
