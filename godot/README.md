@@ -272,8 +272,6 @@ I'm going to start with pre-made decks, and a pre-made OPPONENT logic template.
 
 ## Day 8
 
-### 32 Bytes Versus the World
-
 Testing Chainlink Automation is on today's agenda.
 
 My intention is to allow players to play multiple cards and take multiple actions per turn.  Both the PLAYER and the OPPONENT need to operate under the same rules, which means the OPPONENT must be able to take the same number of actions as a PLAYER.  Those actions need to be encoded in 32 bytes using the method outlined above.
