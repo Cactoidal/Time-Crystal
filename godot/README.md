@@ -320,3 +320,8 @@ I have to be cognizant of the limitations of the Functions callback (already man
 Preferably, it would be nice if I could allow the "action stack" to bounce back and forth indefinitely, until a final resolution is reached, but that doesn't seem especially realistic at the moment.
 
 In any case, I should approach the game logic in pieces, rather than trying to do it all at once!
+
+<img width="1014" alt="13picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/9fb6dff3-0dd8-432c-9e32-e126685f764b">
+
+As an aside, I'm thinking about switching to a 3D game board.
+
