@@ -70,6 +70,13 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     OPPONENT
   }
 
+  struct cardActions {
+        string[] doers;
+        string[] targets;
+        uint[] action;
+        cardKeyword[] ability;
+    }
+
     struct gameSession {
         string[] playerHand;
         uint8 playerHealth;
@@ -79,6 +86,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
         bytes updateBytes;
         validationType updateType;
         bool updateInFlight;
+        cardActions pendingActions;
         uint8 currentTurn;
   }
 
@@ -273,6 +281,8 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     uint8 energyCost;
   }
 
+
+
   mapping (string => cardTraits) cards;
 
 
@@ -288,6 +298,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
         
         string memory playerDrawnCard;
         uint8 usedEnergy = 0;
+        uint8 newFieldCards = 0;
 
         //decode lead byte for action count
         //only 4 actions allowed per turn
@@ -384,6 +395,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
                         //}                            
 
                         if (action == 1) {
+                            newFieldCards++;
                             //enters field, triggers drop effect, otherwise does nothing
                             //drop effects on constructs and crystals are always traitA
                             if (card.traitA == cardKeyword.ST_SHIELD) {
@@ -435,6 +447,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
                       //  }
         
                         if (action == 1) {
+                            newFieldCards++;
                             //enters field, triggers drop effect, otherwise does nothing
                             //drop effects on constructs and crystals are always traitA
                             
@@ -494,12 +507,12 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
                     valid = false;
                 }
 
-                //check if persistent cards exist on field
+                //check if ability-using persistent cards exist on field
                 for (uint y = 0; y < cardStrings.length; y++) {
                     bool has = false;
                     for (uint p = 0; p < fieldCards.length; p++) {
                         if (keccak256(abi.encode(cardStrings[y])) == keccak256(abi.encode(""))) {
-
+                            has = true;
                         }
                         else if (keccak256(abi.encode(cardStrings[y])) == keccak256(abi.encode(string(fieldCards[p])))) {
                             has = true;
@@ -508,6 +521,11 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
                     if (has == false) {
                     valid = false;
                 }
+                }
+
+                //check that there will be no more than 9 persistent cards on the field
+                if (fieldCards.length + newFieldCards > 9) {
+                    valid = false;
                 }
                 
   
@@ -531,12 +549,22 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
             //call turn complete
         }
 
+        //finalizedActions
+        //newPendingActions
+
         upkeepNeeded = true;
 
         if (valid == true) {
+
+
+
             performData = abi.encode(playerDrawnCard);
         }
         else{
+
+
+            
+            //even in the case of an invalid action, pending actions must still resolve.
             performData = abi.encode("not valid");
         }
 
