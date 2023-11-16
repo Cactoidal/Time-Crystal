@@ -240,13 +240,10 @@ Indeed, since I can control the formatting of the bytes returned by the oracle, 
 
 ```
         string[3] memory newCards;
-        uint index = 0;
         for (uint i = 0; i < 3; i++) {
             bytes memory card = new bytes(2);
-            card[0] = response[index];
-            index++;
-            card[1] = response[index];
-            index++;
+            card[0] = response[i];
+            card[1] = response[i+1];
             newCards[i] = string(card);
         }
         playerCards = newCards;
