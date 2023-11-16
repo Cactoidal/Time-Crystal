@@ -303,7 +303,7 @@ Implementing the game logic is somewhat challenging, but I think it will be doab
 5) Validate that there aren't too many cards on the field
 6) Validate that the player has enough energy to play all of the cards and perform all of the actions
 7) If everything is valid, resolve the pending actions against interrupts (POWER cards and Blocking)
-8) If they are not valid (which should only happen if someone tries to break the game on purpose), skip the offending player's turn and resolve the pending actions anyway
+8) If the cards/targets/actions are not valid (which should only happen if someone tries to break the game on purpose), skip the offending player's turn and resolve the pending actions anyway
 9) Update the game state
 10) Set the new pending actions
 11) If transmitting to the oracle, create the JSON of data to send to the oracle
