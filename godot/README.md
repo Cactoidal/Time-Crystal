@@ -315,7 +315,7 @@ If I attack with one of my CONSTRUCTs, for example, my OPPONENT will have a chan
 
 The question however is how long this pending should go on.  Taking my example further, say my OPPONENT has tried to cast Crystallize on my attacking CONSTRUCT.  Should I be given the opportunity to cast Shield on my CONSTRUCT before my OPPONENT's Crystallize goes off?  Should I be allowed to cast Disrupt on my OPPONENT's blocker?  Or does the defender just have an advantage?
 
-I have to be cognizant of the limitations of the callback (already manifesting as limits on the number of per-turn actions and the number of cards allowed on the field) and the limitations of Solidity (too many nested loops results in stack-too-deep errors).  So it may be that the defender gets the advantage of reaction, and attacking and playing POWER cards offensively will just be risky.
+I have to be cognizant of the limitations of the Functions callback (already manifesting as limits on the number of per-turn actions and the number of cards allowed on the field) and the limitations of Solidity (too many nested loops results in stack-too-deep errors).  So it may be that the defender gets the advantage of reaction, and attacking and playing POWER cards offensively will just be risky.
 
 Preferably, it would be nice if I could allow the "action stack" to bounce back and forth indefinitely, until a final resolution is reached, but that doesn't seem especially realistic at the moment.
 
