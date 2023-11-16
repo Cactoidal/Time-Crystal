@@ -244,9 +244,9 @@ Indeed, since I can control the formatting of the bytes returned by the oracle, 
         for (uint i = 0; i < 3; i++) {
             bytes memory card = new bytes(2);
             card[0] = response[index];
-            index += 1;
+            index++;
             card[1] = response[index];
-            index += 1;
+            index++;
             newCards[i] = string(card);
         }
         playerCards = newCards;
