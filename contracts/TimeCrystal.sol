@@ -185,8 +185,10 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     }
 
     else if (pendingRequests[requestId] == requestType.TAKE_TURN) {
-
-        emit WaitingForUpkeep(requestIdbyRequester[requestId], response);
+        //string memory raw = abi.decode(response, (string));
+        address player = requestIdbyRequester[requestId];
+        currentSession[player].updateBytes = response;
+        emit WaitingForUpkeep(player);
         //bytes memory opponentCard = new bytes(2);
         //bytes memory playerCard = new bytes(2);
         //opponentCard[0] = response[0];
@@ -235,6 +237,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     uint8 opponentHealth;
     uint8[] playerCards;
     uint8[] opponentCards;
+    bytes updateBytes;
   }
 
   mapping (address => bool) inSession;
@@ -245,15 +248,18 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   function checkLog(
     Log calldata log,
     bytes memory checkData
-  ) external pure returns (bool upkeepNeeded, bytes memory performData) {
-        bytes memory opponentCard = new bytes(2);
-        bytes memory playerCard = new bytes(2);
-        opponentCard[0] = log.topics[2][0];
-        opponentCard[1] = log.topics[2][1];
-        playerCard[0] = log.topics[2][3];
-        playerCard[1] = log.topics[2][4];
+  ) external view returns (bool upkeepNeeded, bytes memory performData) {
+        //bytes memory opponentCard = new bytes(2);
+        //bytes memory playerCard = new bytes(2);
+        //opponentCard[0] = log.topics[2][0];
+        //opponentCard[1] = log.topics[2][1];
+        //playerCard[0] = log.topics[2][3];
+        //playerCard[1] = log.topics[2][4];
+        address player = address(uint160(uint256(log.topics[1])));
+        (string memory opponentCard, string memory playerCard) = abi.decode(currentSession[player].updateBytes, (string, string));
         upkeepNeeded = true;
-        performData = abi.encode(string(opponentCard), string(playerCard));
+        performData = abi.encode(opponentCard, playerCard);
+        //performData = abi.encode(string(opponentCard), string(playerCard));
         return (upkeepNeeded, performData);
 
   }
@@ -297,7 +303,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
 
   event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
-  event WaitingForUpkeep(address indexed _player, bytes indexed _gameData);
+  event WaitingForUpkeep(address indexed _player);
   event UpkeepFulfilled(bytes indexed _performData);
 
 
