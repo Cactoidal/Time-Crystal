@@ -78,6 +78,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     bytes updateBytes;
     validationType updateType;
     bool updateInFlight;
+    uint8 currentTurn;
   }
 
     mapping (address => bool) inSession;
@@ -113,6 +114,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
     currentSession[msg.sender].playerHealth = 15;
     currentSession[msg.sender].opponentHealth = 15;
+    currentSession[msg.sender].currentTurn = 1;
 
     FunctionsRequest.Request memory req;
     req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, start_game_source);
@@ -235,18 +237,24 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 //  AUTOMATION AND GAMEPLAY VALIDATION  //
 
   enum cType {
-    CONSTRUCT,
-    CRYSTAL,
-    ORACLE
+    CONSTRUCT, //persistent units
+    CRYSTAL,  //persistent structures
+    POWER, //tactical spells
+    ORACLE //strategic spells
   }
 
   enum cardKeyword {
-    DESTROY,
-    DAMAGE1,
-    DAMAGE2,
-    REGENERATE2,
-    HEAL1,
-    SHIELD
+    DESTROY,  //destroy target
+    DAMAGE1,  //deal 1 damage to target
+    DAMAGE2, //deal 2 damage to target
+    REGENERATE2, //spend 2 energy to regenerate
+    HEAL1, //player heals 1 damage 
+    SHIELD, //prevent damage to target
+    ST_SHIELD, //give shield when entering the field
+    ST_HEAL1, //heals player for 1 when entering the field
+    ST_DAMAGE1 //deals 1 damage to target when entering the field
+    //DRAW
+    //QUERY
   }
 
   struct cardTraits {
@@ -255,6 +263,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     uint8 defense;
     cardKeyword traitA;
     cardKeyword traitB;
+    uint8 energyCost;
   }
 
   mapping (string => cardTraits) cards;
@@ -264,13 +273,19 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     bytes memory checkData
   ) external view returns (bool upkeepNeeded, bytes memory performData) {
         address player = address(uint160(uint256(log.topics[1])));
+        bool valid = true;
         
         bytes memory cardBytes = currentSession[player].updateBytes;
         validationType updateType = currentSession[player].updateType;
         string memory playerDrawnCard;
+        uint8 maxEnergy = currentSession[player].currentTurn;
+        uint8 usedEnergy = 0;
 
         //decode lead byte for action count
         uint8 actionCount = uint8(cardBytes[0]);
+        if (actionCount > 4) {
+            valid = false;
+        }
 
         //sort actions
         bytes[] memory actions = new bytes[](actionCount);
@@ -292,23 +307,112 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
             }
         }
 
-            //validate and load actions into phases (PLAY CARD, BLOCK, ATTACK)
+            //validate and load actions into phases (1: PLAY CARD, 2: ABILITY, 3: BLOCK, 4: ATTACK)
+            //do not need to check if the player owns the card, since the deck has already been validated
             for (uint k = 0; k < actionCount; k++) {
-                bytes memory card = new bytes(2);
+                bytes memory _card = new bytes(2);
                 bytes memory target = new bytes(2);
-                bytes memory action = new bytes(1);
-                card[0] = actions[k][0];
-                card[1] = actions[k][1];
+                uint8 action;
+                _card[0] = actions[k][0];
+                _card[1] = actions[k][1];
                 target[0] = actions[k][2];
                 target[1] = actions[k][3];
-                action[0] = actions[k][4];
-                if (cards[string(card)].cardType == cType.CONSTRUCT) {
+                action = uint8(actions[k][4]);
 
+                cardTraits memory card = cards[string(_card)];
+
+                usedEnergy += card.energyCost;
+
+                if (action > 4 || action == 0) {
+                    valid = false;
+                }
+                else {
+                    //CONSTRUCT
+                    if (card.cardType == cType.CONSTRUCT) {
+                        if (action == 1) {
+                            //enters field, triggers drop effect, otherwise does nothing
+                            //drop effects on constructs and crystals are always traitA
+                            
+                        }
+                        else if (action == 2) {
+                            //does construct have ability?
+                            //does target exist and is valid?
+                            //does ability
+                            //usedEnergy += ability energy cost
+                            
+                        }
+                        else if (action == 3) {
+                            //does target exist and is valid?
+                            //blocks target
+                        }
+                        else if (action == 4) {
+                            //does target exist and is valid?
+                            //attacks target
+                        }
+
+
+                        }
+                    
+                    //CRYSTAL
+                    if (card.cardType == cType.CRYSTAL) {
+                        if (action == 1) {
+                            //enters field, triggers drop effect, otherwise does nothing
+                            //drop effects on constructs and crystals are always traitA
+                            
+                        }
+                        else if (action == 2) {
+                            //does crystal have ability?
+                            //does target exist and is valid?
+                            //does ability
+                            //usedEnergy += ability energy cost
+                            
+                        }
+                        //can't attack or block, but can be attacked
+
+                        }
+                    
+
+                    //POWER
+                    if (card.cardType == cType.POWER) {
+                        //does not persist
+                        if (action == 1) {
+                            //does drop effect, may or may not have target
+                            
+                        }
+                        else {
+                            valid = false;
+                        }
+                            
+                        }
+                    
+                    //ORACLE
+                    if (card.cardType == cType.ORACLE) {
+                        //does not persist
+                        //appends itself to request
+                        if (action == 1) {
+                            //does drop effect, may or may not have target
+                            
+                        }
+                        else {
+                            valid = false;
+                        }
+                            
+                        }
+                       
+
+
+
+
+                        }
 
                 }
 
+                // check energy used
+                if (usedEnergy > maxEnergy) {
+                    valid = false;
+                }
 
-            }
+            
 
             //execute phases
 
@@ -328,7 +432,12 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
         playerCard[0] = cardBytes[2];
         playerCard[1] = cardBytes[3];
         upkeepNeeded = true;
-        performData = abi.encode(string(opponentCard), string(playerCard));
+        if (valid == true) {
+            performData = abi.encode(string(opponentCard), string(playerCard));
+        }
+        else{
+            performData = abi.encode("not valid");
+        }
         return (upkeepNeeded, performData);
         }
   }
