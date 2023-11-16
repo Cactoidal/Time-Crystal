@@ -249,17 +249,17 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     Log calldata log,
     bytes memory checkData
   ) external view returns (bool upkeepNeeded, bytes memory performData) {
-        //bytes memory opponentCard = new bytes(2);
-        //bytes memory playerCard = new bytes(2);
-        //opponentCard[0] = log.topics[2][0];
-        //opponentCard[1] = log.topics[2][1];
-        //playerCard[0] = log.topics[2][3];
-        //playerCard[1] = log.topics[2][4];
+        
         address player = address(uint160(uint256(log.topics[1])));
-        (string memory opponentCard, string memory playerCard) = abi.decode(currentSession[player].updateBytes, (string, string));
+        bytes memory cardBytes = currentSession[player].updateBytes;
+        bytes memory opponentCard = new bytes(2);
+        bytes memory playerCard = new bytes(2);
+        opponentCard[0] = cardBytes[0];
+        opponentCard[1] = cardBytes[1];
+        playerCard[0] = cardBytes[2];
+        playerCard[1] = cardBytes[3];
         upkeepNeeded = true;
-        performData = abi.encode(opponentCard, playerCard);
-        //performData = abi.encode(string(opponentCard), string(playerCard));
+        performData = abi.encode(string(opponentCard), string(playerCard));
         return (upkeepNeeded, performData);
 
   }
