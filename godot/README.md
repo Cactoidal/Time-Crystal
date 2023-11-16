@@ -290,4 +290,33 @@ While this should make gas manageable, it will also increase the waiting time be
 
 ___
 
-Log trigger is pretty cool.  Still have some bugs to work out in the actual outcome, but the event emitted by the Functions DON's callback successfully triggered the Automation DON.  It was pretty much instantaneous as well, which is very good news. 
+Log trigger is pretty cool.  Still have some bugs to work out in the actual outcome, but the event emitted by the Functions DON's callback successfully triggered the Automation DON.  It was pretty much instantaneous as well, which is very good news.
+
+## Day 9
+
+Implementing the game logic is somewhat challenging, but I think it will be doable.  Under checkLog, the Automation DON will be doing several layers of sorting and validation:
+
+1) Determine the number of cards in the bytes, rejecting the bytes if there are more than 4 cards
+2) Decode the cards, their targets, and actions
+3) Determine that the cards exist (either in-hand or in the field)
+4) Determine whether the targets are valid
+5) Validate that there aren't too many cards on the field
+6) Validate that the player has enough energy to play all of the cards and perform all of the actions
+7) If everything is valid, resolve the pending actions against interrupts (POWER cards and Blocking)
+8) If they are not valid (which should only happen if someone tries to break the game on purpose), skip the offending player's turn and resolve the pending actions anyway
+9) Update the game state
+10) Set the new pending actions
+11) If transmitting to the oracle, create the JSON of data to send to the oracle
+12) If transmitting to the player, provide the player their drawn card(s)
+
+Perhaps the most difficult is the "pending action" logic.  I want to give players the option of reacting to incoming dangers.  This means that actions must pend from turn to turn before they are finalized.
+
+If I attack with one of my CONSTRUCTs, for example, my OPPONENT will have a chance to assign a blocker, or play a POWER CARD, or use an ability against it, before that attack resolves.  
+
+The question however is how long this pending should go on.  Taking my example further, say my OPPONENT has tried to cast Crystallize my CONSTRUCT.  Should I be given the opportunity to cast Shield on my CONSTRUCT before my OPPONENT's Crystallize goes off?  Or does the defender have an advantage?
+
+I have to be cognizant of the limitations of the callback (already manifesting as limits on the number of per-turn actions and the number of cards allowed on the field) and the limitations of Solidity (too many nested loops results in stack-too-deep errors).  So it may be that the defender gets the advantage of reaction, and attacking and playing POWER cards offensively will just be risky.
+
+Preferably, it would be nice if I could allow the "action stack" to bounce back and forth indefinitely, until a final resolution is reached, but that doesn't seem especially realistic at the moment.
+
+In any case, I should approach the game logic in pieces, rather than trying to do it all at once!
