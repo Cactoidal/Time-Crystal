@@ -313,7 +313,7 @@ Perhaps the most difficult is the "pending action" logic.  I want to give player
 
 If I attack with one of my CONSTRUCTs, for example, my OPPONENT will have a chance to assign a blocker, or play a POWER CARD, or use an ability against it, before that attack resolves.  
 
-The question however is how long this pending should go on.  Taking my example further, say my OPPONENT has tried to cast Crystallize on my CONSTRUCT.  Should I be given the opportunity to cast Shield on my CONSTRUCT before my OPPONENT's Crystallize goes off?  Or does the defender have an advantage?
+The question however is how long this pending should go on.  Taking my example further, say my OPPONENT has tried to cast Crystallize on my attacking CONSTRUCT.  Should I be given the opportunity to cast Shield on my CONSTRUCT before my OPPONENT's Crystallize goes off?  Should I be allowed to cast Disrupt on my OPPONENT's blocker?  Or does the defender just have an advantage?
 
 I have to be cognizant of the limitations of the callback (already manifesting as limits on the number of per-turn actions and the number of cards allowed on the field) and the limitations of Solidity (too many nested loops results in stack-too-deep errors).  So it may be that the defender gets the advantage of reaction, and attacking and playing POWER cards offensively will just be risky.
 
