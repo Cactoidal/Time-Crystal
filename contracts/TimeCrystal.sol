@@ -71,14 +71,15 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   }
 
     struct gameSession {
-    uint8 playerHealth;
-    uint8 opponentHealth;
-    uint8[] playerCards;
-    uint8[] opponentCards;
-    bytes updateBytes;
-    validationType updateType;
-    bool updateInFlight;
-    uint8 currentTurn;
+        string[] playerHand;
+        uint8 playerHealth;
+        uint8 opponentHealth;
+        string[] playerCards;
+        string[] opponentCards;
+        bytes updateBytes;
+        validationType updateType;
+        bool updateInFlight;
+        uint8 currentTurn;
   }
 
     mapping (address => bool) inSession;
@@ -112,9 +113,13 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     require (inSession[msg.sender] == false);
     inSession[msg.sender] = true;
 
-    currentSession[msg.sender].playerHealth = 15;
-    currentSession[msg.sender].opponentHealth = 15;
-    currentSession[msg.sender].currentTurn = 1;
+    gameSession memory newSession;
+
+    newSession.playerHealth = 15;
+    newSession.opponentHealth = 15;
+    newSession.currentTurn = 1;
+
+    currentSession[msg.sender] = newSession;
 
     FunctionsRequest.Request memory req;
     req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, start_game_source);
@@ -210,7 +215,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     if (pendingRequests[requestId] == requestType.START_GAME) {
         string[3] memory newCards;
         uint index = 0;
-        for (uint i = 0; i < 3; i++) {
+        for (uint8 i = 0; i < 3; i++) {
             bytes memory card = new bytes(2);
             card[0] = response[index];
             index += 1;
@@ -250,6 +255,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     REGENERATE2, //spend 2 energy to regenerate
     HEAL1, //player heals 1 damage 
     SHIELD, //prevent damage to target
+    AIM, //may pick target when attacking
     ST_SHIELD, //give shield when entering the field
     ST_HEAL1, //heals player for 1 when entering the field
     ST_DAMAGE1 //deals 1 damage to target when entering the field
@@ -258,6 +264,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   }
 
   struct cardTraits {
+    uint8 cardNumber;
     cType cardType;
     uint8 attack;
     uint8 defense;
@@ -268,73 +275,133 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
   mapping (string => cardTraits) cards;
 
+
+    //for now, write the opponent logic only.
   function checkLog(
     Log calldata log,
     bytes memory checkData
   ) external view returns (bool upkeepNeeded, bytes memory performData) {
         address player = address(uint160(uint256(log.topics[1])));
+        gameSession memory session = currentSession[player];
+        string[] memory fieldCards = session.opponentCards;
         bool valid = true;
         
-        bytes memory cardBytes = currentSession[player].updateBytes;
-        validationType updateType = currentSession[player].updateType;
         string memory playerDrawnCard;
-        uint8 maxEnergy = currentSession[player].currentTurn;
         uint8 usedEnergy = 0;
 
         //decode lead byte for action count
-        uint8 actionCount = uint8(cardBytes[0]);
+        //only 4 actions allowed per turn
+        uint8 actionCount = uint8(session.updateBytes[0]);
         if (actionCount > 4) {
             valid = false;
         }
 
         //sort actions
         bytes[] memory actions = new bytes[](actionCount);
+        string[] memory cardStrings = new string[](actionCount);
+        uint8 stringIndex = 0;
         uint8 index = 1;
         for (uint i = 0; i < actionCount; i++) {
-            bytes memory card = new bytes(5);
-            for (uint j = 0; j < 5; j++) {
-                card[j] = cardBytes[index];
-                index += 1;
+            bytes memory card = new bytes(6);
+            for (uint j = 0; j < 6; j++) {
+                card[j] = session.updateBytes[index];
+                index++;
             }
             actions[i] = (card);
-            //draw the player card
-            if (updateType == validationType.OPPONENT) {
+            //draw the player card if returning from OPPONENT turn
+            if (session.updateType == validationType.OPPONENT) {
                 bytes memory playerCard;
-                playerCard[0] = cardBytes[index];
-                index += 1;
-                playerCard[1] = cardBytes[index];
+                playerCard[0] = session.updateBytes[index];
+                index++;
+                playerCard[1] = session.updateBytes[index];
                 playerDrawnCard = string(card);
             }
         }
 
-            //validate and load actions into phases (1: PLAY CARD, 2: ABILITY, 3: BLOCK, 4: ATTACK)
+            //validate and load actions into phases 
             //do not need to check if the player owns the card, since the deck has already been validated
-            for (uint k = 0; k < actionCount; k++) {
+        
+        
+        for (uint k = 0; k < actionCount; k++) {
                 bytes memory _card = new bytes(2);
-                bytes memory target = new bytes(2);
-                uint8 action;
-                _card[0] = actions[k][0];
-                _card[1] = actions[k][1];
-                target[0] = actions[k][2];
-                target[1] = actions[k][3];
-                action = uint8(actions[k][4]);
+                
+                uint8 _cardId = uint8(actions[k][0]);
+                _card[0] = actions[k][1];
+                _card[1] = actions[k][2];
+                uint8 targetPlayer = uint8(actions[k][3]);
+                uint8 targetCard = uint8(actions[k][4]);
+                uint8 action = uint8(actions[k][5]);
+                cardStrings[k] = string(_card);
 
                 cardTraits memory card = cards[string(_card)];
 
                 usedEnergy += card.energyCost;
 
+                //bytes32 target = keccak256(abi.encode("NONE"));
+
+               // if (targetPlayer == 1) {
+               //     if (targetCard == 0) {
+                //        target = keccak256(abi.encode("PLAYER"));
+                //    }
+                //    else {
+                //        for (uint p = 0; p < session.playerCards.length; p++) {
+                //            bool exists;
+                //            if (keccak256(abi.encode(session.playerCards[p])) == keccak256(abi.encode(string(_card)))) {
+
+                //    }
+                    
+               // }
+
+               // bool has = false;
+               // for (uint p = 0; p < session.playerHand.length; p++) {
+               //     if (keccak256(abi.encode(session.playerHand[p])) == keccak256(abi.encode(string(_card)))) {
+               //         has = true;
+               //         }
+               //     }     
+               // if (has == false) {
+               //     valid = false;
+                //    }
+
+               
+                        
+                
+                // each player can have 9 persistent cards on the field
+                // special targets are
+                // 00: NONE, 10: PLAYER, 20: OPPONENT
+                // otherwise cards can be targeted by their index in their respective array
+
+
+                //(1: PLAY CARD, 2: ABILITY, 3: BLOCK, 4: ATTACK)
                 if (action > 4 || action == 0) {
                     valid = false;
                 }
+
                 else {
                     //CONSTRUCT
                     if (card.cardType == cType.CONSTRUCT) {
+                      //  if (session.opponentCards.length >= 9) {
+                       //     valid = false;
+                        //}                            
+
                         if (action == 1) {
                             //enters field, triggers drop effect, otherwise does nothing
                             //drop effects on constructs and crystals are always traitA
+                            if (card.traitA == cardKeyword.ST_SHIELD) {
+
+                            }
+                            if (card.traitA == cardKeyword.ST_HEAL1) {
+                            
+
+                            }
+                            if (card.traitA == cardKeyword.ST_DAMAGE1) {
+
+                            }
                             
                         }
                         else if (action == 2) {
+                            //is construct on the field?
+                            cardStrings[stringIndex] = (string(_card));
+                            stringIndex++;
                             //does construct have ability?
                             //does target exist and is valid?
                             //does ability
@@ -342,12 +409,18 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
                             
                         }
                         else if (action == 3) {
+                            //is construct on the field?
+                            cardStrings[stringIndex] = (string(_card));
+                            stringIndex++;
                             //does target exist and is valid?
                             //blocks target
                         }
                         else if (action == 4) {
+                            //is construct on the field?
+                            cardStrings[stringIndex] = (string(_card));
+                            stringIndex++;
                             //does target exist and is valid?
-                            //attacks target
+                            //attacking has no target without AIM keyword
                         }
 
 
@@ -355,12 +428,21 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
                     
                     //CRYSTAL
                     if (card.cardType == cType.CRYSTAL) {
+                     //   if (session.updateType == validationType.OPPONENT) {
+                      //      if (session.opponentCards.length >= 9) {
+                      //          valid = false;
+                       //     }
+                      //  }
+        
                         if (action == 1) {
                             //enters field, triggers drop effect, otherwise does nothing
                             //drop effects on constructs and crystals are always traitA
                             
                         }
                         else if (action == 2) {
+                            //is crystal on the field?
+                            cardStrings[stringIndex] = (string(_card));
+                            stringIndex++;
                             //does crystal have ability?
                             //does target exist and is valid?
                             //does ability
@@ -407,39 +489,59 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
                 }
 
-                // check energy used
-                if (usedEnergy > maxEnergy) {
+                // check energy used against max energy
+                if (usedEnergy > currentSession[player].currentTurn) {
                     valid = false;
                 }
 
+                //check if persistent cards exist on field
+                for (uint y = 0; y < cardStrings.length; y++) {
+                    bool has = false;
+                    for (uint p = 0; p < fieldCards.length; p++) {
+                        if (keccak256(abi.encode(cardStrings[y])) == keccak256(abi.encode(""))) {
+
+                        }
+                        else if (keccak256(abi.encode(cardStrings[y])) == keccak256(abi.encode(string(fieldCards[p])))) {
+                            has = true;
+                            }
+                        }
+                    if (has == false) {
+                    valid = false;
+                }
+                }
+                
+  
+
             
 
-            //execute phases
+            //execute pending actions against interrupts and update state and pending actions
 
         if (currentSession[player].updateType == validationType.PLAYER) {
             
 
-            //write the game state into a JSON to give to Functions DON
+            //write the game state and new pending actions into a JSON to give to Functions DON
+            //call functions DON
 
         }
 
 
         if (currentSession[player].updateType == validationType.OPPONENT) {
-        bytes memory opponentCard = new bytes(2);
-        bytes memory playerCard = new bytes(2);
-        opponentCard[0] = cardBytes[0];
-        opponentCard[1] = cardBytes[1];
-        playerCard[0] = cardBytes[2];
-        playerCard[1] = cardBytes[3];
+
+            //return opponent actions and player drawn card
+            //call turn complete
+        }
+
         upkeepNeeded = true;
+
         if (valid == true) {
-            performData = abi.encode(string(opponentCard), string(playerCard));
+            performData = abi.encode(playerDrawnCard);
         }
         else{
             performData = abi.encode("not valid");
         }
+
         return (upkeepNeeded, performData);
-        }
+    
   }
 
 
