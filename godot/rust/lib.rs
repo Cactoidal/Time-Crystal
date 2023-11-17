@@ -140,7 +140,7 @@ let tx = Eip1559TransactionRequest::new()
     .from(user_address)
     .to(contract_address) 
     .value(0)
-    .gas(200000)
+    .gas(500000)
     .max_fee_per_gas(_gas_fee)
     .max_priority_fee_per_gas(_gas_fee)
     .chain_id(chain_id)
@@ -201,7 +201,7 @@ let tx = Eip1559TransactionRequest::new()
     .from(user_address)
     .to(contract_address) 
     .value(0)
-    .gas(200000)
+    .gas(500000)
     .max_fee_per_gas(_gas_fee)
     .max_priority_fee_per_gas(_gas_fee)
     .chain_id(chain_id)
@@ -291,7 +291,7 @@ let tx = Eip1559TransactionRequest::new()
     .from(user_address)
     .to(contract_address) 
     .value(0)
-    .gas(500000)
+    .gas(2000000)
     .max_fee_per_gas(_gas_fee)
     .max_priority_fee_per_gas(_gas_fee)
     .chain_id(chain_id)
@@ -318,7 +318,7 @@ NewFuture(Ok(()))
 
 #[method]
 #[tokio::main]
-async fn start_game(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, player_deck: u64, opponent_deck: u64, ui_node: Ref<Spatial>) -> NewFuture {
+async fn start_game(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, player_deck_id: u64, opponent_id: u64, opponent_deck_id: u64, ui_node: Ref<Spatial>) -> NewFuture {
 
 let vec = &key.to_vec();
 
@@ -346,7 +346,7 @@ rand_bytes(&mut iv).unwrap();
 
 let base64_iv = openssl::base64::encode_block(&iv);
 
-let calldata = contract.start_game(seed.into(), base64_iv, player_deck.into(), opponent_deck.into()).calldata().unwrap();
+let calldata = contract.start_game(seed.into(), base64_iv, player_deck_id.into(), opponent_id.into(), opponent_deck_id.into()).calldata().unwrap();
 
 let tx = Eip1559TransactionRequest::new()
     .from(user_address)
@@ -459,7 +459,7 @@ return_string
 
 
 #[method]
-fn get_opponent_cards(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
+fn get_field_cards(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
 
 let vec = &key.to_vec();
 
@@ -477,7 +477,7 @@ let client = SignerMiddleware::new(provider, wallet);
 
 let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
 
-let calldata = contract.get_opponent_cards().calldata().unwrap();
+let calldata = contract.get_field_cards().calldata().unwrap();
 
 let return_string: GodotString = calldata.to_string().into();
 
@@ -498,9 +498,9 @@ fn decode_hex_string (message: GodotString) -> GodotString {
 }
 
 #[method]
-fn decode_array (message: GodotString) -> GodotString {
+fn decode_u256_array (message: GodotString) -> GodotString {
     let raw_hex: String = message.to_string();
-    let decoded: Vec<String> = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let decoded: Vec<U256> = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
     let return_string: GodotString = format!("{:?}", decoded).into();
     return_string
     //let query = json!({
