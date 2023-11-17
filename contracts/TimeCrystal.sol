@@ -66,7 +66,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     string[] public playerCards;
     uint public gameSeed;
     string public gameCounter;
-    string gameNonce = "1";
+    uint gameNonce = 1;
     string public playerDeck;
 
     enum validationType {
@@ -83,6 +83,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     uint VRFindex;
     uint[] VRFseeds;
     bool registered;
+    requestType upkeepType;
   }
 
   struct cardActions {
@@ -92,7 +93,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         cardKeyword[] ability;
     }
 
-    struct gameSession {
+    struct gameSessionOLD {
         string[] playerHand;
         uint8 playerHealth;
         uint8 opponentHealth;
@@ -103,6 +104,24 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         bool updateInFlight;
         cardActions pendingActions;
         uint8 currentTurn;
+  }
+
+  struct gameSession {
+    uint8 playerHealth;
+    uint8 opponentHealth;
+    address opponent;
+    uint opponentDeckId;
+    uint[] playerHand;
+    uint8[] fieldCards;
+
+    bytes updateBytes;
+    validationType updateType;
+    
+    
+    uint seed;
+    string counter;
+    uint nonce;
+    uint8 currentTurn;
   }
 
     mapping (address => Player) public players;
@@ -155,53 +174,40 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         newOpponentDeck.iv = _iv;
 
         players[msg.sender].opponentDecks.push(newOpponentDeck);
+        players[msg.sender].upkeepType = requestType.REGISTER_OPPONENT;
 
         emit AwaitingAutomation(msg.sender);
 
     }
 
 
-    function submitOpponentDeck(address _player, string memory _inventory) internal {
-        
-        FunctionsRequest.Request memory req;
-        req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, register_opponent_source);
-        req.secretsLocation = secretsLocation;
-        req.encryptedSecretsReference = encryptedSecretsReference;
-
-    
-        string[] memory args = new string[](4);
-        args[0] = players[_player].opponentDecks[players[_player].opponentDecks.length - 1].key;
-        args[1] = players[_player].opponentDecks[players[_player].opponentDecks.length - 1].deck;
-        args[2] = players[_player].opponentDecks[players[_player].opponentDecks.length - 1].iv;
-        args[3] = _inventory;
-
-        req.setArgs(args);
-        
-        s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
-        requestIdbyRequester[s_lastRequestId] = _player;
-        pendingRequests[s_lastRequestId] = requestType.REGISTER_OPPONENT;
-    }
-
-
-
-
     //counter here is a base64 string
     //seed will eventually come from VRF and be validated
     //I will need to validate the counter later
-    function startGame (uint _seed, string calldata _counter, uint _deckId, uint _opponentId) external {
+    function startGame (uint _seed, string calldata _counter, uint _deckId, uint _opponentId, uint _opponentDeckId) external {
     //require (usedCounters[_counter] == false);
     //require (usedSeeds[_seed] == false);
     //usedSeeds[_seed] = true;
     //usedCounters[_counter] = true;
     require (players[msg.sender].inQueue == false);
     require (players[msg.sender].inGame == false);
+    require (players[opponents[_opponentId]].opponentDecks[_opponentDeckId].registered == true);
+    //require (players[player] != players[opponents[_opponentId]]);
+
     players[msg.sender].inGame = true;
+    players[msg.sender].inQueue = true;
 
     gameSession memory newSession;
 
     newSession.playerHealth = 15;
     newSession.opponentHealth = 15;
     newSession.currentTurn = 1;
+    newSession.opponent = opponents[_opponentId];
+    newSession.opponentDeckId = _opponentDeckId;
+    newSession.seed = _seed;
+    newSession.counter = _counter;
+    newSession.nonce = gameNonce;
+    gameNonce++;
 
     currentSession[msg.sender] = newSession;
 
@@ -210,13 +216,10 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     req.secretsLocation = secretsLocation;
     req.encryptedSecretsReference = encryptedSecretsReference;
     
-    gameSeed = _seed;
-    gameCounter = _counter;
-    
     string[] memory args = new string[](4);
     args[0] = Strings.toString(_seed);
     args[1] = _counter;
-    args[2] = gameNonce;
+    args[2] = Strings.toString(gameNonce);
     args[3] = players[msg.sender].playerDecks[_deckId];
 
     req.setArgs(args);
@@ -228,14 +231,16 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   }
 
 
+
   function playerTakeTurn (bytes memory _actions) external {
     require (players[msg.sender].inGame == true);
-    require (currentSession[msg.sender].updateInFlight == false);
-    currentSession[msg.sender].updateInFlight = true;
+    require (players[msg.sender].inQueue == false);
+    players[msg.sender].inQueue = true;
     currentSession[msg.sender].updateType = validationType.PLAYER;
     currentSession[msg.sender].updateBytes = _actions;
     emit AwaitingAutomation(msg.sender);
   }
+
 
 
     //time to move this into checkUpkeep
@@ -246,16 +251,15 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     req.secretsLocation = secretsLocation;
     req.encryptedSecretsReference = encryptedSecretsReference;
 
-    
     string[] memory args = new string[](9);
     args[0] = playerCards[_action];
     args[1] = currentOpponent[0];
     args[2] = currentOpponent[1];
     args[3] = currentOpponent[2];
-    args[4] = Strings.toString(currentTurn);
-    args[5] = Strings.toString(gameSeed);
-    args[6] = gameCounter;
-    args[7] = gameNonce;
+    args[4] = Strings.toString(currentSession[_player].currentTurn);
+    args[5] = Strings.toString(currentSession[_player].seed);
+    args[6] = currentSession[_player].counter;
+    args[7] = Strings.toString(currentSession[_player].nonce);
     args[8] = playerDeck;
 
     playerCards[_action] = playerCards[playerCards.length - 1];
@@ -273,12 +277,12 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
   }
 
-    function getPlayerCards() public view returns (string[] memory) {
-        return currentSession[msg.sender].playerCards;
+    function getPlayerCards() public view returns (uint[] memory) {
+        return currentSession[msg.sender].playerHand;
     }
 
-    function getOpponentCards() public view returns (string[] memory) {
-        return currentSession[msg.sender].opponentCards;
+    function getFieldCards() public view returns (uint8[] memory) {
+        return currentSession[msg.sender].fieldCards;
     }
 
    function resetGame() public {
@@ -297,17 +301,10 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
     
     if (pendingRequests[requestId] == requestType.START_GAME) {
-        string[3] memory newCards;
-        uint index = 0;
-        for (uint8 i = 0; i < 3; i++) {
-            bytes memory card = new bytes(2);
-            card[0] = response[index];
-            index += 1;
-            card[1] = response[index];
-            index += 1;
-            newCards[i] = string(card);
-        }
-        playerCards = newCards;
+        address player = requestIdbyRequester[requestId];
+        currentSession[player].updateBytes = response;
+
+        emit AwaitingAutomation(player);
     }
 
     else if (pendingRequests[requestId] == requestType.TAKE_TURN) {
@@ -388,7 +385,8 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   ) external view returns (bool upkeepNeeded, bytes memory performData) {
         address player = address(uint160(uint256(log.topics[1])));
         
-        if (players[player].inQueue == true) {
+
+        if (players[player].upkeepType == requestType.REGISTER_OPPONENT) {
             uint8[] memory inventory = players[player].inventory;
             string memory inventoryString = "";
             for (uint y = 0; y < inventory.length; y++) {
@@ -398,26 +396,57 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 }
             }
 
-        FunctionsRequest.Request memory req;
-        req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, register_opponent_source);
-        req.secretsLocation = secretsLocation;
-        req.encryptedSecretsReference = encryptedSecretsReference;
+            FunctionsRequest.Request memory req;
+            req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, register_opponent_source);
+            req.secretsLocation = secretsLocation;
+            req.encryptedSecretsReference = encryptedSecretsReference;
 
     
-        string[] memory args = new string[](4);
-        args[0] = players[player].opponentDecks[players[player].opponentDecks.length - 1].key;
-        args[1] = players[player].opponentDecks[players[player].opponentDecks.length - 1].deck;
-        args[2] = players[player].opponentDecks[players[player].opponentDecks.length - 1].iv;
-        args[3] = inventoryString;
+            string[] memory args = new string[](4);
+            args[0] = players[player].opponentDecks[players[player].opponentDecks.length - 1].key;
+            args[1] = players[player].opponentDecks[players[player].opponentDecks.length - 1].deck;
+            args[2] = players[player].opponentDecks[players[player].opponentDecks.length - 1].iv;
+            args[3] = inventoryString;
 
-        req.setArgs(args);
+            req.setArgs(args);
     
-        performData = abi.encode(player, requestType.REGISTER_OPPONENT, req.encodeCBOR());
-        upkeepNeeded = true;
-        return (upkeepNeeded, performData);
+            performData = abi.encode(player, requestType.REGISTER_OPPONENT, req.encodeCBOR());
+            upkeepNeeded = true;
+            return (upkeepNeeded, performData);
+        }
+
+
+        if (players[player].upkeepType == requestType.START_GAME) {
+            bytes memory response = currentSession[player].updateBytes;
+            uint[5] memory newCards;
+            uint index = 0;
+            for (uint8 i = 0; i < 5; i++) {
+                bytes memory card = new bytes(2);
+                card[0] = response[index];
+                index += 1;
+                card[1] = response[index];
+                index += 1;
+                newCards[i] = strToUint(string(card));
+            }
+            performData = abi.encode(player, requestType.REGISTER_OPPONENT, abi.encode(newCards));
+            upkeepNeeded = true;
+            
         }
     
   }
+
+  //credit: stackoverflow
+    function strToUint(string memory _str) public pure returns(uint256 result) {
+    
+    for (uint256 i = 0; i < bytes(_str).length; i++) {
+        if ((uint8(bytes(_str)[i]) - 48) < 0 || (uint8(bytes(_str)[i]) - 48) > 9) {
+            return 0;
+        }
+        result += (uint8(bytes(_str)[i]) - 48) * 10**(bytes(_str).length - i - 1);
+    }
+    
+    return result;
+}
 
 
 
@@ -428,6 +457,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
        // require(msg.sender == forwarder);
 
         (address player, requestType upkeepType, bytes memory params) = abi.decode(performData, (address, requestType, bytes));
+        
         if (upkeepType == requestType.REGISTER_OPPONENT) {
 
         s_lastRequestId = _sendRequest(params, subscriptionId, callbackGasLimit, donId);
@@ -435,6 +465,16 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         pendingRequests[s_lastRequestId] = requestType.REGISTER_OPPONENT;
 
         emit UpkeepFulfilled(performData);
+
+        }
+
+
+        if (upkeepType == requestType.START_GAME) {
+            uint[5] memory newHand =  abi.decode(params, (uint[5]));
+            currentSession[player].playerHand = newHand;
+            players[player].inQueue = false;
+
+            emit UpkeepFulfilled(performData);
 
         }
         
