@@ -333,3 +333,5 @@ Haven't made quite the progress I would have liked; I've had a strange problem t
 
 I've begun rewriting the contract logic to support players having multiple decks.  Currently I'm also planning to shift the game logic over into a second contract connected via interface.
 
+Ah, fortunately my Automation -> Functions connection problem has a mundane cause: my gas limit for performUpkeep was simply too low.
+
