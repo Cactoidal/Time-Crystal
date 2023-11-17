@@ -25,12 +25,15 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   uint32 callbackGasLimit = 300000;
   
 
-  constructor(address router, bytes32 _donId, string memory _source,  string memory _source2, FunctionsRequest.Location _location, bytes memory _reference) FunctionsClient(router) ConfirmedOwner(msg.sender) {
+  constructor(address router, bytes32 _donId, string memory _source,  string memory _source2, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) ConfirmedOwner(msg.sender) {
     donId = _donId;
     start_game_source = _source;
     take_turn_source = _source2;
     secretsLocation = _location;
     encryptedSecretsReference = _reference;
+    for (uint z = 0; z < _cards.length; z++) {
+        cards[Strings.toString(z + 10)] = _cards[z];
+    }
   }
 
   enum requestType {
@@ -257,6 +260,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   }
 
   enum cardKeyword {
+    NONE,
     DESTROY,  //destroy target
     DAMAGE1,  //deal 1 damage to target
     DAMAGE2, //deal 2 damage to target
@@ -273,6 +277,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
   struct cardTraits {
     uint8 cardNumber;
+    string cardName;
     cType cardType;
     uint8 attack;
     uint8 defense;
@@ -563,7 +568,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
         else{
 
 
-            
+
             //even in the case of an invalid action, pending actions must still resolve.
             performData = abi.encode("not valid");
         }
