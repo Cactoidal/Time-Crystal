@@ -78,7 +78,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     uint8[] inventory;
     string[] playerDecks;
     Opponent[] opponentDecks;
-    uint pendingOpponentIndex;
     bool inQueue;
     bool inGame;
     uint VRFindex;
@@ -107,6 +106,8 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   }
 
     mapping (address => Player) public players;
+    uint opponentId;
+    mapping (uint => address) public opponents;
     mapping (address => gameSession) public currentSession;
 
     struct Opponent {
@@ -118,6 +119,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     function registerPlayer() public {
         require (players[msg.sender].registered == false);
+        players[msg.sender].registered = true;
         players[msg.sender].inventory = [10,11,12,13,14,15,16,17,18,19,20];
         createPlayerDeck([0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,10]);
     }
@@ -142,6 +144,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     //all provided as base64 strings
     //automation will submit after manipulating inventory into an array of strings
     function registerOpponentDeck(string calldata _key, string calldata _deck, string calldata _iv) public {
+        require (players[msg.sender].registered == true);
         require (players[msg.sender].inGame == false);
         require (players[msg.sender].inQueue == false);
         players[msg.sender].inQueue = true;
@@ -153,7 +156,34 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
         players[msg.sender].opponentDecks.push(newOpponentDeck);
 
-        emit AwaitingAutomation(msg.sender);
+        uint8[] memory inventory = players[msg.sender].inventory;
+        string memory inventoryString = "";
+        for (uint y = 0; y < inventory.length; y++) {
+            inventoryString = string.concat(inventoryString, Strings.toString(inventory[y]));
+            if (y != inventory.length - 1) {
+                inventoryString = string.concat(inventoryString, ",");
+                }
+            }
+
+        FunctionsRequest.Request memory req;
+        req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, register_opponent_source);
+        req.secretsLocation = secretsLocation;
+        req.encryptedSecretsReference = encryptedSecretsReference;
+
+    
+        string[] memory args = new string[](4);
+        args[0] = players[msg.sender].opponentDecks[players[msg.sender].opponentDecks.length - 1].key;
+        args[1] = players[msg.sender].opponentDecks[players[msg.sender].opponentDecks.length - 1].deck;
+        args[2] = players[msg.sender].opponentDecks[players[msg.sender].opponentDecks.length - 1].iv;
+        args[3] = inventoryString;
+
+        req.setArgs(args);
+        
+        s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
+        requestIdbyRequester[s_lastRequestId] = msg.sender;
+        pendingRequests[s_lastRequestId] = requestType.REGISTER_OPPONENT;
+
+        //emit AwaitingAutomation(msg.sender);
 
     }
 
@@ -167,13 +197,12 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     
         string[] memory args = new string[](4);
-        args[0] = players[_player].opponentDecks[players[_player].pendingOpponentIndex].key;
-        args[1] = players[_player].opponentDecks[players[_player].pendingOpponentIndex].deck;
-        args[2] = players[_player].opponentDecks[players[_player].pendingOpponentIndex].iv;
+        args[0] = players[_player].opponentDecks[players[_player].opponentDecks.length - 1].key;
+        args[1] = players[_player].opponentDecks[players[_player].opponentDecks.length - 1].deck;
+        args[2] = players[_player].opponentDecks[players[_player].opponentDecks.length - 1].iv;
         args[3] = _inventory;
 
         req.setArgs(args);
-
         
         s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
         requestIdbyRequester[s_lastRequestId] = _player;
@@ -181,10 +210,12 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
+
+
     //counter here is a base64 string
     //seed will eventually come from VRF and be validated
     //I will need to validate the counter later
-    function startGame (uint _seed, string calldata _counter) external {
+    function startGame (uint _seed, string calldata _counter, uint _deckId, uint _opponentId) external {
     //require (usedCounters[_counter] == false);
     //require (usedSeeds[_seed] == false);
     //usedSeeds[_seed] = true;
@@ -213,7 +244,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     args[0] = Strings.toString(_seed);
     args[1] = _counter;
     args[2] = gameNonce;
-    args[3] = playerDeck;
+    args[3] = players[msg.sender].playerDecks[_deckId];
 
     req.setArgs(args);
     //req.setBytesArgs(args);
@@ -235,7 +266,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
 
     //time to move this into checkUpkeep
-    function progressGame (uint8 _action, address _player) internal {
+    function progressGame (uint8 _action, address _player) public {
 
     FunctionsRequest.Request memory req;
     req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, take_turn_source);
@@ -317,9 +348,10 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         players[player].inQueue = false;
         uint valid = abi.decode(response, (uint));
         if (valid == 1) {
-            players[player].opponentDecks[players[player].pendingOpponentIndex].registered = true;
+            players[player].opponentDecks[players[player].opponentDecks.length - 1].registered = true;
+            opponents[opponentId] = player;
+            opponentId++;
         }
-        players[player].pendingOpponentIndex += 1;
     }
     
     s_lastResponse = response;
@@ -368,6 +400,14 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
   mapping (string => cardTraits) cards;
 
+  function getQueueStatus(address _player) external view returns (bool) {
+        return players[_player].inQueue;
+  }
+
+   function getPlayerInventory(address _player) external view returns (uint8[] memory) {
+        return players[_player].inventory;
+  }
+
 
   function checkLog(
     Log calldata log,
@@ -388,30 +428,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             upkeepNeeded = true;
             return (upkeepNeeded, performData);
         }
-        
-        
-        gameSession memory session = currentSession[player];
-        string[] memory fieldCards = session.opponentCards;
-        bool valid = true;
-        
-        string memory playerDrawnCard;
-        uint8 usedEnergy = 0;
-    
-        upkeepNeeded = true;
-
-        if (valid == true) {
-
-
-
-            performData = abi.encode(playerDrawnCard);
-        }
-        else{
-
-            //even in the case of an invalid action, pending actions must still resolve.
-            performData = abi.encode("not valid");
-        }
-
-        return (upkeepNeeded, performData);
     
   }
 
@@ -423,15 +439,30 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
        // require(msg.sender == forwarder);
         (address player, string memory params, requestType upkeepType) = abi.decode(performData, (address, string, requestType));
         if (upkeepType == requestType.REGISTER_OPPONENT) {
-            submitOpponentDeck(player, params);
+
+            FunctionsRequest.Request memory req;
+            req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, register_opponent_source);
+            req.secretsLocation = secretsLocation;
+            req.encryptedSecretsReference = encryptedSecretsReference;
+
+    
+            string[] memory args = new string[](4);
+            args[0] = players[player].opponentDecks[players[player].opponentDecks.length - 1].key;
+            args[1] = players[player].opponentDecks[players[player].opponentDecks.length - 1].deck;
+            args[2] = players[player].opponentDecks[players[player].opponentDecks.length - 1].iv;
+            args[3] = params;
+
+            req.setArgs(args);
+        
+            s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
+            requestIdbyRequester[s_lastRequestId] = player;
+            pendingRequests[s_lastRequestId] = requestType.REGISTER_OPPONENT;
+
+            emit UpkeepFulfilled(performData);
+
         }
         
         
-        
-        (string memory opponentCard, string memory playerCard) = abi.decode(performData, (string, string));
-        opponentCards.push(opponentCard);
-        playerCards.push(playerCard);
-        emit UpkeepFulfilled(performData);
     }
 
  
@@ -460,6 +491,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
   event AwaitingAutomation(address indexed _player);
   event UpkeepFulfilled(bytes indexed _performData);
+  event AwaitingGameLogic(address indexed _player);
 
 
 
