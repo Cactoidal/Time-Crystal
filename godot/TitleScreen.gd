@@ -10,7 +10,7 @@ var sepolia_rpc = "https://ethereum-sepolia.publicnode.com"
 
 var rpc_list
 
-var time_crystal_contract = "0xEd04A7670086b4A6E81656A05FA3fEbC87bFD9aC"
+var time_crystal_contract = "0x570846Aba62a8d985611B0D123fA326b347937D5"
 
 var signed_data = ""
 
@@ -89,7 +89,7 @@ func _process(delta):
 		check_cards_timer -= delta
 		if check_cards_timer <= 0:
 			check_player_cards()
-			check_opponent_cards()
+			check_field_cards()
 			check_cards_timer = 16
 		
 		
@@ -389,12 +389,13 @@ func create_player_deck():
 
 func start_new_card_game():
 	var playerDeck = tx_parameter[0]
-	var opponentDeck = tx_parameter[1]
+	var opponent = tx_parameter[1]
+	var opponentDeck = tx_parameter[2]
 	var file = File.new()
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	TimeCrystal.start_game(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, playerDeck, opponentDeck, self)
+	TimeCrystal.start_game(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, playerDeck, opponent, opponentDeck, self)
 
 func reset_game():
 	var file = File.new()
@@ -439,20 +440,21 @@ func check_player_cards_attempted(result, response_code, headers, body):
 
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
-		game_board.get_node("YourHand").text = "Your Hand:\n" + TimeCrystal.decode_array(raw_response)
+		print(raw_response)
+		game_board.get_node("YourHand").text = "Your Hand:\n" + TimeCrystal.decode_u8_array(raw_response)
 
 
-func check_opponent_cards():
+func check_field_cards():
 	var http_request = HTTPRequest.new()
 	$HTTP.add_child(http_request)
 	http_request_delete_tx_read = http_request
-	http_request.connect("request_completed", self, "check_opponent_cards_attempted")
+	http_request.connect("request_completed", self, "check_field_cards_attempted")
 	
 	var file = File.new()
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.get_opponent_cards(content, sepolia_id, time_crystal_contract, sepolia_rpc)
+	var calldata = TimeCrystal.get_field_cards(content, sepolia_id, time_crystal_contract, sepolia_rpc)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
@@ -462,13 +464,13 @@ func check_opponent_cards():
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
 
-func check_opponent_cards_attempted(result, response_code, headers, body):
+func check_field_cards_attempted(result, response_code, headers, body):
 	
 	var get_result = parse_json(body.get_string_from_ascii())
 
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
-		game_board.get_node("OpponentCard").text = "Opponent Played:\n" + TimeCrystal.decode_array(raw_response)
+		game_board.get_node("OpponentCard").text = "Opponent Played:\n" + TimeCrystal.decode_u8_array(raw_response)
 
 
 
