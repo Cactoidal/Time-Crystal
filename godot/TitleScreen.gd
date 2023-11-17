@@ -10,7 +10,7 @@ var sepolia_rpc = "https://ethereum-sepolia.publicnode.com"
 
 var rpc_list
 
-var time_crystal_contract = "0xd7e086238c038d386C8732C33aD087A17a5Dc819"
+var time_crystal_contract = "0xEd04A7670086b4A6E81656A05FA3fEbC87bFD9aC"
 
 var signed_data = ""
 
@@ -19,7 +19,7 @@ var gas_price
 var confirmation_timer = 0
 var tx_ongoing = false
 var tx_function_name = ""
-var tx_parameter = "None"
+var tx_parameter = ["None"]
 
 var menu_open = false
 
@@ -249,7 +249,7 @@ func start_card_game():
 	fadein = true
 	
 	
-func start_transaction(function_name, param="None"):
+func start_transaction(function_name, param=["None"]):
 	if tx_ongoing == false:
 		tx_function_name = function_name
 		tx_parameter = param
@@ -356,7 +356,7 @@ func estimate_gas_attempted(result, response_code, headers, body):
 
 
 func register_opponent():
-	var deck = tx_parameter
+	var deck = tx_parameter[0]
 	var file = File.new()
 	file.open("user://aes", File.READ)
 	var aes_key = file.get_buffer(16)
@@ -367,7 +367,6 @@ func register_opponent():
 	TimeCrystal.register_opponent_deck(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, aes_key, deck, self)
 
 func register_player():
-	var deck = tx_parameter
 	var file = File.new()
 	file.open("user://aes", File.READ)
 	var aes_key = file.get_buffer(16)
@@ -375,14 +374,27 @@ func register_player():
 	file2.open("user://keystore", File.READ)
 	var content = file2.get_buffer(32)
 	file2.close()
-	TimeCrystal.register_player_deck(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, deck, self)
+	TimeCrystal.register_player(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, self)
+
+func create_player_deck():
+	var deck = tx_parameter[0]
+	var file = File.new()
+	file.open("user://aes", File.READ)
+	var aes_key = file.get_buffer(16)
+	var file2 = File.new()
+	file2.open("user://keystore", File.READ)
+	var content = file2.get_buffer(32)
+	file2.close()
+	TimeCrystal.create_player_deck(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, deck, self)
 
 func start_new_card_game():
+	var playerDeck = tx_parameter[0]
+	var opponentDeck = tx_parameter[1]
 	var file = File.new()
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	TimeCrystal.start_game(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, self)
+	TimeCrystal.start_game(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, playerDeck, opponentDeck, self)
 
 func reset_game():
 	var file = File.new()
@@ -393,7 +405,7 @@ func reset_game():
 
 
 func play_card():
-	var card_index = tx_parameter
+	var card_index = tx_parameter[0]
 	var file = File.new()
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
