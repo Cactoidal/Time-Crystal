@@ -327,3 +327,9 @@ As an aside, I'm thinking about switching to a 3D game board.
 
 <img width="700" alt="14picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/001a0cd4-275c-4045-b88a-be393a8841a8">
 
+## Day 10
+
+Haven't made quite the progress I would have liked; I've had a strange problem trying to get Automation to call Functions.  checkUpkeep is returning a valid performData, and when called manually, the Functions call works just fine.  But for some unknown reason, I can't seem to connect the two.  I've had Functions trigger Automation, but not the other way around.  Ostensibly it is possible to do it, but at the moment I seem to be going wrong somewhere.
+
+I've begun rewriting the contract logic to support players having multiple decks.  Currently I'm also planning to shift the game logic over into a second contract connected via interface.
+
