@@ -3,7 +3,7 @@
 //args[2] = registeredOpponents[_player].iv;
 //args[3] = _inventory;
 
-//decrypts the OPPONENT AES key, then the OPPONENT DECK.  Checks that the inventory contains the cards
+//decrypts the pending Opponent deck, checks that the inventory actually contains the cards,
 //returns 1 for valid, 2 for invalid
 
 
@@ -73,11 +73,7 @@ let decoder = new TextDecoder
 
 let opponentDeck = decoder.decode(decodedMessage)
 
-var opponentDeckArray = []
-
-for (let j = 1; j < 21; j++) {
-    opponentDeckArray.push(JSON.parse(opponentDeck)[j.toString()]);
-};
+var opponentDeckArray = opponentDeck.split(",")
 
 var inventoryArray = args[3].split(",")
 
