@@ -7,11 +7,7 @@
 
 // Import the deck
 
-var deckArray = []
-
-for (let j = 1; j < 11; j++) {
-    deckArray.push(JSON.parse(args[3])[j.toString()]);
-}
+var deckArray = args[3].split(",")
 
 var deckLength = deckArray.length;
 
