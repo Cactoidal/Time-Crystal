@@ -26,13 +26,13 @@ function str2ab(str) {
    return buf;
   }
 
-  const binaryDerString = atob(secrets.privateRSA);
+  const binaryDONRSAString = atob(secrets.privateRSA);
   // convert from a binary string to an ArrayBuffer
-  const binaryDer = str2ab(binaryDerString);
+  const binaryDONRSAKey = str2ab(binaryDONRSAString);
 
 const decryption_key = await crypto.subtle.importKey(
     "pkcs8",
-   binaryDer,
+   binaryDONRSAKey,
     {
         name: "RSA-OAEP",
         //not secure!
@@ -82,20 +82,11 @@ let decoder = new TextDecoder
 
 let opponentDeck = decoder.decode(decodedMessage)
 
-var opponentDeckArray = []
-
-for (let j = 1; j < 11; j++) {
-    opponentDeckArray.push(JSON.parse(opponentDeck)[j.toString()]);
-}
+var opponentDeckArray = opponentDeck.split(",")
 
 var opponentDeckLength = opponentDeckArray.length;
 
-
-var playerDeckArray = []
-
-for (let z = 1; z < 11; z++) {
-    playerDeckArray.push(JSON.parse(args[8])[z.toString()]);
-}
+var playerDeckArray = args[8].split(",")
 
 var playerDeckLength = playerDeckArray.length;
 
@@ -173,5 +164,8 @@ for (var k = 0; k < 3 + currentTurn; k++) {
 }
 
 let result = opponentCard + playerCard
-  
+
+//assemble it all as a string, but then use
+//Funcions.encodeUint256(parseInt(result))
+
 return Functions.encodeString(result)
