@@ -386,6 +386,16 @@
 				"type": "uint8"
 			},
 			{
+				"internalType": "address",
+				"name": "opponent",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "opponentDeckId",
+				"type": "uint256"
+			},
+			{
 				"internalType": "bytes",
 				"name": "updateBytes",
 				"type": "bytes"
@@ -396,36 +406,19 @@
 				"type": "uint8"
 			},
 			{
-				"internalType": "bool",
-				"name": "updateInFlight",
-				"type": "bool"
+				"internalType": "uint256",
+				"name": "seed",
+				"type": "uint256"
 			},
 			{
-				"components": [
-					{
-						"internalType": "string[]",
-						"name": "doers",
-						"type": "string[]"
-					},
-					{
-						"internalType": "string[]",
-						"name": "targets",
-						"type": "string[]"
-					},
-					{
-						"internalType": "uint256[]",
-						"name": "action",
-						"type": "uint256[]"
-					},
-					{
-						"internalType": "enum RemixTester.cardKeyword[]",
-						"name": "ability",
-						"type": "uint8[]"
-					}
-				],
-				"internalType": "struct RemixTester.cardActions",
-				"name": "pendingActions",
-				"type": "tuple"
+				"internalType": "string",
+				"name": "counter",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "nonce",
+				"type": "uint256"
 			},
 			{
 				"internalType": "uint8",
@@ -503,12 +496,12 @@
 	},
 	{
 		"inputs": [],
-		"name": "getOpponentCards",
+		"name": "getFieldCards",
 		"outputs": [
 			{
-				"internalType": "string[]",
+				"internalType": "uint8[]",
 				"name": "",
-				"type": "string[]"
+				"type": "uint8[]"
 			}
 		],
 		"stateMutability": "view",
@@ -519,9 +512,9 @@
 		"name": "getPlayerCards",
 		"outputs": [
 			{
-				"internalType": "string[]",
+				"internalType": "uint8[]",
 				"name": "",
-				"type": "string[]"
+				"type": "uint8[]"
 			}
 		],
 		"stateMutability": "view",
@@ -740,11 +733,6 @@
 		"name": "players",
 		"outputs": [
 			{
-				"internalType": "uint256",
-				"name": "pendingOpponentIndex",
-				"type": "uint256"
-			},
-			{
 				"internalType": "bool",
 				"name": "inQueue",
 				"type": "bool"
@@ -763,6 +751,11 @@
 				"internalType": "bool",
 				"name": "registered",
 				"type": "bool"
+			},
+			{
+				"internalType": "enum RemixTester.requestType",
+				"name": "upkeepType",
+				"type": "uint8"
 			}
 		],
 		"stateMutability": "view",
@@ -965,12 +958,17 @@
 			},
 			{
 				"internalType": "uint256",
-				"name": "deckId",
+				"name": "_deckId",
 				"type": "uint256"
 			},
 			{
 				"internalType": "uint256",
-				"name": "opponentId",
+				"name": "_opponentId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_opponentDeckId",
 				"type": "uint256"
 			}
 		],
@@ -990,6 +988,25 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_str",
+				"type": "string"
+			}
+		],
+		"name": "strToUint",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "result",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "pure",
 		"type": "function"
 	},
 	{
