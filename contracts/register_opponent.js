@@ -84,7 +84,7 @@ var inventoryArray = args[3].split(",")
 let valid = true
 
 for (let k = 0; k < 20; k++) {
-    if (!inventoryArray.includes(opoonentDeckArray[k])) {
+    if (!inventoryArray.includes(opponentDeckArray[k])) {
         valid = false
     }
 }
