@@ -335,3 +335,5 @@ I've begun rewriting the contract logic to support players having multiple decks
 
 Ah, fortunately my Automation -> Functions connection problem has a mundane cause: my gas limit for performUpkeep was simply too low.
 
+For this particular operation, it's also about 30% cheaper if I just put the entire CBOR-encoded request into performData.  I'll have to figure out how to make this work.
+
