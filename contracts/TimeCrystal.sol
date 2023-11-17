@@ -4,14 +4,17 @@ pragma solidity 0.8.20;
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
+import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "ILogAutomation.sol";
+import "IGameLogic.sol";
 
-contract RemixTester is FunctionsClient, ConfirmedOwner {
+contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   using FunctionsRequest for FunctionsRequest.Request;
 
   bytes32 public donId;
   address private forwarder;
+  address public gameAutomation;
 
   bytes32 public s_lastRequestId;
   bytes public s_lastResponse;
@@ -19,18 +22,21 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
   string public start_game_source;
   string public take_turn_source;
+  string public register_opponent_source;
   FunctionsRequest.Location public secretsLocation;
   bytes encryptedSecretsReference;
   uint64 subscriptionId = 1600;
   uint32 callbackGasLimit = 300000;
   
 
-  constructor(address router, bytes32 _donId, string memory _source,  string memory _source2, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) ConfirmedOwner(msg.sender) {
+  constructor(address _vrfCoordinator, address router, address _gameAutomation, bytes32 _donId, string memory _source,  string memory _source2, string memory _source3, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
     donId = _donId;
     start_game_source = _source;
     take_turn_source = _source2;
+    register_opponent_source = _source3;
     secretsLocation = _location;
     encryptedSecretsReference = _reference;
+    gameAutomation = _gameAutomation;
     for (uint z = 0; z < _cards.length; z++) {
         cards[Strings.toString(z + 10)] = _cards[z];
     }
@@ -38,10 +44,10 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
   enum requestType {
     TAKE_TURN,
-    START_GAME
+    START_GAME,
+    REGISTER_OPPONENT
   }
   
-
 
   mapping (bytes32 => address) public requestIdbyRequester;
 
@@ -49,11 +55,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   mapping (bytes32 => requestType) public pendingRequests;
   mapping (uint => bool) public usedSeeds;
   mapping (string => bool) usedCounters;
-
-  mapping (address => string) registeredKeys;
-  mapping (address => bool) playerKeyRegistered;
-
-  mapping (address => bytes) public decryptedMessage;
 
 
 //             NEW GAME STUFF             //    
@@ -71,6 +72,18 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     enum validationType {
     PLAYER,
     OPPONENT
+  }
+
+  struct Player {
+    uint8[] inventory;
+    string[] playerDecks;
+    Opponent[] opponentDecks;
+    uint pendingOpponentIndex;
+    bool inQueue;
+    bool inGame;
+    uint VRFindex;
+    uint[] VRFseeds;
+    bool registered;
   }
 
   struct cardActions {
@@ -93,23 +106,78 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
         uint8 currentTurn;
   }
 
-    mapping (address => bool) inSession;
-    mapping (address => gameSession) currentSession;
-    mapping (address => bool) awaitingAutomation;
+    mapping (address => Player) public players;
+    mapping (address => gameSession) public currentSession;
 
-    function registerPlayerDeck(string calldata _deck) public {
-        playerDeck = _deck;
+    struct Opponent {
+        string key;
+        string deck;
+        string iv;
+        bool registered;
+    }
+
+    function registerPlayer() public {
+        require (players[msg.sender].registered == false);
+        players[msg.sender].inventory = [10,11,12,13,14,15,16,17,18,19,20];
+        createPlayerDeck([0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,10]);
+    }
+
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual override {
+        
+    }
+
+    function createPlayerDeck(uint8[20] memory cardIndices) public {
+        uint8[] memory inventory = players[msg.sender].inventory;
+        string memory newDeck = "";
+        for (uint y = 0; y < 20; y++) {
+            newDeck = string.concat(newDeck, Strings.toString(inventory[cardIndices[y]]));
+            if (y != 19) {
+                newDeck = string.concat(newDeck, ",");
+            }
+        }
+        players[msg.sender].playerDecks.push(newDeck);
     }
 
     //RSA-encrypted AES key, AES-encrypted deck/logic, and the iv used to encrypt
     //all provided as base64 strings
+    //automation will submit after manipulating inventory into an array of strings
     function registerOpponentDeck(string calldata _key, string calldata _deck, string calldata _iv) public {
+        require (players[msg.sender].inGame == false);
+        require (players[msg.sender].inQueue == false);
+        players[msg.sender].inQueue = true;
+
+        Opponent memory newOpponentDeck;
+        newOpponentDeck.key = _key;
+        newOpponentDeck.deck = _deck;
+        newOpponentDeck.iv = _iv;
+
+        players[msg.sender].opponentDecks.push(newOpponentDeck);
+
+        emit AwaitingAutomation(msg.sender);
+
+    }
+
+
+    function submitOpponentDeck(address _player, string memory _inventory) internal {
         
-        string[3] memory newOpponent;
-        newOpponent[0] = _key;
-        newOpponent[1] = _deck;
-        newOpponent[2] = _iv;
-        currentOpponent = newOpponent;
+        FunctionsRequest.Request memory req;
+        req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, register_opponent_source);
+        req.secretsLocation = secretsLocation;
+        req.encryptedSecretsReference = encryptedSecretsReference;
+
+    
+        string[] memory args = new string[](4);
+        args[0] = players[_player].opponentDecks[players[_player].pendingOpponentIndex].key;
+        args[1] = players[_player].opponentDecks[players[_player].pendingOpponentIndex].deck;
+        args[2] = players[_player].opponentDecks[players[_player].pendingOpponentIndex].iv;
+        args[3] = _inventory;
+
+        req.setArgs(args);
+
+        
+        s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
+        requestIdbyRequester[s_lastRequestId] = _player;
+        pendingRequests[s_lastRequestId] = requestType.REGISTER_OPPONENT;
     }
 
 
@@ -121,8 +189,9 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
     //require (usedSeeds[_seed] == false);
     //usedSeeds[_seed] = true;
     //usedCounters[_counter] = true;
-    require (inSession[msg.sender] == false);
-    inSession[msg.sender] = true;
+    require (players[msg.sender].inQueue == false);
+    require (players[msg.sender].inGame == false);
+    players[msg.sender].inGame = true;
 
     gameSession memory newSession;
 
@@ -156,12 +225,12 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
 
   function playerTakeTurn (bytes memory _actions) external {
-    require (inSession[msg.sender] == true);
+    require (players[msg.sender].inGame == true);
     require (currentSession[msg.sender].updateInFlight == false);
     currentSession[msg.sender].updateInFlight = true;
     currentSession[msg.sender].updateType = validationType.PLAYER;
     currentSession[msg.sender].updateBytes = _actions;
-    emit AwaitingOpponentValidation(msg.sender);
+    emit AwaitingAutomation(msg.sender);
   }
 
 
@@ -201,11 +270,11 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   }
 
     function getPlayerCards() public view returns (string[] memory) {
-        return playerCards;
+        return currentSession[msg.sender].playerCards;
     }
 
     function getOpponentCards() public view returns (string[] memory) {
-        return opponentCards;
+        return currentSession[msg.sender].opponentCards;
     }
 
    function resetGame() public {
@@ -218,7 +287,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
 
 
-//            REQUEST FULFILLMENT            //
+//            FUNCTIONS REQUEST FULFILLMENT            //
 
 
   function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
@@ -241,7 +310,16 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
         address player = requestIdbyRequester[requestId];
         currentSession[player].updateBytes = response;
         currentSession[player].updateType = validationType.OPPONENT;
-        emit AwaitingOpponentValidation(player);
+        emit AwaitingAutomation(player);
+    }
+    else if (pendingRequests[requestId] == requestType.REGISTER_OPPONENT) {
+        address player = requestIdbyRequester[requestId];
+        players[player].inQueue = false;
+        uint valid = abi.decode(response, (uint));
+        if (valid == 1) {
+            players[player].opponentDecks[players[player].pendingOpponentIndex].registered = true;
+        }
+        players[player].pendingOpponentIndex += 1;
     }
     
     s_lastResponse = response;
@@ -291,272 +369,34 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
   mapping (string => cardTraits) cards;
 
 
-    //for now, write the opponent logic only.
   function checkLog(
     Log calldata log,
     bytes memory checkData
   ) external view returns (bool upkeepNeeded, bytes memory performData) {
         address player = address(uint160(uint256(log.topics[1])));
+        
+        if (players[player].inQueue == true) {
+            uint8[] memory inventory = players[player].inventory;
+            string memory inventoryString = "";
+            for (uint y = 0; y < inventory.length; y++) {
+                inventoryString = string.concat(inventoryString, Strings.toString(inventory[y]));
+                if (y != inventory.length - 1) {
+                    inventoryString = string.concat(inventoryString, ",");
+                }
+            }
+            performData = abi.encode(player, inventoryString, requestType.REGISTER_OPPONENT);
+            upkeepNeeded = true;
+            return (upkeepNeeded, performData);
+        }
+        
+        
         gameSession memory session = currentSession[player];
         string[] memory fieldCards = session.opponentCards;
         bool valid = true;
         
         string memory playerDrawnCard;
         uint8 usedEnergy = 0;
-        uint8 newFieldCards = 0;
-
-        //decode lead byte for action count
-        //only 4 actions allowed per turn
-        uint8 actionCount = uint8(session.updateBytes[0]);
-        if (actionCount > 4) {
-            valid = false;
-        }
-
-        //sort actions
-        bytes[] memory actions = new bytes[](actionCount);
-        string[] memory cardStrings = new string[](actionCount);
-        uint8 stringIndex = 0;
-        uint8 index = 1;
-        for (uint i = 0; i < actionCount; i++) {
-            bytes memory card = new bytes(6);
-            for (uint j = 0; j < 6; j++) {
-                card[j] = session.updateBytes[index];
-                index++;
-            }
-            actions[i] = (card);
-            //draw the player card if returning from OPPONENT turn
-            if (session.updateType == validationType.OPPONENT) {
-                bytes memory playerCard;
-                playerCard[0] = session.updateBytes[index];
-                index++;
-                playerCard[1] = session.updateBytes[index];
-                playerDrawnCard = string(card);
-            }
-        }
-
-            //validate and load actions into phases 
-            //do not need to check if the player owns the card, since the deck has already been validated
-        
-        
-        for (uint k = 0; k < actionCount; k++) {
-                bytes memory _card = new bytes(2);
-                
-                uint8 _cardId = uint8(actions[k][0]);
-                _card[0] = actions[k][1];
-                _card[1] = actions[k][2];
-                uint8 targetPlayer = uint8(actions[k][3]);
-                uint8 targetCard = uint8(actions[k][4]);
-                uint8 action = uint8(actions[k][5]);
-                cardStrings[k] = string(_card);
-
-                cardTraits memory card = cards[string(_card)];
-
-                usedEnergy += card.energyCost;
-
-                //bytes32 target = keccak256(abi.encode("NONE"));
-
-               // if (targetPlayer == 1) {
-               //     if (targetCard == 0) {
-                //        target = keccak256(abi.encode("PLAYER"));
-                //    }
-                //    else {
-                //        for (uint p = 0; p < session.playerCards.length; p++) {
-                //            bool exists;
-                //            if (keccak256(abi.encode(session.playerCards[p])) == keccak256(abi.encode(string(_card)))) {
-
-                //    }
-                    
-               // }
-
-               // bool has = false;
-               // for (uint p = 0; p < session.playerHand.length; p++) {
-               //     if (keccak256(abi.encode(session.playerHand[p])) == keccak256(abi.encode(string(_card)))) {
-               //         has = true;
-               //         }
-               //     }     
-               // if (has == false) {
-               //     valid = false;
-                //    }
-
-               
-                        
-                
-                // each player can have 9 persistent cards on the field
-                // special targets are
-                // 00: NONE, 10: PLAYER, 20: OPPONENT
-                // otherwise cards can be targeted by their index in their respective array
-
-
-                //(1: PLAY CARD, 2: ABILITY, 3: BLOCK, 4: ATTACK)
-                if (action > 4 || action == 0) {
-                    valid = false;
-                }
-
-                else {
-                    //CONSTRUCT
-                    if (card.cardType == cType.CONSTRUCT) {
-                      //  if (session.opponentCards.length >= 9) {
-                       //     valid = false;
-                        //}                            
-
-                        if (action == 1) {
-                            newFieldCards++;
-                            //enters field, triggers drop effect, otherwise does nothing
-                            //drop effects on constructs and crystals are always traitA
-                            if (card.traitA == cardKeyword.ST_SHIELD) {
-
-                            }
-                            if (card.traitA == cardKeyword.ST_HEAL1) {
-                            
-
-                            }
-                            if (card.traitA == cardKeyword.ST_DAMAGE1) {
-
-                            }
-                            
-                        }
-                        else if (action == 2) {
-                            //is construct on the field?
-                            cardStrings[stringIndex] = (string(_card));
-                            stringIndex++;
-                            //does construct have ability?
-                            //does target exist and is valid?
-                            //does ability
-                            //usedEnergy += ability energy cost
-                            
-                        }
-                        else if (action == 3) {
-                            //is construct on the field?
-                            cardStrings[stringIndex] = (string(_card));
-                            stringIndex++;
-                            //does target exist and is valid?
-                            //blocks target
-                        }
-                        else if (action == 4) {
-                            //is construct on the field?
-                            cardStrings[stringIndex] = (string(_card));
-                            stringIndex++;
-                            //does target exist and is valid?
-                            //attacking has no target without AIM keyword
-                        }
-
-
-                        }
-                    
-                    //CRYSTAL
-                    if (card.cardType == cType.CRYSTAL) {
-                     //   if (session.updateType == validationType.OPPONENT) {
-                      //      if (session.opponentCards.length >= 9) {
-                      //          valid = false;
-                       //     }
-                      //  }
-        
-                        if (action == 1) {
-                            newFieldCards++;
-                            //enters field, triggers drop effect, otherwise does nothing
-                            //drop effects on constructs and crystals are always traitA
-                            
-                        }
-                        else if (action == 2) {
-                            //is crystal on the field?
-                            cardStrings[stringIndex] = (string(_card));
-                            stringIndex++;
-                            //does crystal have ability?
-                            //does target exist and is valid?
-                            //does ability
-                            //usedEnergy += ability energy cost
-                            
-                        }
-                        //can't attack or block, but can be attacked
-
-                        }
-                    
-
-                    //POWER
-                    if (card.cardType == cType.POWER) {
-                        //does not persist
-                        if (action == 1) {
-                            //does drop effect, may or may not have target
-                            
-                        }
-                        else {
-                            valid = false;
-                        }
-                            
-                        }
-                    
-                    //ORACLE
-                    if (card.cardType == cType.ORACLE) {
-                        //does not persist
-                        //appends itself to request
-                        if (action == 1) {
-                            //does drop effect, may or may not have target
-                            
-                        }
-                        else {
-                            valid = false;
-                        }
-                            
-                        }
-                       
-
-
-
-
-                        }
-
-                }
-
-                // check energy used against max energy
-                if (usedEnergy > currentSession[player].currentTurn) {
-                    valid = false;
-                }
-
-                //check if ability-using persistent cards exist on field
-                for (uint y = 0; y < cardStrings.length; y++) {
-                    bool has = false;
-                    for (uint p = 0; p < fieldCards.length; p++) {
-                        if (keccak256(abi.encode(cardStrings[y])) == keccak256(abi.encode(""))) {
-                            has = true;
-                        }
-                        else if (keccak256(abi.encode(cardStrings[y])) == keccak256(abi.encode(string(fieldCards[p])))) {
-                            has = true;
-                            }
-                        }
-                    if (has == false) {
-                    valid = false;
-                }
-                }
-
-                //check that there will be no more than 9 persistent cards on the field
-                if (fieldCards.length + newFieldCards > 9) {
-                    valid = false;
-                }
-                
-  
-
-            
-
-            //execute pending actions against interrupts and update state and pending actions
-
-        if (currentSession[player].updateType == validationType.PLAYER) {
-            
-
-            //write the game state and new pending actions into a JSON to give to Functions DON
-            //call functions DON
-
-        }
-
-
-        if (currentSession[player].updateType == validationType.OPPONENT) {
-
-            //return opponent actions and player drawn card
-            //call turn complete
-        }
-
-        //finalizedActions
-        //newPendingActions
-
+    
         upkeepNeeded = true;
 
         if (valid == true) {
@@ -566,8 +406,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
             performData = abi.encode(playerDrawnCard);
         }
         else{
-
-
 
             //even in the case of an invalid action, pending actions must still resolve.
             performData = abi.encode("not valid");
@@ -583,7 +421,10 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
         bytes calldata performData
     ) external {
        // require(msg.sender == forwarder);
-        
+        (address player, string memory params, requestType upkeepType) = abi.decode(performData, (address, string, requestType));
+        if (upkeepType == requestType.REGISTER_OPPONENT) {
+            submitOpponentDeck(player, params);
+        }
         
         
         
@@ -617,8 +458,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner {
 
 
   event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
-  event AwaitingPlayerValidation(address indexed _player);
-  event AwaitingOpponentValidation(address indexed _player);
+  event AwaitingAutomation(address indexed _player);
   event UpkeepFulfilled(bytes indexed _performData);
 
 
