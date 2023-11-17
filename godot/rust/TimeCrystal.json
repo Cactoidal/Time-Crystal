@@ -3,7 +3,17 @@
 		"inputs": [
 			{
 				"internalType": "address",
+				"name": "_vrfCoordinator",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
 				"name": "router",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_gameAutomation",
 				"type": "address"
 			},
 			{
@@ -22,6 +32,11 @@
 				"type": "string"
 			},
 			{
+				"internalType": "string",
+				"name": "_source3",
+				"type": "string"
+			},
+			{
 				"internalType": "enum FunctionsRequest.Location",
 				"name": "_location",
 				"type": "uint8"
@@ -30,6 +45,53 @@
 				"internalType": "bytes",
 				"name": "_reference",
 				"type": "bytes"
+			},
+			{
+				"components": [
+					{
+						"internalType": "uint8",
+						"name": "cardNumber",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "cardName",
+						"type": "string"
+					},
+					{
+						"internalType": "enum RemixTester.cType",
+						"name": "cardType",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "attack",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "defense",
+						"type": "uint8"
+					},
+					{
+						"internalType": "enum RemixTester.cardKeyword",
+						"name": "traitA",
+						"type": "uint8"
+					},
+					{
+						"internalType": "enum RemixTester.cardKeyword",
+						"name": "traitB",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "energyCost",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct RemixTester.cardTraits[]",
+				"name": "_cards",
+				"type": "tuple[]"
 			}
 		],
 		"stateMutability": "nonpayable",
@@ -51,9 +113,51 @@
 		"type": "error"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "have",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "want",
+				"type": "address"
+			}
+		],
+		"name": "OnlyCoordinatorCanFulfill",
+		"type": "error"
+	},
+	{
 		"inputs": [],
 		"name": "OnlyRouterCanFulfill",
 		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "_player",
+				"type": "address"
+			}
+		],
+		"name": "AwaitingAutomation",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "_player",
+				"type": "address"
+			}
+		],
+		"name": "AwaitingGameLogic",
+		"type": "event"
 	},
 	{
 		"anonymous": false,
@@ -139,8 +243,105 @@
 		"type": "event"
 	},
 	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes",
+				"name": "_performData",
+				"type": "bytes"
+			}
+		],
+		"name": "UpkeepFulfilled",
+		"type": "event"
+	},
+	{
 		"inputs": [],
 		"name": "acceptOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "index",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "txHash",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "uint256",
+						"name": "blockNumber",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "blockHash",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "source",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32[]",
+						"name": "topics",
+						"type": "bytes32[]"
+					},
+					{
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
+					}
+				],
+				"internalType": "struct Log",
+				"name": "log",
+				"type": "tuple"
+			},
+			{
+				"internalType": "bytes",
+				"name": "checkData",
+				"type": "bytes"
+			}
+		],
+		"name": "checkLog",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "upkeepNeeded",
+				"type": "bool"
+			},
+			{
+				"internalType": "bytes",
+				"name": "performData",
+				"type": "bytes"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint8[20]",
+				"name": "cardIndices",
+				"type": "uint8[20]"
+			}
+		],
+		"name": "createPlayerDeck",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -165,6 +366,77 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "currentSession",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "playerHealth",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint8",
+				"name": "opponentHealth",
+				"type": "uint8"
+			},
+			{
+				"internalType": "bytes",
+				"name": "updateBytes",
+				"type": "bytes"
+			},
+			{
+				"internalType": "enum RemixTester.validationType",
+				"name": "updateType",
+				"type": "uint8"
+			},
+			{
+				"internalType": "bool",
+				"name": "updateInFlight",
+				"type": "bool"
+			},
+			{
+				"components": [
+					{
+						"internalType": "string[]",
+						"name": "doers",
+						"type": "string[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "targets",
+						"type": "string[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "action",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "enum RemixTester.cardKeyword[]",
+						"name": "ability",
+						"type": "uint8[]"
+					}
+				],
+				"internalType": "struct RemixTester.cardActions",
+				"name": "pendingActions",
+				"type": "tuple"
+			},
+			{
+				"internalType": "uint8",
+				"name": "currentTurn",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "currentTurn",
 		"outputs": [
@@ -179,7 +451,33 @@
 	},
 	{
 		"inputs": [],
-		"name": "decrypt_source",
+		"name": "donId",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "gameAutomation",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "gameCounter",
 		"outputs": [
 			{
 				"internalType": "string",
@@ -191,32 +489,13 @@
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "decryptedMessage",
-		"outputs": [
-			{
-				"internalType": "bytes",
-				"name": "",
-				"type": "bytes"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [],
-		"name": "donId",
+		"name": "gameSeed",
 		"outputs": [
 			{
-				"internalType": "bytes32",
+				"internalType": "uint256",
 				"name": "",
-				"type": "bytes32"
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -251,6 +530,44 @@
 	{
 		"inputs": [
 			{
+				"internalType": "address",
+				"name": "_player",
+				"type": "address"
+			}
+		],
+		"name": "getPlayerInventory",
+		"outputs": [
+			{
+				"internalType": "uint8[]",
+				"name": "",
+				"type": "uint8[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_player",
+				"type": "address"
+			}
+		],
+		"name": "getQueueStatus",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "bytes32",
 				"name": "requestId",
 				"type": "bytes32"
@@ -269,25 +586,6 @@
 		"name": "handleOracleFulfillment",
 		"outputs": [],
 		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "inSession",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -317,6 +615,25 @@
 				"internalType": "string",
 				"name": "",
 				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "opponents",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",
@@ -357,6 +674,19 @@
 	{
 		"inputs": [
 			{
+				"internalType": "bytes",
+				"name": "performData",
+				"type": "bytes"
+			}
+		],
+		"name": "performUpkeep",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
@@ -374,14 +704,102 @@
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "playerDeck",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "_actions",
+				"type": "bytes"
+			}
+		],
+		"name": "playerTakeTurn",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "players",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "pendingOpponentIndex",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "inQueue",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "inGame",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "VRFindex",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "registered",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "uint8",
 				"name": "_action",
 				"type": "uint8"
+			},
+			{
+				"internalType": "address",
+				"name": "_player",
+				"type": "address"
 			}
 		],
 		"name": "progressGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "requestId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "randomWords",
+				"type": "uint256[]"
+			}
+		],
+		"name": "rawFulfillRandomWords",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -410,16 +828,23 @@
 		"type": "function"
 	},
 	{
-		"inputs": [
+		"inputs": [],
+		"name": "registerPlayer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "register_opponent_source",
+		"outputs": [
 			{
 				"internalType": "string",
-				"name": "_deck",
+				"name": "",
 				"type": "string"
 			}
 		],
-		"name": "registerPlayerDeck",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -446,25 +871,6 @@
 		"name": "resetGame",
 		"outputs": [],
 		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "returnedSecret",
-		"outputs": [
-			{
-				"internalType": "bytes",
-				"name": "",
-				"type": "bytes"
-			}
-		],
-		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -520,72 +926,6 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "send_source",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "sessionIndex",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "sessions",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "seed",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "nonce",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "counter",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
 				"internalType": "bytes32",
@@ -601,6 +941,19 @@
 	{
 		"inputs": [
 			{
+				"internalType": "address",
+				"name": "_forwarder",
+				"type": "address"
+			}
+		],
+		"name": "setForwarderAddress",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "uint256",
 				"name": "_seed",
 				"type": "uint256"
@@ -609,11 +962,47 @@
 				"internalType": "string",
 				"name": "_counter",
 				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "deckId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "opponentId",
+				"type": "uint256"
 			}
 		],
 		"name": "startGame",
 		"outputs": [],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "start_game_source",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "take_turn_source",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
