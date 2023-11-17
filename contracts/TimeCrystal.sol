@@ -156,34 +156,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
         players[msg.sender].opponentDecks.push(newOpponentDeck);
 
-        uint8[] memory inventory = players[msg.sender].inventory;
-        string memory inventoryString = "";
-        for (uint y = 0; y < inventory.length; y++) {
-            inventoryString = string.concat(inventoryString, Strings.toString(inventory[y]));
-            if (y != inventory.length - 1) {
-                inventoryString = string.concat(inventoryString, ",");
-                }
-            }
-
-        FunctionsRequest.Request memory req;
-        req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, register_opponent_source);
-        req.secretsLocation = secretsLocation;
-        req.encryptedSecretsReference = encryptedSecretsReference;
-
-    
-        string[] memory args = new string[](4);
-        args[0] = players[msg.sender].opponentDecks[players[msg.sender].opponentDecks.length - 1].key;
-        args[1] = players[msg.sender].opponentDecks[players[msg.sender].opponentDecks.length - 1].deck;
-        args[2] = players[msg.sender].opponentDecks[players[msg.sender].opponentDecks.length - 1].iv;
-        args[3] = inventoryString;
-
-        req.setArgs(args);
-        
-        s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
-        requestIdbyRequester[s_lastRequestId] = msg.sender;
-        pendingRequests[s_lastRequestId] = requestType.REGISTER_OPPONENT;
-
-        //emit AwaitingAutomation(msg.sender);
+        emit AwaitingAutomation(msg.sender);
 
     }
 
@@ -424,12 +397,28 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                     inventoryString = string.concat(inventoryString, ",");
                 }
             }
-            performData = abi.encode(player, inventoryString, requestType.REGISTER_OPPONENT);
-            upkeepNeeded = true;
-            return (upkeepNeeded, performData);
+
+        FunctionsRequest.Request memory req;
+        req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, register_opponent_source);
+        req.secretsLocation = secretsLocation;
+        req.encryptedSecretsReference = encryptedSecretsReference;
+
+    
+        string[] memory args = new string[](4);
+        args[0] = players[player].opponentDecks[players[player].opponentDecks.length - 1].key;
+        args[1] = players[player].opponentDecks[players[player].opponentDecks.length - 1].deck;
+        args[2] = players[player].opponentDecks[players[player].opponentDecks.length - 1].iv;
+        args[3] = inventoryString;
+
+        req.setArgs(args);
+    
+        performData = abi.encode(player, requestType.REGISTER_OPPONENT, req.encodeCBOR());
+        upkeepNeeded = true;
+        return (upkeepNeeded, performData);
         }
     
   }
+
 
 
 //is forwarding enabled on testnet?
@@ -437,28 +426,15 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         bytes calldata performData
     ) external {
        // require(msg.sender == forwarder);
-        (address player, string memory params, requestType upkeepType) = abi.decode(performData, (address, string, requestType));
+
+        (address player, requestType upkeepType, bytes memory params) = abi.decode(performData, (address, requestType, bytes));
         if (upkeepType == requestType.REGISTER_OPPONENT) {
 
-            FunctionsRequest.Request memory req;
-            req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, register_opponent_source);
-            req.secretsLocation = secretsLocation;
-            req.encryptedSecretsReference = encryptedSecretsReference;
+        s_lastRequestId = _sendRequest(params, subscriptionId, callbackGasLimit, donId);
+        requestIdbyRequester[s_lastRequestId] = player;
+        pendingRequests[s_lastRequestId] = requestType.REGISTER_OPPONENT;
 
-    
-            string[] memory args = new string[](4);
-            args[0] = players[player].opponentDecks[players[player].opponentDecks.length - 1].key;
-            args[1] = players[player].opponentDecks[players[player].opponentDecks.length - 1].deck;
-            args[2] = players[player].opponentDecks[players[player].opponentDecks.length - 1].iv;
-            args[3] = params;
-
-            req.setArgs(args);
-        
-            s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
-            requestIdbyRequester[s_lastRequestId] = player;
-            pendingRequests[s_lastRequestId] = requestType.REGISTER_OPPONENT;
-
-            emit UpkeepFulfilled(performData);
+        emit UpkeepFulfilled(performData);
 
         }
         
