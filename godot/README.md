@@ -329,5 +329,15 @@ As an aside, I'm thinking about switching to a 3D game board.
 
 ## Day 10
 
-I've begun rewriting the contract logic to support players having multiple decks.  Currently I'm also planning to shift the game logic over into a second contract connected via interface.  Not much exciting to report, a lot of time was spent fixing bugs and changing how I pass data between the game, the chain, and the oracle.  
+I've begun rewriting the contract logic to support players having multiple decks.  Currently I'm also planning to shift the game logic over into a second contract connected via interface.  A lot of time was spent fixing bugs and changing how I pass data between the game, the chain, and the oracle.
+
+A particularly pernicious problem: how to return sets of data from the contract to the game.  The player's hand, for example, needs to be an array of numbers.  While during testing I had no problem returning the hand array from the contract, but _something_ changed that caused this to break.
+
+After combing through the contract and fixing important but nonetheless unrelated bugs, I was eventually reminded that the EVM cannot directly return an entire array from a mapping.  I need to map the player's hand to a game session, so I was confronted with a difficult problem. How would I get the data, if I could not return the whole array?
+
+From what I gather, the best practice is to just get the array's length, then cycle through each index of the array to return all the values.  This doesn't work too well in gdscript, so I wondered if there was some other method.
+
+My eventual solution: create a byte array into which I would push abi.encoded hand arrays.  Each game session would be assigned an index in the array, which Godot could then use to reference the bytes and use abi.decode to read the hand array off the contract.
+
+While this does work, I shortly afterward realized that I could just use Automation to create _both_ a uint[] array for the contract to use, and a JSON string for the game to use, which is altogether a much simpler solution.  Oh well.
 
