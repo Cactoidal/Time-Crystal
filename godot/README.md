@@ -339,5 +339,20 @@ From what I gather, the best practice is to just get the array's length, then cy
 
 My eventual solution: create a byte array into which I would push abi.encoded hand arrays.  Each game session would be assigned an index in the array, which Godot could then use to reference the bytes and use abi.decode to read the hand array off the contract.
 
-While this does work, I shortly afterward realized that I could just use Automation to simultaneously create a uint[] array for the contract to use, _and_ a JSON string for the game to use, which is altogether a much simpler solution. 
+While this does work, I shortly afterward realized that I could just use Automation to simultaneously create a uint[] array for the contract to use, _and_ a JSON string for the game to use, which is altogether a much simpler solution.
+
+## Day 11
+
+I may have been overzealous in my debugging.
+
+When my code was working outside of automation, and in Remix was even returning whole arrays from my functions, finding the error became a bit of a guessing game.  By the time I realized what the real issue was re: mapped structs/arrays (which had nothing to do with Automation), I'd already redeployed my contract dozens of times.
+
+Unfortunately, I now seem to be blocked from making new upkeeps through the interface.  If this doesn't resolve itself, I'll have to email support (or try [registering programmatically](https://docs.chain.link/chainlink-automation/guides/register-upkeep-in-contract)).
+
+This leaves me in an awkward position, since I had just refigured my contract to use Automation.  Still, there should be other things I can do in the meanwhile.
+
+<img width="700" alt="15picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/45d9496c-207a-4c03-993b-85ce90a48256">
+
+Still figuring out the interface.  I'll be able to have the cards' information local to Godot, so no need to read every single value from the chain.  All I'll need is a card's id number, and I can look up everything about it in a Dictionary.
+
 
