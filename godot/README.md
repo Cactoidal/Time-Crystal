@@ -329,9 +329,5 @@ As an aside, I'm thinking about switching to a 3D game board.
 
 ## Day 10
 
-Haven't made quite the progress I would have liked; I've had a strange problem trying to get Automation to call Functions.  checkUpkeep is returning a valid performData, and when called manually, the Functions call works just fine.  But for some unknown reason, I can't seem to connect the two.  I've had Functions trigger Automation, but not the other way around.  Ostensibly it is possible to do it, but at the moment I seem to be going wrong somewhere.
-
-I've begun rewriting the contract logic to support players having multiple decks.  Currently I'm also planning to shift the game logic over into a second contract connected via interface.
-
-Ah, fortunately my Automation -> Functions connection problem has a mundane cause: my gas limit for performUpkeep was simply too low.
+I've begun rewriting the contract logic to support players having multiple decks.  Currently I'm also planning to shift the game logic over into a second contract connected via interface.  Not much exciting to report, a lot of time was spent fixing bugs and changing how I pass data between the game, the chain, and the oracle.  
 
