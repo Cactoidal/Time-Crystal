@@ -345,9 +345,9 @@ While this does work, I shortly afterward realized that I could just use Automat
 
 I may have been overzealous in my debugging.
 
-When my code was working outside of automation, and in Remix was even returning whole arrays from my functions, finding the error became a bit of a guessing game.  By the time I realized what the real issue was re: mapped structs/arrays (which had nothing to do with Automation), I'd already redeployed my contract dozens of times.
+When my code was working outside of Automation, and in Remix was even returning whole arrays from my functions, finding the error became a bit of a guessing game.  By the time I realized what the real issue was re: mapped structs/arrays (which had nothing to do with Chainlink Automation), I'd already redeployed my contract dozens of times.
 
-Unfortunately, I now seem to be blocked from making new upkeeps through the interface.  If this doesn't resolve itself, I'll have to email support (or try [registering programmatically](https://docs.chain.link/chainlink-automation/guides/register-upkeep-in-contract)).
+Unfortunately, I now seem to be blocked from making new upkeeps through the Automation dApp interface.  If this doesn't resolve itself, I'll have to email support (or try [registering programmatically](https://docs.chain.link/chainlink-automation/guides/register-upkeep-in-contract)).
 
 This leaves me in an awkward position, since I had just refigured my contract to use Automation.  Still, there should be other things I can do in the meanwhile.
 
