@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "ILogAutomation.sol";
-import "IGameLogic.sol";
+import "./ILogAutomation.sol";
+import "./IGameLogic.sol";
 
 contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   using FunctionsRequest for FunctionsRequest.Request;
@@ -112,6 +112,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     address opponent;
     uint opponentDeckId;
     uint[] playerHand;
+    string handJSON;
     uint8[] fieldCards;
 
     bytes updateBytes;
@@ -277,8 +278,10 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
   }
 
-    function getPlayerCards() public view returns (uint[] memory) {
-        return currentSession[msg.sender].playerHand;
+     //return currentSession[msg.sender].playerHand;
+    //these work but they are returning only the first index, how to get the whole array?
+    function getPlayerCards() public view returns (string memory) {
+        return currentSession[msg.sender].handJSON;
     }
 
     function getFieldCards() public view returns (uint8[] memory) {
@@ -303,6 +306,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     if (pendingRequests[requestId] == requestType.START_GAME) {
         address player = requestIdbyRequester[requestId];
         currentSession[player].updateBytes = response;
+        players[player].upkeepType = requestType.START_GAME;
 
         emit AwaitingAutomation(player);
     }
@@ -414,11 +418,11 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             upkeepNeeded = true;
             return (upkeepNeeded, performData);
         }
-
-
-        if (players[player].upkeepType == requestType.START_GAME) {
+        else if (players[player].upkeepType == requestType.START_GAME) {
             bytes memory response = currentSession[player].updateBytes;
             uint[5] memory newCards;
+            string memory cardsJSON = "{";
+            uint8 jsonIndex = 1;
             uint index = 0;
             for (uint8 i = 0; i < 5; i++) {
                 bytes memory card = new bytes(2);
@@ -426,11 +430,20 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 index += 1;
                 card[1] = response[index];
                 index += 1;
-                newCards[i] = strToUint(string(card));
+                string memory newCard = string(card);
+                newCards[i] = strToUint(newCard);
+                cardsJSON = string.concat(cardsJSON, '"', Strings.toString(jsonIndex), '"', ":", '"', newCard, '"');
+                jsonIndex++;
+                if (i != 4) {
+                    cardsJSON = string.concat(cardsJSON, ",");
+                }
+                else {
+                    cardsJSON = string.concat(cardsJSON, "}");
+                }
             }
-            performData = abi.encode(player, requestType.REGISTER_OPPONENT, abi.encode(newCards));
+            performData = abi.encode(player, requestType.START_GAME, abi.encode(newCards, cardsJSON));
             upkeepNeeded = true;
-            
+            return (upkeepNeeded, performData);
         }
     
   }
@@ -460,18 +473,19 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         
         if (upkeepType == requestType.REGISTER_OPPONENT) {
 
-        s_lastRequestId = _sendRequest(params, subscriptionId, callbackGasLimit, donId);
-        requestIdbyRequester[s_lastRequestId] = player;
-        pendingRequests[s_lastRequestId] = requestType.REGISTER_OPPONENT;
+            s_lastRequestId = _sendRequest(params, subscriptionId, callbackGasLimit, donId);
+            requestIdbyRequester[s_lastRequestId] = player;
+            pendingRequests[s_lastRequestId] = requestType.REGISTER_OPPONENT;
 
-        emit UpkeepFulfilled(performData);
+            emit UpkeepFulfilled(performData);
 
         }
 
 
-        if (upkeepType == requestType.START_GAME) {
-            uint[5] memory newHand =  abi.decode(params, (uint[5]));
-            currentSession[player].playerHand = newHand;
+        else if (upkeepType == requestType.START_GAME) {
+            (uint[5] memory _newHand, string memory _handJSON) =  abi.decode(params, (uint[5], string));
+            currentSession[player].playerHand = _newHand;
+            currentSession[player].handJSON = _handJSON;
             players[player].inQueue = false;
 
             emit UpkeepFulfilled(performData);
