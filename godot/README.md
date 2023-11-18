@@ -331,7 +331,7 @@ As an aside, I'm thinking about switching to a 3D game board.
 
 I've begun rewriting the contract logic to support players having multiple decks.  Currently I'm also planning to shift the game logic over into a second contract connected via interface.  A lot of time was spent fixing bugs and changing how I pass data between the game, the chain, and the oracle.
 
-A particularly pernicious problem: how to return sets of data from the contract to the game.  The player's hand, for example, needs to be an array of numbers.  While during testing I had no problem returning the hand array from the contract, _something_ changed that caused this to break.
+A particularly pernicious problem: how to return sets of data from the contract to the game.  The player's hand, for example, needs to be an array of numbers.  During testing a few days ago, I had no problem returning the hand array from the contract, but _something_ changed that caused this to break.
 
 After combing through the contract and fixing important but nonetheless unrelated bugs, I was eventually reminded that the EVM cannot directly return an entire array from a mapping.  I need to map the player's hand to a game session, so I was confronted with a difficult problem. How would I get the data, if I could not return the whole array?
 
