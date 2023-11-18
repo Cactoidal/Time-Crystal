@@ -339,5 +339,5 @@ From what I gather, the best practice is to just get the array's length, then cy
 
 My eventual solution: create a byte array into which I would push abi.encoded hand arrays.  Each game session would be assigned an index in the array, which Godot could then use to reference the bytes and use abi.decode to read the hand array off the contract.
 
-While this does work, I shortly afterward realized that I could just use Automation to create _both_ a uint[] array for the contract to use, and a JSON string for the game to use, which is altogether a much simpler solution.  Oh well.
+While this does work, I shortly afterward realized that I could just use Automation to create _both_ a uint[] array for the contract to use, and a JSON string for the game to use, which is altogether a much simpler solution. 
 
