@@ -165,7 +165,7 @@ func map_random_spaces():
 	player_mapped_to_board_index.shuffle()
 	opponent_mapped_to_board_index.shuffle()
 
-func assign_units():
+func assign_units():			
 	for unit in range(player_units.size()):
 		print(player_mapped_to_board_index[unit])
 		var card_info = get_card_info(int(player_units[unit]))
@@ -175,6 +175,8 @@ func assign_units():
 		elif card_info["type"] == "crystal":
 			mesh = crystal.instance()
 		player_mapped_to_board_index[unit].add_child(mesh)
+		mesh.set_info(card_info.duplicate())
+		mesh.get_node("Info/Team").text = "Player"
 		mesh.global_transform.origin.y += 1
 		mesh.rotate_y(0.4)
 		
@@ -189,10 +191,10 @@ func assign_units():
 			mesh = crystal.instance()
 		opponent_mapped_to_board_index[unit].add_child(mesh)
 		mesh.mod = -1
+		mesh.set_info(card_info.duplicate())
+		mesh.get_node("Info/Team").text = "Opponent"
 		mesh.global_transform.origin.y += 1
 		mesh.rotate_y(0.4)
-	
-
 	
 	
 var playing = false
@@ -224,7 +226,7 @@ func play_from_hand(unit):
 		playing = false
 		
 
-func play_from_field(unit):
+func play_from_field(card_info):
 	pass
 
 
@@ -261,6 +263,9 @@ func action_confirmed():
 	if card_info["type"] == "oracle":
 		if oracle_used == true:
 			return
+	elif card_info["type"] in ["construct", "crystal"]:
+		if player_units.size() == 9:
+			return
 	if confirmable == true:
 		$Overlay.visible = false
 		$ActionConfirm.visible = false
@@ -268,6 +273,8 @@ func action_confirmed():
 		#var card_info = get_card_info(hand[selected_card_index])
 		if card_info["type"] == "oracle":
 			oracle_used = true
+		if card_info["type"] in ["construct", "crystal"]:
+			place_unit(card_info.duplicate())
 		for image in card_nodes:
 			if image != card_nodes[selected_card_index]:
 				if !image in actions:
@@ -306,6 +313,15 @@ func revert_action():
 			used_energy -= card_info["cost"]
 			if card_info["type"] == "oracle":
 				oracle_used = false
+		else:
+			if reverted.attacking == true:
+				reverted.attacking = false;
+			#elif to preclude removing a same-turn attack following a placement
+			elif reverted.mapped_card != null:
+				var index = card_nodes.find(reverted.mapped_card)
+				var card_info = get_card_info(hand[index])
+				reverted.mapped_card.get_node("Overlay").visible = false
+				used_energy -= card_info["cost"]
 		action_count -= 1
 		#used_energy -= card_info["cost"]
 		$Actions.text = "Actions\n" + str(action_count) + "/ 4"
@@ -316,6 +332,22 @@ func revert_action():
 			$ActionsLog.text += line
 		if oracle_used == true:
 			$ActionsLog.text += "\nORACLE CALLED"
+
+
+func place_unit(card_info):
+	var mesh
+	if card_info["type"] == "construct":
+		mesh = paramecium.instance()
+	elif card_info["type"] == "crystal":
+		mesh = crystal.instance()
+	player_units.append(mesh)
+	player_mapped_to_board_index[player_units.back()].add_child(mesh)
+	mesh.set_info(card_info.duplicate())
+	mesh.get_node("Info/Team").text = "Player"
+	mesh.global_transform.origin.y += 1
+	mesh.rotate_y(0.4)
+	mesh.mapped_card = card_nodes[selected_card_index]
+	actions.append(mesh)
 	
 
 func open_end_turn_confirm():
@@ -337,3 +369,26 @@ func end_turn_canceled():
 	
 	
 	
+	
+	
+	# Old 
+#	var card_info = get_card_info(hand[0])
+#	$Card2/TextureButton.texture_normal = load("res://" + card_info["type"] + "_card_base.png")
+#	$Card2/Name.text = card_info["name"]
+#	$Card2/CostSquare/Cost.text = str(card_info["cost"])
+#	if card_info["type"] == "construct":
+#		$Card2/Attack.text = str(card_info["attack"])
+#		$Card2/Defense.text = str(card_info["defense"])
+#	$Card2/KeywordA.text = card_info["keywordA"]
+#	$Card2/KeywordB.text = card_info["keywordB"]
+#
+#
+#	card_info = get_card_info(hand[4])
+#	$Card6/TextureButton.texture_normal = load("res://" + card_info["type"] + "_card_base.png")
+#	$Card6/Name.text = card_info["name"]
+#	$Card6/CostSquare/Cost.text = str(card_info["cost"])
+#	if card_info["type"] == "construct":
+#		$Card6/Attack.text = str(card_info["attack"])
+#		$Card6/Defense.text = str(card_info["defense"])
+#	$Card6/KeywordA.text = card_info["keywordA"]
+#	$Card6/KeywordB.text = card_info["keywordB"]
