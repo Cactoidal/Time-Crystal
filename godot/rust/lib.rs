@@ -1,5 +1,5 @@
 use gdnative::{prelude::*, core_types::ToVariant};
-use ethers::{core::{abi::{struct_def::StructFieldType, AbiEncode, AbiDecode}, types::*}, signers::*, providers::*, prelude::SignerMiddleware};
+use ethers::{core::{abi::{struct_def::StructFieldType, AbiEncode, AbiDecode}, types::*, k256::elliptic_curve::consts::U8}, signers::*, providers::*, prelude::SignerMiddleware};
 use ethers_contract::{abigen};
 use ethers::core::types::transaction::eip2718::TypedTransaction;
 use std::{convert::TryFrom, sync::Arc};
@@ -140,7 +140,7 @@ let tx = Eip1559TransactionRequest::new()
     .from(user_address)
     .to(contract_address) 
     .value(0)
-    .gas(500000)
+    .gas(900000)
     .max_fee_per_gas(_gas_fee)
     .max_priority_fee_per_gas(_gas_fee)
     .chain_id(chain_id)
@@ -352,7 +352,7 @@ let tx = Eip1559TransactionRequest::new()
     .from(user_address)
     .to(contract_address) 
     .value(0)
-    .gas(800000)
+    .gas(1500000)
     .max_fee_per_gas(_gas_fee)
     .max_priority_fee_per_gas(_gas_fee)
     .chain_id(chain_id)
@@ -508,6 +508,16 @@ fn decode_u256_array (message: GodotString) -> GodotString {
     //    "g": prequery.g,
     //    "b": prequery.b
     //});
+}
+
+#[method]
+fn decode_u256_array_from_bytes (message: GodotString) -> GodotString {
+    let raw_hex: String = message.to_string();
+    //let bytes: Bytes = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let decoded_bytes: [U256; 5] = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    godot_print!("{:?}", decoded_bytes);
+    let return_string: GodotString = format!("{:?}", decoded_bytes).into();
+    return_string
 }
 
 
