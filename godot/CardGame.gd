@@ -111,6 +111,7 @@ func _process(delta):
 #everything has a type, name, and cost
 #constructs have attack and defense, crystals have only defense
 #cards can have two keywords.  for crystals and constructs, keywordA is always a drop effect
+#need to imeplement drop abilities, multiple abilities, and separate ability energy costs
 func get_card_info(card_id):
 	match card_id:
 		10: return {"id": "10", "type": "construct", "name": "Paramecium", "cost": 0, "attack": 1, "defense": 1, "keywordA": "", "keywordB": ""}
@@ -349,7 +350,10 @@ func open_target_confirm():
 		keyword = "keywordA"
 	else:
 		keyword = "keywordB"
-	$TargetConfirm/Question.text = "Use " + active_card[keyword] + "\non " + target.card_info["name"] + "?"
+	var if_crystal = ""
+	if target.card_info["type"] == "crystal":
+		if_crystal = " Crystal"
+	$TargetConfirm/Question.text = "Use " + active_card[keyword] + "\non " + target.card_info["name"] + if_crystal + "?"
 	$TargetConfirm/Cost.text = str(active_card["cost"])
 	if used_energy + active_card["cost"] > max_energy:
 		$TargetConfirm/NoEnergy.visible = true
@@ -379,9 +383,13 @@ func target_confirmed():
 	
 		actions.append(pending_actor)
 		for image in card_nodes:
-			if image != card_nodes[selected_card_index]:
+			if selected_card_index != null:
+				if image != card_nodes[selected_card_index]:
+					if !image in actions:
+						image.get_node("Overlay").visible = false
+			else:
 				if !image in actions:
-					image.get_node("Overlay").visible = false
+						image.get_node("Overlay").visible = false
 		for action in actions:
 			if !action in card_nodes:
 				if action.mapped_card != null:
@@ -390,6 +398,8 @@ func target_confirmed():
 		if !pending_actor in card_nodes:
 			pending_actor.targeting = false
 			pending_actor.selected = false
+			#this is a placeholder and could be replaced by "using_ability"
+			pending_actor.attacking = true
 		else:
 			card_nodes[selected_card_index].get_node("Overlay").visible = true
 		
@@ -460,6 +470,9 @@ func revert_action():
 				used_energy -= card_info["cost"]
 				player_units.remove(reverted.player_unit_index)
 				reverted.queue_free()
+			#reverting cost of unit on field using ability
+			else:
+				used_energy -= reverted.card_info["cost"]
 		action_count -= 1
 		$Actions.text = "Actions\n" + str(action_count) + "/ 4"
 		$Energy.text = "Energy\n" + str(used_energy) + " / " + str(max_energy)
