@@ -357,7 +357,7 @@ Still figuring out the interface.  I'll be able to have the cards' information l
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/041eff6c-8736-468c-b5b2-5f9cb1874f59
 
-Building the targeting system.  The idea is that players will be able to click on cards in their hand, or units already on the field, and choose which target to attack or target with the card/unit's ability.
+Building the targeting system.  The idea is that players will be able to click on cards in their hand, or units already on the field, and choose who to attack or target with the card/unit's ability.
 
 
 
