@@ -335,7 +335,7 @@ A particularly pernicious problem: how to return sets of data from the contract 
 
 After combing through the contract and fixing important but nonetheless unrelated bugs, I was eventually reminded that the EVM cannot directly return an entire array from a mapping.  I need to map the player's hand to a game session, so I was confronted with a difficult problem. How would I get the data, if I could not return the whole array?
 
-From what I gather, the best practice is to just get the array's length, then cycle through each index of the array to return all the values.  This doesn't work too well in gdscript, so I wondered if there was some other method.
+From what I gather, the suggested best practice is to just get the array's length, then cycle through each index of the array to return all the values.  This doesn't work too well in gdscript, so I wondered if there was some other method.
 
 My eventual solution: create a byte array into which I would push abi.encoded hand arrays.  Each game session would be assigned an index in the array, which Godot could then use to reference the bytes and use abi.decode to read the hand array off the contract.
 
