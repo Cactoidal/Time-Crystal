@@ -39,6 +39,9 @@ var action_count = 0
 var max_energy = 10
 var used_energy = 0
 
+var seeking_target = false
+var pending_actor
+var active_card
 var target = "None"
 
 var actions = []
@@ -74,6 +77,9 @@ func _ready():
 	$EndTurnConfirm/Confirm.connect("pressed", self, "end_turn_confirmed")
 	$EndTurnConfirm/Cancel.connect("pressed", self, "end_turn_canceled")
 	
+	$TargetConfirm/Confirm.connect("pressed", self, "target_confirmed")
+	$TargetConfirm/Cancel.connect("pressed", self, "target_canceled")
+	
 	get_hand()
 	map_random_spaces()
 	assign_units()
@@ -96,9 +102,11 @@ func reset_game():
 func play_card():
 	ethers.start_transaction("play_card", [$CardIndex.text])
 
+var confirming_target = false
 func _process(delta):
-	$Targeting.set_point_position(1, get_global_mouse_position() - Vector2(90,40))
-	#$Line2D.points[1].position = get_global_mouse_position()
+	if confirming_target == false:
+		$Targeting.set_point_position(1, get_global_mouse_position() - Vector2(90,40))
+
 
 #everything has a type, name, and cost
 #constructs have attack and defense, crystals have only defense
@@ -169,7 +177,6 @@ func map_random_spaces():
 
 func assign_units():			
 	for unit in range(player_units.size()):
-		print(player_mapped_to_board_index[unit])
 		var card_info = get_card_info(int(player_units[unit]))
 		var mesh
 		if card_info["type"] == "construct":
@@ -188,7 +195,6 @@ func assign_units():
 		
 		
 	for unit in range (opponent_units.size()):
-		print(opponent_mapped_to_board_index[unit])
 		var card_info = get_card_info(int(opponent_units[unit]))
 		var mesh
 		if card_info["type"] == "construct":
@@ -219,11 +225,15 @@ func play_from_hand(unit):
 					image.get_node("Overlay").visible = false
 					
 			var card_info = get_card_info(hand[selected_card_index])
+			#add drop abilities
 			if card_info["type"] in ["power"] || card_info["keywordA"] in ["SHIELD", "DAMAGE 1", "REGENERATE"]:
 				$Targeting.set_point_position(0, unit.rect_position)
 				$Targeting.visible = true
 				$InfoSquareOverlay.visible = true
 				board_targeting_activated = true
+				seeking_target = true
+				active_card = card_info.duplicate()
+				pending_actor = unit
 			else:
 				open_action_confirm()
 		#else:
@@ -281,6 +291,8 @@ func action_confirmed():
 		if player_units.size() == 9:
 			return
 	if confirmable == true:
+		#target = "None"
+		#active_card = null
 		$Overlay.visible = false
 		$ActionConfirm.visible = false
 		playing = false
@@ -325,6 +337,108 @@ func action_canceled():
 				if action.mapped_card != null:
 					action.mapped_card.get_node("Overlay").visible = true
 
+
+#add drop abilities
+func open_target_confirm():
+	confirming_target = true
+	$Overlay.visible = true
+	$TargetConfirm.visible = true
+	#will need to be altered to accommodate drop abilities
+	var keyword
+	if active_card["type"] == "power":
+		keyword = "keywordA"
+	else:
+		keyword = "keywordB"
+	$TargetConfirm/Question.text = "Use " + active_card[keyword] + "\non " + target.card_info["name"] + "?"
+	$TargetConfirm/Cost.text = str(active_card["cost"])
+	if used_energy + active_card["cost"] > max_energy:
+		$TargetConfirm/NoEnergy.visible = true
+		confirmable = false
+	else:
+		$TargetConfirm/NoEnergy.visible = false
+		confirmable = true
+		
+		
+func target_confirmed():
+	if confirmable == true:
+		confirming_target = false
+		$Overlay.visible = false
+		$Targeting.visible = false
+		$TargetConfirm.visible = false
+		$InfoSquareOverlay.visible = false
+		playing = false
+		board_targeting_activated = false
+		
+		#will need to be altered to accommodate drop abilities
+		var keyword
+		if active_card["type"] == "power":
+			keyword = "keywordA"
+		else:
+			keyword = "keywordB"
+		
+	
+		actions.append(pending_actor)
+		for image in card_nodes:
+			if image != card_nodes[selected_card_index]:
+				if !image in actions:
+					image.get_node("Overlay").visible = false
+		for action in actions:
+			if !action in card_nodes:
+				if action.mapped_card != null:
+					action.mapped_card.get_node("Overlay").visible = true
+		
+		if !pending_actor in card_nodes:
+			pending_actor.targeting = false
+			pending_actor.selected = false
+		else:
+			card_nodes[selected_card_index].get_node("Overlay").visible = true
+		
+		action_count += 1
+		used_energy += active_card["cost"]
+		$Actions.text = "Actions\n" + str(action_count) + "/ 4"
+		$Energy.text = "Energy\n" + str(used_energy) + " / " + str(max_energy)
+		
+		action_strings.append("\nUsed " + active_card[keyword] + "\non " + target.card_info["name"] + "(" + str(active_card["cost"]) + ")")
+		if action_count == 4:
+			action_strings[3] += "\n\nACTIONS MAXED"
+		$ActionsLog.text = ""
+		for line in action_strings:
+			$ActionsLog.text += line
+		if oracle_used == true:
+			$ActionsLog.text += "\nORACLE CALLED"
+		
+		target = "None"
+		active_card = null
+		pending_actor = null
+
+
+func target_canceled():
+	if !pending_actor in card_nodes:
+		pending_actor.targeting = false
+		pending_actor.selected = false
+	target = "None"
+	active_card = null
+	pending_actor = null
+	confirming_target = false
+	playing = false
+	board_targeting_activated = false
+	$Overlay.visible = false
+	$Targeting.visible = false
+	$TargetConfirm.visible = false
+	$InfoSquareOverlay.visible = false
+	for image in card_nodes:
+		if selected_card_index != null:
+			if image != card_nodes[selected_card_index]:
+				if !image in actions:
+					image.get_node("Overlay").visible = false
+		else:
+			if !image in actions:
+				image.get_node("Overlay").visible = false
+	for action in actions:
+		if !action in card_nodes:
+			if action.mapped_card != null:
+				action.mapped_card.get_node("Overlay").visible = true
+
 func revert_action():
 	if action_count > 0:
 		var reverted = actions.pop_back()
@@ -345,7 +459,6 @@ func revert_action():
 				reverted.mapped_card.get_node("Overlay").visible = false
 				used_energy -= card_info["cost"]
 				player_units.remove(reverted.player_unit_index)
-				print(reverted)
 				reverted.queue_free()
 		action_count -= 1
 		$Actions.text = "Actions\n" + str(action_count) + "/ 4"
