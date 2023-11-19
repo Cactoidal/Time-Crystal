@@ -9,6 +9,9 @@ var player_unit_index
 var mod = 1
 var card_info
 var mapped_card
+
+var targeting = false
+
 var attacking = false
 
 var selected = false
@@ -90,7 +93,8 @@ func attack():
 
 func use_ability():
 	ui.get_node("Targeting").visible = true
-	ui.get_node("Targeting").set_point_position(0, $Info.rect_position - Vector2(20,10))
+	ui.get_node("Targeting").set_point_position(0, ui.get_parent().get_node("WorldRotate/Camera").unproject_position(global_transform.origin) - Vector2(100,40))
+	targeting = true
 	$Info.visible = false
 	$Info/Choices.visible = false
 
@@ -114,19 +118,21 @@ func _on_Area_mouse_entered():
 	$Info.visible = true
 	if selected == false:
 		$Info.rect_position = $Info.get_global_mouse_position()
+		if $Info.rect_position.x > 600:
+			 $Info.rect_position.x -= 200
 	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
 	clickable = true
 
 
 func _on_Area_mouse_exited():
-	if selected == false:
+	if selected == false || targeting == true:
 		$Info.visible = false
 	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 	clickable = false
 
 func activate():
 	if selected == false:
-		if ui.board_targeting_activated == false:
+		if ui.board_targeting_activated == false && $Info/Team.text == "Player":
 			selected = true
 			$Info.visible = true
 			$Info/Choices.visible = true
