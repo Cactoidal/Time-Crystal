@@ -359,6 +359,17 @@ https://github.com/Cactoidal/Time-Crystal/assets/115384394/041eff6c-8736-468c-b5
 
 Building the targeting system.  The idea is that players will be able to click on cards in their hand, or units already on the field, and choose who to attack or target with the card/unit's ability.
 
+## Day 12
+
+Certainly the code could use some reorganizing, but the first part of the interface seems to be complete.  It supports playing cards from the hand and attacking/activating abilities from the field, tracks energy costs and the timeline of actions, and can revert actions.
+
+It needs some additional work to support drop abilities, cards having multiple abilities, and abilities having separate energy costs, and the ability to block incoming attacks.  And of course, it needs to be integrated with the contracts.  On the Godot side, this means reading JSONs containing information about the game state, and formatting information to send to the contract.
+
+The contract side needs to implement the validation logic.  I still seem to be locked out of the Automation dApp, but while waiting for access I can test locally.
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/063d9a64-64ea-464b-8cb0-40941249a227
+
+
 
 
 
