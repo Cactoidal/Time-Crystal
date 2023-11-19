@@ -355,4 +355,10 @@ This leaves me in an awkward position, since I had just refigured my contract to
 
 Still figuring out the interface.  I'll be able to have the cards' information local to Godot, so no need to read every single value from the chain.  All I'll need is a card's id number, and I can look up everything about it in a Dictionary.
 
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/041eff6c-8736-468c-b5b2-5f9cb1874f59
+
+Building the targeting system.  The idea is that players will be able to click on cards in their hand, or units already on the field, and choose which target to attack or target with the card/unit's ability.
+
+
+
 
