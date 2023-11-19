@@ -18,6 +18,17 @@ var your_hand = '{"1": "10", "2": "11", "3": "17", "4": "15", "5": "19"}'
 
 var hand = []
 var card_nodes = []
+var selected_card_index
+
+var action_count = 0
+#var max_energy = 1
+var max_energy = 10
+var used_energy = 0
+
+var target = "None"
+
+var actions = []
+var action_strings = []
 
 var mapped_to_board_index = []
 
@@ -40,7 +51,8 @@ func _ready():
 	$Card6/TextureButton.connect("pressed", self, "play_from_hand", [$Card6])
 	
 	$ActionConfirm/Confirm.connect("pressed", self, "action_confirmed")
-	$ActionConfirm/Cancel.connect("pressed", self, "action_cancelled")
+	$ActionConfirm/Cancel.connect("pressed", self, "action_canceled")
+	$Revert.connect("pressed", self, "revert_action")
 	
 	get_hand()
 
@@ -84,7 +96,7 @@ func get_card_info(card_id):
 		18: return {"type": "power", "name": "Shield", "cost": 1, "attack": 0, "defense": 0, "keywordA": "SHIELD", "keywordB": ""}
 		
 		19: return {"type": "oracle", "name": "Randomize", "cost": 2, "attack": 0, "defense": 0, "keywordA": "RANDOM", "keywordB": ""}
-		20: return {"type": "oracle", "name": "Call", "cost": 1, "attack": 0, "defense": 0, "keywordA": "DRAW +1", "keywordB": ""}
+		20: return {"type": "oracle", "name": "Knowledge", "cost": 1, "attack": 0, "defense": 0, "keywordA": "DRAW +1", "keywordB": ""}
 
 func get_hand():
 	var inc_hand = parse_json(your_hand)
@@ -125,25 +137,29 @@ func set_card_values():
 
 var playing = false
 func play_from_hand(unit):
-	var hand_index
 	if playing == false:
-		playing = true
-		for image in card_nodes:
-			if image != unit:
-				image.get_node("Overlay").visible = true
+		if action_count < 4:
+			playing = true
+			selected_card_index = card_nodes.find(unit)
+			for image in card_nodes:
+				if image != unit:
+					image.get_node("Overlay").visible = true
+				else:
+					image.get_node("Overlay").visible = false
+					
+			var card_info = get_card_info(hand[selected_card_index])
+			if card_info["type"] in ["power"] || card_info["keywordA"] in ["SHIELD", "DAMAGE 1", "REGENERATE"]:
+				$Targeting.set_point_position(0, unit.rect_position)
+				$Targeting.visible = true
 			else:
-				hand_index = card_nodes.find(image)
-				image.get_node("Overlay").visible = false
-				
-		var card_info = get_card_info(hand[hand_index])
-		if card_info["type"] in ["power"] || card_info["keywordA"] in ["SHIELD", "DAMAGE 1", "REGENERATE"]:
-			$Targeting.set_point_position(0, unit.rect_position)
-			$Targeting.visible = true
+				open_action_confirm()
 		else:
-			open_action_confirm(hand_index)
+			#put indicator here
+			print("Actions Maxed")
 	else:
-		for image in [$Card1, $Card2, $Card3, $Card4, $Card5, $Card6]:
-			image.get_node("Overlay").visible = false
+		for image in card_nodes:
+			if !image in actions:
+				image.get_node("Overlay").visible = false
 		$Targeting.visible = false
 		playing = false
 		
@@ -152,34 +168,74 @@ func play_from_field(unit):
 	pass
 
 
-func open_action_confirm(hand_index):
-	var card_info = get_card_info(hand[hand_index])
+var confirmable = false
+func open_action_confirm():
+	$Overlay.visible = true
+	$ActionConfirm.visible = true
+	var card_info = get_card_info(hand[selected_card_index])
+	$ActionConfirm/Cost.text = "Energy Cost:\n" + str(card_info["cost"])
+	if used_energy + card_info["cost"] > max_energy:
+		$ActionConfirm/NoEnergy.visible = true
+		confirmable = false
+	else:
+		$ActionConfirm/NoEnergy.visible = false
+		confirmable = true
+
+	if target != "None":
+		if card_info["type"] == "power":
+			$ActionConfirm/Question.text = "Use " + card_info["name"] + "\non " + target + "?"
+		else:
+			$ActionConfirm/Question.text = "Deploy " + card_info["name"] + "\n and use " + card_info["keywordA"] + "\non " + target + "?"
+	elif card_info["type"] == "crystal":
+		$ActionConfirm/Question.text = "Deploy " + card_info["name"] + " Crystal?"
+	elif card_info["type"] == "oracle":
+		$ActionConfirm/Question.text = "Request oracle for " + card_info["name"] + "?"
+	else:
+		$ActionConfirm/Question.text = "Deploy " + card_info["name"] + "?"
+
+func action_confirmed():
+	if confirmable == true:
+		$Overlay.visible = false
+		$ActionConfirm.visible = false
+		playing = false
+		var card_info = get_card_info(hand[selected_card_index])
+		for image in card_nodes:
+			if image != card_nodes[selected_card_index]:
+				if !image in actions:
+					image.get_node("Overlay").visible = false
+		card_nodes[selected_card_index].get_node("Overlay").visible = true
+		actions.append(card_nodes[selected_card_index])
+		action_count += 1
+		used_energy += card_info["cost"]
+		$Actions.text = "Actions\n" + str(action_count) + "/ 4"
+		$Energy.text = "Energy\n" + str(used_energy) + " / " + str(max_energy)
+		action_strings.append("\nPlayed " + card_info["name"] + "(" + str(card_info["cost"]) + ")")
+		if action_count == 4:
+			action_strings[3] += "\n\nACTIONS MAXED"
+		$ActionsLog.text = ""
+		for line in action_strings:
+			$ActionsLog.text += line
+
+func action_canceled():
+	$Overlay.visible = false
+	$ActionConfirm.visible = false
+	playing = false
+	for image in card_nodes:
+		if !image in actions:
+			image.get_node("Overlay").visible = false
 	
-	
-	
-	
-	
-	
-	
-	
-	# Old 
-#	var card_info = get_card_info(hand[0])
-#	$Card2/TextureButton.texture_normal = load("res://" + card_info["type"] + "_card_base.png")
-#	$Card2/Name.text = card_info["name"]
-#	$Card2/CostSquare/Cost.text = str(card_info["cost"])
-#	if card_info["type"] == "construct":
-#		$Card2/Attack.text = str(card_info["attack"])
-#		$Card2/Defense.text = str(card_info["defense"])
-#	$Card2/KeywordA.text = card_info["keywordA"]
-#	$Card2/KeywordB.text = card_info["keywordB"]
-#
-#
-#	card_info = get_card_info(hand[4])
-#	$Card6/TextureButton.texture_normal = load("res://" + card_info["type"] + "_card_base.png")
-#	$Card6/Name.text = card_info["name"]
-#	$Card6/CostSquare/Cost.text = str(card_info["cost"])
-#	if card_info["type"] == "construct":
-#		$Card6/Attack.text = str(card_info["attack"])
-#		$Card6/Defense.text = str(card_info["defense"])
-#	$Card6/KeywordA.text = card_info["keywordA"]
-#	$Card6/KeywordB.text = card_info["keywordB"]
+
+func revert_action():
+	if action_count > 0:
+		var reverted = actions.pop_back()
+		var index = card_nodes.find(reverted)
+		var card_info = get_card_info(hand[index])
+		reverted.get_node("Overlay").visible = false
+		action_count -= 1
+		used_energy -= card_info["cost"]
+		$Actions.text = "Actions\n" + str(action_count) + "/ 4"
+		$Energy.text = "Energy\n" + str(used_energy) + " / " + str(max_energy)
+		action_strings.pop_back()
+		$ActionsLog.text = ""
+		for line in action_strings:
+			$ActionsLog.text += line
