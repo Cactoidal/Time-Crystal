@@ -97,6 +97,9 @@ func use_ability():
 	targeting = true
 	$Info.visible = false
 	$Info/Choices.visible = false
+	ui.seeking_target = true
+	ui.active_card = card_info.duplicate()
+	ui.pending_actor = self
 
 func cancel():
 	ui.board_targeting_activated = false
@@ -120,6 +123,8 @@ func _on_Area_mouse_entered():
 		$Info.rect_position = $Info.get_global_mouse_position()
 		if $Info.rect_position.x > 600:
 			 $Info.rect_position.x -= 200
+		if $Info.rect_position.y > 280:
+			$Info.rect_position.y -= 100
 	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
 	clickable = true
 
@@ -140,5 +145,11 @@ func activate():
 			ui.board_targeting_activated = true
 			for image in card_nodes:
 				image.get_node("Overlay").visible = true
+		else:
+			if ui.seeking_target == true:
+				ui.target = self
+				ui.open_target_confirm()
 	else:
-		print('cancel')
+		if ui.seeking_target == true:
+			ui.target = self
+			ui.open_target_confirm()
