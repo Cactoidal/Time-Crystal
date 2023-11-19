@@ -1,6 +1,8 @@
 extends Control
 
 var card = load("res://Card.tscn")
+var paramecium = load("res://Paramecium.tscn")
+var crystal = load("res://Crystal.tscn")
 var ethers
 #var deck = {"1": "10", "2": "11", "3": "12", "4": "13", "5": "14", "6": "15", "7": "16", "8": "17", "9": "18", "10": "19", "11": "20", "12": "21", "13": "22", "14": "23", "15": "24", "16": "25", "17": "26", "18": "27", "19": "28", "20": "29"}
 
@@ -20,6 +22,16 @@ var hand = []
 var card_nodes = []
 var selected_card_index
 
+var board
+var board_nodes = []
+var selected_board_index
+
+var player_units = ["10", "11", "15"]
+var opponent_units = ["11", "10", "15"]
+
+var player_mapped_to_board_index = []
+var opponent_mapped_to_board_index = []
+
 var action_count = 0
 #var max_energy = 1
 var max_energy = 10
@@ -30,7 +42,9 @@ var target = "None"
 var actions = []
 var action_strings = []
 
-var mapped_to_board_index = []
+var oracle_used = false
+
+
 
 
 
@@ -39,9 +53,11 @@ func _ready():
 	$RegisterPlayer.connect("pressed", self, "register_player")
 	$StartGame.connect("pressed", self, "start_game")
 	$ResetGame.connect("pressed", self, "reset_game")
-	$PlayCard.connect("pressed", self, "play_card")
+	$EndTurn.connect("pressed", self, "open_end_turn_confirm")
 	
 	card_nodes = [$Card1, $Card2, $Card3, $Card4, $Card5, $Card6]
+	board = get_parent().get_node("WorldRotate")
+	board_nodes = board.get_children()
 	
 	$Card1/TextureButton.connect("pressed", self, "play_from_hand", [$Card1])
 	$Card2/TextureButton.connect("pressed", self, "play_from_hand", [$Card2])
@@ -53,8 +69,12 @@ func _ready():
 	$ActionConfirm/Confirm.connect("pressed", self, "action_confirmed")
 	$ActionConfirm/Cancel.connect("pressed", self, "action_canceled")
 	$Revert.connect("pressed", self, "revert_action")
+	$EndTurnConfirm/Confirm.connect("pressed", self, "end_turn_confirmed")
+	$EndTurnConfirm/Cancel.connect("pressed", self, "end_turn_canceled")
 	
 	get_hand()
+	map_random_spaces()
+	assign_units()
 
 func register_opponent():
 	ethers.start_transaction("register_opponent", [opponentDeck])
@@ -95,7 +115,7 @@ func get_card_info(card_id):
 		17: return {"type": "power", "name": "Crystallize", "cost": 2, "attack": 0, "defense": 0, "keywordA": "DESTROY", "keywordB": ""}
 		18: return {"type": "power", "name": "Shield", "cost": 1, "attack": 0, "defense": 0, "keywordA": "SHIELD", "keywordB": ""}
 		
-		19: return {"type": "oracle", "name": "Randomize", "cost": 2, "attack": 0, "defense": 0, "keywordA": "RANDOM", "keywordB": ""}
+		19: return {"type": "oracle", "name": "Randomness", "cost": 2, "attack": 0, "defense": 0, "keywordA": "RANDOM", "keywordB": ""}
 		20: return {"type": "oracle", "name": "Knowledge", "cost": 1, "attack": 0, "defense": 0, "keywordA": "DRAW +1", "keywordB": ""}
 
 func get_hand():
@@ -110,7 +130,6 @@ func set_card_values():
 	for image in card_nodes:
 		image.visible = false
 	for card in range(hand.size()):
-	#for card in [0,4]:
 		var card_info = get_card_info(hand[card])
 		card += 1
 		get_node("Card" + str(card) + "/TextureButton").texture_normal = load("res://" + card_info["type"] + "_card_base.png")
@@ -135,6 +154,47 @@ func set_card_values():
 			get_node("Card" + str(card) + "/Name").material = null
 		
 
+func map_random_spaces():
+	randomize()
+	for node in range(15):
+		player_mapped_to_board_index.append(board_nodes[node])
+	
+	for node in range(15,30):
+		opponent_mapped_to_board_index.append(board_nodes[node])
+		
+	player_mapped_to_board_index.shuffle()
+	opponent_mapped_to_board_index.shuffle()
+
+func assign_units():
+	for unit in range(player_units.size()):
+		print(player_mapped_to_board_index[unit])
+		var card_info = get_card_info(int(player_units[unit]))
+		var mesh
+		if card_info["type"] == "construct":
+			mesh = paramecium.instance()
+		elif card_info["type"] == "crystal":
+			mesh = crystal.instance()
+		player_mapped_to_board_index[unit].add_child(mesh)
+		mesh.global_transform.origin.y += 1
+		mesh.rotate_y(0.4)
+		
+		
+	for unit in range (opponent_units.size()):
+		print(opponent_mapped_to_board_index[unit])
+		var card_info = get_card_info(int(opponent_units[unit]))
+		var mesh
+		if card_info["type"] == "construct":
+			mesh = paramecium.instance()
+		elif card_info["type"] == "crystal":
+			mesh = crystal.instance()
+		opponent_mapped_to_board_index[unit].add_child(mesh)
+		mesh.mod = -1
+		mesh.global_transform.origin.y += 1
+		mesh.rotate_y(0.4)
+	
+
+	
+	
 var playing = false
 func play_from_hand(unit):
 	if playing == false:
@@ -153,9 +213,9 @@ func play_from_hand(unit):
 				$Targeting.visible = true
 			else:
 				open_action_confirm()
-		else:
+		#else:
 			#put indicator here
-			print("Actions Maxed")
+			#print("Actions Maxed")
 	else:
 		for image in card_nodes:
 			if !image in actions:
@@ -172,6 +232,7 @@ var confirmable = false
 func open_action_confirm():
 	$Overlay.visible = true
 	$ActionConfirm.visible = true
+	$ActionConfirm/OracleCalled.visible = false
 	var card_info = get_card_info(hand[selected_card_index])
 	$ActionConfirm/Cost.text = "Energy Cost:\n" + str(card_info["cost"])
 	if used_energy + card_info["cost"] > max_energy:
@@ -189,16 +250,24 @@ func open_action_confirm():
 	elif card_info["type"] == "crystal":
 		$ActionConfirm/Question.text = "Deploy " + card_info["name"] + " Crystal?"
 	elif card_info["type"] == "oracle":
-		$ActionConfirm/Question.text = "Request oracle for " + card_info["name"] + "?"
+		$ActionConfirm/Question.text = "Request " + card_info["name"] + "\nfrom oracle?"
+		if oracle_used == true:
+			$ActionConfirm/OracleCalled.visible = true
 	else:
 		$ActionConfirm/Question.text = "Deploy " + card_info["name"] + "?"
 
 func action_confirmed():
+	var card_info = get_card_info(hand[selected_card_index])
+	if card_info["type"] == "oracle":
+		if oracle_used == true:
+			return
 	if confirmable == true:
 		$Overlay.visible = false
 		$ActionConfirm.visible = false
 		playing = false
-		var card_info = get_card_info(hand[selected_card_index])
+		#var card_info = get_card_info(hand[selected_card_index])
+		if card_info["type"] == "oracle":
+			oracle_used = true
 		for image in card_nodes:
 			if image != card_nodes[selected_card_index]:
 				if !image in actions:
@@ -215,6 +284,8 @@ func action_confirmed():
 		$ActionsLog.text = ""
 		for line in action_strings:
 			$ActionsLog.text += line
+		if oracle_used == true:
+			$ActionsLog.text += "\nORACLE CALLED"
 
 func action_canceled():
 	$Overlay.visible = false
@@ -228,14 +299,41 @@ func action_canceled():
 func revert_action():
 	if action_count > 0:
 		var reverted = actions.pop_back()
-		var index = card_nodes.find(reverted)
-		var card_info = get_card_info(hand[index])
-		reverted.get_node("Overlay").visible = false
+		if reverted in card_nodes:
+			var index = card_nodes.find(reverted)
+			var card_info = get_card_info(hand[index])
+			reverted.get_node("Overlay").visible = false
+			used_energy -= card_info["cost"]
+			if card_info["type"] == "oracle":
+				oracle_used = false
 		action_count -= 1
-		used_energy -= card_info["cost"]
+		#used_energy -= card_info["cost"]
 		$Actions.text = "Actions\n" + str(action_count) + "/ 4"
 		$Energy.text = "Energy\n" + str(used_energy) + " / " + str(max_energy)
 		action_strings.pop_back()
 		$ActionsLog.text = ""
 		for line in action_strings:
 			$ActionsLog.text += line
+		if oracle_used == true:
+			$ActionsLog.text += "\nORACLE CALLED"
+	
+
+func open_end_turn_confirm():
+	$Overlay.visible = true
+	$EndTurnConfirm.visible = true
+	$EndTurnConfirm/Cost.text = "Energy Used:\n" + str(used_energy) + " / " + str(max_energy)
+	$EndTurnConfirm/Question.text = "End Turn?\n\n"
+	for line in action_strings:
+		$EndTurnConfirm/Question.text += line
+
+func end_turn_confirmed():
+	$Overlay.visible = false
+	$EndTurnConfirm.visible = false
+
+func end_turn_canceled():
+	$Overlay.visible = false
+	$EndTurnConfirm.visible = false
+	
+	
+	
+	
