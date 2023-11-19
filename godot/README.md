@@ -54,7 +54,7 @@ Since I uploaded the key to the DON gateway, I know what it is, and I could use 
 
 Fortunately, I think the solution should be straightforward.  AES keys are just 16 random bytes.  After the contract has been deployed, a special Functions job could ask each node to generate some random bytes and upload them to the DON gateway.  The full key could then be reconstituted later during requests.
 
-I would create this job now, but I don't think the gateway is set up in such a way that it will work.  For now, I will simulate the idea by uploading parts of the inner key, and combining those parts during requests.
+I would create this job now, but I don't think the gateway is set up in such a way that it will work.  For now, I will simulate the idea by uploading parts of the inner key, and then combine those parts during requests.
 
 ### Oracle Key Exchange
 
