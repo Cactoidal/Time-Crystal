@@ -135,12 +135,18 @@ func _on_Area_mouse_exited():
 	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 	clickable = false
 
+#I'll need to allow blocking as well
 func activate():
 	if selected == false:
 		if ui.board_targeting_activated == false && $Info/Team.text == "Player":
 			selected = true
 			$Info.visible = true
 			$Info/Choices.visible = true
+			if card_info["type"] == "construct":
+				if attacking == true:
+					$Info/Choices/Attack.visible = false
+				else:
+					$Info/Choices/Attack.visible = true
 			info_square_overlay.visible = true
 			ui.board_targeting_activated = true
 			for image in card_nodes:
