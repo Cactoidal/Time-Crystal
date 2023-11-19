@@ -1,0 +1,510 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://TileBlock.tscn" type="PackedScene" id=1]
+[ext_resource path="res://world_rotate.gd" type="Script" id=3]
+[ext_resource path="res://CardGame.gd" type="Script" id=5]
+[ext_resource path="res://Card.tscn" type="PackedScene" id=7]
+
+[sub_resource type="Shader" id=3]
+code = "// HSV to RBG from https://www.rapidtables.com/convert/color/hsv-to-rgb.html
+// Rotation matrix from https://en.wikipedia.org/wiki/Rotation_matrix
+
+shader_type canvas_item;
+
+const float PI = 3.1415926535;
+
+uniform float strength: hint_range(0., 1.) = 0.5;
+uniform float speed: hint_range(0., 10.) = 0.5;
+uniform float angle: hint_range(0., 360.) = 120.;
+
+void fragment() {
+	float hue = UV.x * cos(radians(angle)) - UV.y * sin(radians(angle));
+	hue = fract(hue + fract(TIME  * speed));
+	float x = 1. - abs(mod(hue / (1./ 6.), 2.) - 1.);
+	vec3 rainbow;
+	if(hue < 1./6.){
+		rainbow = vec3(1., x, 0.);
+	} else if (hue < 1./3.) {
+		rainbow = vec3(x, 1., 0);
+	} else if (hue < 0.5) {
+		rainbow = vec3(0, 1., x);
+	} else if (hue < 2./3.) {
+		rainbow = vec3(0., x, 1.);
+	} else if (hue < 5./6.) {
+		rainbow = vec3(x, 0., 1.);
+	} else {
+		rainbow = vec3(1., 0., x);
+	}
+	vec4 color = texture(TEXTURE, UV);
+	COLOR = mix(color, vec4(rainbow, color.a), strength);
+}"
+
+[sub_resource type="ShaderMaterial" id=4]
+shader = SubResource( 3 )
+shader_param/strength = 0.5
+shader_param/speed = 0.5
+shader_param/angle = 120.0
+
+[node name="3DBoard" type="Spatial"]
+
+[node name="ColorRect" type="ColorRect" parent="."]
+visible = false
+anchor_top = 1.0
+anchor_bottom = 1.0
+margin_top = -117.0
+margin_right = 1035.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="ColorRect2" type="ColorRect" parent="."]
+margin_right = 182.0
+margin_bottom = 594.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="WorldRotate" type="Spatial" parent="."]
+script = ExtResource( 3 )
+
+[node name="TileBlock1" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.73941, 0, -4.6145 )
+
+[node name="TileBlock2" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.80301, 0, -3.07329 )
+
+[node name="TileBlock3" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.900765, 0, -1.51466 )
+
+[node name="TileBlock4" parent="WorldRotate" instance=ExtResource( 1 )]
+
+[node name="TileBlock5" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.55058, 0, -4.6145 )
+
+[node name="TileBlock6" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3.63665, 0, -3.07329 )
+
+[node name="TileBlock7" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.71737, 0, -1.51466 )
+
+[node name="TileBlock8" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81117, 0, 0 )
+
+[node name="TileBlock9" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.900765, 0, 1.55739 )
+
+[node name="TileBlock10" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 6.36719, 0, -4.6145 )
+
+[node name="TileBlock11" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 5.44782, 0, -3.07329 )
+
+[node name="TileBlock12" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.55101, 0, -1.51466 )
+
+[node name="TileBlock13" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3.62778, 0, 0 )
+
+[node name="TileBlock14" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.71737, 0, 1.55739 )
+
+[node name="TileBlock15" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.80301, 0, 3.12548 )
+
+[node name="TileBlock16" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.26443, 0, -3.07329 )
+
+[node name="TileBlock17" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 6.36218, 0, -1.51466 )
+
+[node name="TileBlock18" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 5.46142, 0, 0 )
+
+[node name="TileBlock19" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.55101, 0, 1.55739 )
+
+[node name="TileBlock20" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3.63665, 0, 3.12548 )
+
+[node name="TileBlock21" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.68338, 0.0112314, 4.65271 )
+
+[node name="TileBlock22" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 8.17879, 0, -1.51466 )
+
+[node name="TileBlock23" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.27259, 0, 0 )
+
+[node name="TileBlock24" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 6.36218, 0, 1.55739 )
+
+[node name="TileBlock25" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 5.44782, 0, 3.12548 )
+
+[node name="TileBlock26" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.49455, 0.0112314, 4.65271 )
+
+[node name="TileBlock27" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 9.08919, 0, 0 )
+
+[node name="TileBlock28" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 8.17879, 0, 1.55739 )
+
+[node name="TileBlock29" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.26443, 0, 3.12548 )
+
+[node name="TileBlock30" parent="WorldRotate" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 6.31116, 0.0112314, 4.65271 )
+
+[node name="Camera" type="Camera" parent="WorldRotate"]
+transform = Transform( -0.0930866, 0.884052, -0.458026, -0.00893109, 0.459263, 0.888255, 0.995618, 0.0867754, -0.0348557, -1.55988, 7.20663, -1.02524 )
+
+[node name="ReflectionProbe" type="ReflectionProbe" parent="WorldRotate"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 6.04484, 0, 0 )
+extents = Vector3( 8, 3, 8 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="WorldRotate"]
+transform = Transform( 0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 0, 0, 0 )
+
+[node name="UI" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+script = ExtResource( 5 )
+
+[node name="InfoSquareBackground" type="ColorRect" parent="UI"]
+margin_left = 807.0
+margin_top = 410.0
+margin_right = 1025.0
+margin_bottom = 598.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="RegisterOpponent" type="Button" parent="UI"]
+visible = false
+margin_left = 616.0
+margin_top = 122.0
+margin_right = 792.0
+margin_bottom = 142.0
+mouse_default_cursor_shape = 2
+text = "Register OPPONENT Deck"
+
+[node name="RegisterPlayer" type="Button" parent="UI"]
+visible = false
+margin_left = 616.0
+margin_top = 67.0
+margin_right = 792.0
+margin_bottom = 87.0
+mouse_default_cursor_shape = 2
+text = "Register PLAYER Deck"
+
+[node name="StartGame" type="Button" parent="UI"]
+visible = false
+margin_left = 616.0
+margin_top = 281.0
+margin_right = 792.0
+margin_bottom = 301.0
+mouse_default_cursor_shape = 2
+text = "Start Game"
+
+[node name="ResetGame" type="Button" parent="UI"]
+visible = false
+margin_left = 616.0
+margin_top = 334.0
+margin_right = 792.0
+margin_bottom = 354.0
+mouse_default_cursor_shape = 2
+text = "Reset Game"
+
+[node name="OpponentCard" type="Label" parent="UI"]
+visible = false
+margin_left = 856.0
+margin_top = 52.0
+margin_right = 970.0
+margin_bottom = 83.0
+text = "Opponent Played:
+"
+
+[node name="YourCard" type="Label" parent="UI"]
+visible = false
+margin_left = 856.0
+margin_top = 181.0
+margin_right = 970.0
+margin_bottom = 212.0
+text = "You Played:
+"
+
+[node name="YourHand" type="Label" parent="UI"]
+visible = false
+margin_left = 876.0
+margin_top = 268.0
+margin_right = 990.0
+margin_bottom = 299.0
+text = "Your Hand:
+"
+
+[node name="PickCard" type="Label" parent="UI"]
+visible = false
+margin_left = 758.0
+margin_top = 387.0
+margin_right = 872.0
+margin_bottom = 418.0
+text = "Pick Card:
+"
+
+[node name="CardIndex" type="LineEdit" parent="UI"]
+visible = false
+margin_left = 756.0
+margin_top = 414.0
+margin_right = 814.0
+margin_bottom = 438.0
+
+[node name="EndTurn" type="Button" parent="UI"]
+margin_left = 829.0
+margin_top = 566.0
+margin_right = 1005.0
+margin_bottom = 586.0
+mouse_default_cursor_shape = 2
+text = "End Turn"
+
+[node name="Card1" parent="UI" instance=ExtResource( 7 )]
+margin_left = 11.0
+margin_top = 8.0
+margin_right = 11.0
+margin_bottom = 8.0
+
+[node name="Card2" parent="UI" instance=ExtResource( 7 )]
+margin_left = 11.0
+margin_top = 105.0
+margin_right = 11.0
+margin_bottom = 105.0
+
+[node name="Card3" parent="UI" instance=ExtResource( 7 )]
+margin_left = 11.0
+margin_top = 201.0
+margin_right = 11.0
+margin_bottom = 201.0
+
+[node name="Card4" parent="UI" instance=ExtResource( 7 )]
+margin_left = 11.0
+margin_top = 297.0
+margin_right = 11.0
+margin_bottom = 297.0
+
+[node name="Card5" parent="UI" instance=ExtResource( 7 )]
+margin_left = 11.0
+margin_top = 393.0
+margin_right = 11.0
+margin_bottom = 393.0
+
+[node name="Card6" parent="UI" instance=ExtResource( 7 )]
+margin_left = 11.0
+margin_top = 490.0
+margin_right = 11.0
+margin_bottom = 490.0
+
+[node name="Actions" type="Label" parent="UI"]
+margin_left = 893.0
+margin_top = 437.0
+margin_right = 941.0
+margin_bottom = 468.0
+text = "Actions
+0 / 4"
+
+[node name="ActionsLog" type="Label" parent="UI"]
+margin_left = 638.0
+margin_top = 441.0
+margin_right = 784.0
+margin_bottom = 506.0
+
+[node name="Revert" type="Button" parent="UI"]
+margin_left = 885.0
+margin_top = 474.0
+margin_right = 938.0
+margin_bottom = 494.0
+mouse_default_cursor_shape = 2
+text = "Revert"
+
+[node name="Energy" type="Label" parent="UI"]
+margin_left = 893.0
+margin_top = 502.0
+margin_right = 941.0
+margin_bottom = 533.0
+text = "Energy
+0 / 10"
+
+[node name="Overlay" type="ColorRect" parent="UI"]
+visible = false
+anchor_right = 25.78
+anchor_bottom = 15.062
+margin_right = 4.79993
+margin_bottom = 11.52
+color = Color( 0, 0, 0, 0.384314 )
+
+[node name="InfoSquareOverlay" type="ColorRect" parent="UI"]
+visible = false
+margin_left = 807.0
+margin_top = 410.0
+margin_right = 1025.0
+margin_bottom = 598.0
+color = Color( 0, 0, 0, 0.419608 )
+
+[node name="Targeting" type="Line2D" parent="UI"]
+visible = false
+material = SubResource( 4 )
+position = Vector2( 100, 50 )
+points = PoolVector2Array( -2, -2, -2, -2 )
+
+[node name="ActionConfirm" type="ColorRect" parent="UI"]
+visible = false
+margin_left = 421.0
+margin_top = 201.0
+margin_right = 674.0
+margin_bottom = 413.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="Question" type="Label" parent="UI/ActionConfirm"]
+margin_left = 14.0
+margin_top = 18.0
+margin_right = 238.0
+margin_bottom = 49.0
+text = "Use Crystallize 
+on Paramecium?"
+
+[node name="Cost" type="Label" parent="UI/ActionConfirm"]
+margin_left = 83.0
+margin_top = 81.0
+margin_right = 201.0
+margin_bottom = 116.0
+text = "Energy Cost:
+0"
+
+[node name="NoEnergy" type="Label" parent="UI/ActionConfirm"]
+visible = false
+margin_left = 64.0
+margin_top = 162.0
+margin_right = 183.0
+margin_bottom = 176.0
+text = "Not Enough Energy"
+
+[node name="OracleCalled" type="Label" parent="UI/ActionConfirm"]
+visible = false
+margin_left = 56.0
+margin_top = 184.0
+margin_right = 193.0
+margin_bottom = 198.0
+text = "Oracle Already Called"
+
+[node name="Confirm" type="Button" parent="UI/ActionConfirm"]
+margin_left = 18.0
+margin_top = 123.0
+margin_right = 102.0
+margin_bottom = 149.0
+mouse_default_cursor_shape = 2
+text = "Confirm"
+
+[node name="Cancel" type="Button" parent="UI/ActionConfirm"]
+margin_left = 147.0
+margin_top = 123.0
+margin_right = 231.0
+margin_bottom = 149.0
+mouse_default_cursor_shape = 2
+text = "Cancel"
+
+[node name="TargetConfirm" type="ColorRect" parent="UI"]
+visible = false
+margin_left = 421.0
+margin_top = 201.0
+margin_right = 674.0
+margin_bottom = 413.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="Question" type="Label" parent="UI/TargetConfirm"]
+margin_left = 14.0
+margin_top = 18.0
+margin_right = 238.0
+margin_bottom = 49.0
+text = "Use Crystallize 
+on Paramecium?"
+
+[node name="Cost" type="Label" parent="UI/TargetConfirm"]
+margin_left = 83.0
+margin_top = 81.0
+margin_right = 201.0
+margin_bottom = 116.0
+text = "Energy Cost:
+0"
+
+[node name="NoEnergy" type="Label" parent="UI/TargetConfirm"]
+visible = false
+margin_left = 64.0
+margin_top = 162.0
+margin_right = 183.0
+margin_bottom = 176.0
+text = "Not Enough Energy"
+
+[node name="OracleCalled" type="Label" parent="UI/TargetConfirm"]
+visible = false
+margin_left = 56.0
+margin_top = 184.0
+margin_right = 193.0
+margin_bottom = 198.0
+text = "Oracle Already Called"
+
+[node name="Confirm" type="Button" parent="UI/TargetConfirm"]
+margin_left = 18.0
+margin_top = 123.0
+margin_right = 102.0
+margin_bottom = 149.0
+mouse_default_cursor_shape = 2
+text = "Confirm"
+
+[node name="Cancel" type="Button" parent="UI/TargetConfirm"]
+margin_left = 147.0
+margin_top = 123.0
+margin_right = 231.0
+margin_bottom = 149.0
+mouse_default_cursor_shape = 2
+text = "Cancel"
+
+[node name="EndTurnConfirm" type="ColorRect" parent="UI"]
+visible = false
+margin_left = 421.0
+margin_top = 201.0
+margin_right = 674.0
+margin_bottom = 398.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="Question" type="Label" parent="UI/EndTurnConfirm"]
+margin_left = 10.0
+margin_top = 9.0
+margin_right = 234.0
+margin_bottom = 176.0
+text = "End Turn?
+
+Actions:
+Played Paramecium(0)
+Played Paramecium(0)
+Played Paramecium(0)
+Played Paramecium(0)
+
+ACTIONS MAXED
+"
+
+[node name="Cost" type="Label" parent="UI/EndTurnConfirm"]
+margin_left = 150.0
+margin_top = 7.0
+margin_right = 268.0
+margin_bottom = 42.0
+text = "Energy Used:
+0 / 10"
+
+[node name="Confirm" type="Button" parent="UI/EndTurnConfirm"]
+margin_left = 22.0
+margin_top = 165.0
+margin_right = 106.0
+margin_bottom = 191.0
+mouse_default_cursor_shape = 2
+text = "Confirm"
+
+[node name="Cancel" type="Button" parent="UI/EndTurnConfirm"]
+margin_left = 149.0
+margin_top = 165.0
+margin_right = 233.0
+margin_bottom = 191.0
+mouse_default_cursor_shape = 2
+text = "Cancel"

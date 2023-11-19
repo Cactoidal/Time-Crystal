@@ -10,7 +10,7 @@ var sepolia_rpc = "https://ethereum-sepolia.publicnode.com"
 
 var rpc_list
 
-var time_crystal_contract = "0x570846Aba62a8d985611B0D123fA326b347937D5"
+var time_crystal_contract = "0x4555e826206050150703313aE28A8cff885A522b"
 
 var signed_data = ""
 
@@ -22,12 +22,13 @@ var tx_function_name = ""
 var tx_parameter = ["None"]
 
 var menu_open = false
-
+var left_title = false
 var exiting = false
 #placeholder
 var main_screen = load("res://MainScreen.tscn")
 var game_world = load("res://World.tscn")
-var card_game = load("res://CardGame.tscn")
+var card_game = load("res://3DBoard.tscn")
+#var card_game = load("res://CardGame.tscn")
 
 var game_board
 
@@ -49,7 +50,8 @@ func _ready():
 	$OptionsMenu/Close.connect("pressed", self, "close_menu")
 	check_keystore()
 	check_aes_key()
-	get_rpc()
+	#apparently breaks the game if an invalid rpc is input
+	get_rpc()  
 	get_address()
 	get_balance()
 
@@ -152,6 +154,7 @@ func set_rpc():
 	file.open("user://rpc", File.WRITE)
 	file.store_line(JSON.print(new_rpc_list))
 	file.close()
+	sepolia_rpc = $OptionsMenu/RPC1.text
 
 func attempt_play():
 	if menu_open == false:
@@ -217,6 +220,7 @@ func fade(action, params="None"):
 			destination = params
 		fadeout = true
 
+
 func start_game():
 	for child in get_children():
 		if child != $Fadeout && child != $HTTP:
@@ -224,6 +228,7 @@ func start_game():
 	var new_main = main_screen.instance()
 	add_child(new_main)
 	move_child(new_main, 0)
+	left_title = true
 	fadein = true
 
 func embark():
@@ -239,14 +244,21 @@ func teleport():
 	$World/Player.global_transform.origin = Vector3(0,0,0)
 	fadein = true
 
+var console
 func start_card_game():
 	var new_game = card_game.instance()
 	add_child(new_game)
 	var children_length = get_children().size()
 	move_child(new_game, children_length - 2)
-	game_board = new_game
-	new_game.ethers = self
+	new_game.global_transform.origin.x += 1000
+	#game_board = new_game
+	#new_game.ethers = self
+	game_board = new_game.get_node("UI")
+	new_game.get_node("UI").ethers = self
+	$World/Player/Head/Camera.queue_free()
+	$World/DirectionalLight.queue_free()
 	fadein = true
+	console.close()
 	
 	
 func start_transaction(function_name, param=["None"]):
@@ -272,7 +284,8 @@ func get_balance():
 	http_request_delete_balance = http_request
 	http_request.connect("request_completed", self, "get_balance_attempted")
 	
-	$MenuBackground/GasBalance.text = "Refreshing..."
+	if left_title == false:
+		$MenuBackground/GasBalance.text = "Refreshing..."
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_getBalance", "params": [user_address, "latest"], "id": 7}
 	
@@ -290,9 +303,11 @@ func get_balance_attempted(result, response_code, headers, body):
 	if response_code == 200:
 		var balance = String(get_result["result"].hex_to_int())
 		user_balance = balance
-		$MenuBackground/GasBalance.text = "Your gas balance:\n" + balance
+		if left_title == false:
+			$MenuBackground/GasBalance.text = "Your gas balance:\n" + balance
 	else:
-		$MenuBackground/GasBalance.text = "CHECK RPC"
+		if left_title == false:
+			$MenuBackground/GasBalance.text = "CHECK RPC"
 	http_request_delete_balance.queue_free()
 	
 
@@ -441,8 +456,9 @@ func check_player_cards_attempted(result, response_code, headers, body):
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
 		print(raw_response)
-		game_board.get_node("YourHand").text = "Your Hand:\n" + TimeCrystal.decode_u8_array(raw_response)
-
+		game_board.get_node("YourHand").text = "Your Hand:\n" + TimeCrystal.decode_hex_string(raw_response)
+		#game_board.get_node("YourHand").text = "Your Hand:\n" + TimeCrystal.decode_u256_array_from_bytes(raw_response)
+		#print(parse_json(TimeCrystal.decode_hex_string(raw_response)["1"]))
 
 func check_field_cards():
 	var http_request = HTTPRequest.new()
@@ -470,7 +486,7 @@ func check_field_cards_attempted(result, response_code, headers, body):
 
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
-		game_board.get_node("OpponentCard").text = "Opponent Played:\n" + TimeCrystal.decode_u8_array(raw_response)
+		game_board.get_node("OpponentCard").text = "Opponent Played:\n" + TimeCrystal.decode_u256_array(raw_response)
 
 
 
@@ -501,7 +517,7 @@ func send_transaction_attempted(result, response_code, headers, body):
 
 	if response_code == 200:
 		tx_ongoing = true
-		confirmation_timer = 8
+		confirmation_timer = 7
 	else:
 		pass
 		#$Send.text = "TX ERROR"

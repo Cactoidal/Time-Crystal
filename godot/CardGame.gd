@@ -353,7 +353,8 @@ func open_target_confirm():
 	var if_crystal = ""
 	if target.card_info["type"] == "crystal":
 		if_crystal = " Crystal"
-	$TargetConfirm/Question.text = "Use " + active_card[keyword] + "\non " + target.card_info["name"] + if_crystal + "?"
+	var team = target.get_node("Info/Team").text
+	$TargetConfirm/Question.text = "Use " + active_card[keyword] + "\non " + team + "'s\n"+ target.card_info["name"] + if_crystal + "?"
 	$TargetConfirm/Cost.text = str(active_card["cost"])
 	if used_energy + active_card["cost"] > max_energy:
 		$TargetConfirm/NoEnergy.visible = true
