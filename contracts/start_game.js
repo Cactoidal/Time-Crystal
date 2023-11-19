@@ -3,13 +3,14 @@
 //args[2] = nonce;
 //args[3] = playerDeck, a JSON;
 
-// use CSPRNG key to randomize deck and draw 3 cards. return the 3 cards on chain
+// use CSPRNG key to randomize deck and draw 5 cards. return the 5 cards on chain
 
 // Import the deck
 
 var deckArray = args[3].split(",")
 
 var deckLength = deckArray.length;
+
 
 // Import the CSPRNG key from DON
 var csprngArray = secrets.csprngKey.split(",")
@@ -71,14 +72,14 @@ for (var i = number_array.length - 1; i >= 0; i--) {
 // Generate output
 // Create a better randomness regeneration later
 var playerHandArray = []
-for (var k = 0; k < 3; k++) {
+for (var k = 0; k < 5; k++) {
     let picked = secret_value % deckLength
     playerHandArray.push(deckArray[picked])
     deckArray.splice(picked, 1)
     deckLength -= 1
 }
 
-let result = (playerHandArray[0] + playerHandArray[1] + playerHandArray[2])
+let result = (playerHandArray[0] + playerHandArray[1] + playerHandArray[2] +  playerHandArray[3] +  playerHandArray[4])
 //let return_string = playerHandArray[0].concat(",")
 //return_string = return_string.concat(playerHandArray[1])
 //return_string = return_string.concat(",")
