@@ -32,6 +32,8 @@ var opponent_units = ["11", "10", "15"]
 var player_mapped_to_board_index = []
 var opponent_mapped_to_board_index = []
 
+var board_targeting_activated = false
+
 var action_count = 0
 #var max_energy = 1
 var max_energy = 10
@@ -103,20 +105,20 @@ func _process(delta):
 #cards can have two keywords.  for crystals and constructs, keywordA is always a drop effect
 func get_card_info(card_id):
 	match card_id:
-		10: return {"type": "construct", "name": "Paramecium", "cost": 0, "attack": 1, "defense": 1, "keywordA": "", "keywordB": ""}
-		11: return {"type": "construct", "name": "Attacker", "cost": 1, "attack": 2, "defense": 1, "keywordA": "", "keywordB": ""}
-		12: return {"type": "construct", "name": "Defender", "cost": 2, "attack": 1, "defense": 4, "keywordA": "SHIELD", "keywordB": ""}
-		13: return {"type": "construct", "name": "Sapper", "cost": 3, "attack": 2, "defense": 2, "keywordA": "DAMAGE 1", "keywordB": ""}
-		14: return {"type": "construct", "name": "Destroyer", "cost": 4, "attack": 4, "defense": 4, "keywordA": "", "keywordB": ""}
+		10: return {"id": "10", "type": "construct", "name": "Paramecium", "cost": 0, "attack": 1, "defense": 1, "keywordA": "", "keywordB": ""}
+		11: return {"id": "11", "type": "construct", "name": "Attacker", "cost": 1, "attack": 2, "defense": 1, "keywordA": "", "keywordB": ""}
+		12: return {"id": "12", "type": "construct", "name": "Defender", "cost": 2, "attack": 1, "defense": 4, "keywordA": "SHIELD", "keywordB": ""}
+		13: return {"id": "13", "type": "construct", "name": "Sapper", "cost": 3, "attack": 2, "defense": 2, "keywordA": "DAMAGE 1", "keywordB": ""}
+		14: return {"id": "14", "type": "construct", "name": "Destroyer", "cost": 4, "attack": 4, "defense": 4, "keywordA": "", "keywordB": ""}
 		
-		15: return {"type": "crystal", "name": "Regeneration", "cost": 2, "attack": 0, "defense": 3, "keywordA": "", "keywordB": "REGENERATE"}
-		16: return {"type": "crystal", "name": "Healing", "cost": 2, "attack": 0, "defense": 3, "keywordA": "", "keywordB": "HEAL 1"}
+		15: return {"id": "15", "type": "crystal", "name": "Regeneration", "cost": 2, "attack": 0, "defense": 3, "keywordA": "", "keywordB": "REGENERATE"}
+		16: return {"id": "16", "type": "crystal", "name": "Healing", "cost": 2, "attack": 0, "defense": 3, "keywordA": "", "keywordB": "HEAL 1"}
 		
-		17: return {"type": "power", "name": "Crystallize", "cost": 2, "attack": 0, "defense": 0, "keywordA": "DESTROY", "keywordB": ""}
-		18: return {"type": "power", "name": "Shield", "cost": 1, "attack": 0, "defense": 0, "keywordA": "SHIELD", "keywordB": ""}
+		17: return {"id": "17", "type": "power", "name": "Crystallize", "cost": 2, "attack": 0, "defense": 0, "keywordA": "DESTROY", "keywordB": ""}
+		18: return {"id": "18", "type": "power", "name": "Shield", "cost": 1, "attack": 0, "defense": 0, "keywordA": "SHIELD", "keywordB": ""}
 		
-		19: return {"type": "oracle", "name": "Randomness", "cost": 2, "attack": 0, "defense": 0, "keywordA": "RANDOM", "keywordB": ""}
-		20: return {"type": "oracle", "name": "Knowledge", "cost": 1, "attack": 0, "defense": 0, "keywordA": "DRAW +1", "keywordB": ""}
+		19: return {"id": "19", "type": "oracle", "name": "Randomness", "cost": 2, "attack": 0, "defense": 0, "keywordA": "RANDOM", "keywordB": ""}
+		20: return {"id": "20", "type": "oracle", "name": "Knowledge", "cost": 1, "attack": 0, "defense": 0, "keywordA": "DRAW +1", "keywordB": ""}
 
 func get_hand():
 	var inc_hand = parse_json(your_hand)
@@ -177,6 +179,10 @@ func assign_units():
 		player_mapped_to_board_index[unit].add_child(mesh)
 		mesh.set_info(card_info.duplicate())
 		mesh.get_node("Info/Team").text = "Player"
+		mesh.info_square_overlay = $InfoSquareOverlay
+		mesh.card_nodes = card_nodes
+		mesh.ui = self
+		mesh.player_unit_index = unit
 		mesh.global_transform.origin.y += 1
 		mesh.rotate_y(0.4)
 		
@@ -193,6 +199,9 @@ func assign_units():
 		mesh.mod = -1
 		mesh.set_info(card_info.duplicate())
 		mesh.get_node("Info/Team").text = "Opponent"
+		mesh.info_square_overlay = $InfoSquareOverlay
+		mesh.card_nodes = card_nodes
+		mesh.ui = self
 		mesh.global_transform.origin.y += 1
 		mesh.rotate_y(0.4)
 	
@@ -213,6 +222,8 @@ func play_from_hand(unit):
 			if card_info["type"] in ["power"] || card_info["keywordA"] in ["SHIELD", "DAMAGE 1", "REGENERATE"]:
 				$Targeting.set_point_position(0, unit.rect_position)
 				$Targeting.visible = true
+				$InfoSquareOverlay.visible = true
+				board_targeting_activated = true
 			else:
 				open_action_confirm()
 		#else:
@@ -222,12 +233,14 @@ func play_from_hand(unit):
 		for image in card_nodes:
 			if !image in actions:
 				image.get_node("Overlay").visible = false
+		for action in actions:
+			if !action in card_nodes:
+				if action.mapped_card != null:
+					action.mapped_card.get_node("Overlay").visible = true
 		$Targeting.visible = false
 		playing = false
-		
-
-func play_from_field(card_info):
-	pass
+		$InfoSquareOverlay.visible = false
+		board_targeting_activated = false
 
 
 var confirmable = false
@@ -260,6 +273,7 @@ func open_action_confirm():
 
 func action_confirmed():
 	var card_info = get_card_info(hand[selected_card_index])
+	var placed = false
 	if card_info["type"] == "oracle":
 		if oracle_used == true:
 			return
@@ -270,17 +284,22 @@ func action_confirmed():
 		$Overlay.visible = false
 		$ActionConfirm.visible = false
 		playing = false
-		#var card_info = get_card_info(hand[selected_card_index])
 		if card_info["type"] == "oracle":
 			oracle_used = true
 		if card_info["type"] in ["construct", "crystal"]:
 			place_unit(card_info.duplicate())
+			placed = true
 		for image in card_nodes:
 			if image != card_nodes[selected_card_index]:
 				if !image in actions:
 					image.get_node("Overlay").visible = false
+		for action in actions:
+			if !action in card_nodes:
+				if action.mapped_card != null:
+					action.mapped_card.get_node("Overlay").visible = true
 		card_nodes[selected_card_index].get_node("Overlay").visible = true
-		actions.append(card_nodes[selected_card_index])
+		if placed == false:
+			actions.append(card_nodes[selected_card_index])
 		action_count += 1
 		used_energy += card_info["cost"]
 		$Actions.text = "Actions\n" + str(action_count) + "/ 4"
@@ -301,7 +320,10 @@ func action_canceled():
 	for image in card_nodes:
 		if !image in actions:
 			image.get_node("Overlay").visible = false
-	
+	for action in actions:
+			if !action in card_nodes:
+				if action.mapped_card != null:
+					action.mapped_card.get_node("Overlay").visible = true
 
 func revert_action():
 	if action_count > 0:
@@ -322,8 +344,10 @@ func revert_action():
 				var card_info = get_card_info(hand[index])
 				reverted.mapped_card.get_node("Overlay").visible = false
 				used_energy -= card_info["cost"]
+				player_units.remove(reverted.player_unit_index)
+				print(reverted)
+				reverted.queue_free()
 		action_count -= 1
-		#used_energy -= card_info["cost"]
 		$Actions.text = "Actions\n" + str(action_count) + "/ 4"
 		$Energy.text = "Energy\n" + str(used_energy) + " / " + str(max_energy)
 		action_strings.pop_back()
@@ -340,11 +364,15 @@ func place_unit(card_info):
 		mesh = paramecium.instance()
 	elif card_info["type"] == "crystal":
 		mesh = crystal.instance()
-	player_units.append(mesh)
-	player_mapped_to_board_index[player_units.back()].add_child(mesh)
+	player_units.append(card_info["id"])
+	player_mapped_to_board_index[player_units.size() - 1].add_child(mesh)
 	mesh.set_info(card_info.duplicate())
 	mesh.get_node("Info/Team").text = "Player"
+	mesh.info_square_overlay = $InfoSquareOverlay
+	mesh.card_nodes = card_nodes
+	mesh.ui = self
 	mesh.global_transform.origin.y += 1
+	mesh.player_unit_index = player_units.size() - 1
 	mesh.rotate_y(0.4)
 	mesh.mapped_card = card_nodes[selected_card_index]
 	actions.append(mesh)
@@ -365,30 +393,3 @@ func end_turn_confirmed():
 func end_turn_canceled():
 	$Overlay.visible = false
 	$EndTurnConfirm.visible = false
-	
-	
-	
-	
-	
-	
-	# Old 
-#	var card_info = get_card_info(hand[0])
-#	$Card2/TextureButton.texture_normal = load("res://" + card_info["type"] + "_card_base.png")
-#	$Card2/Name.text = card_info["name"]
-#	$Card2/CostSquare/Cost.text = str(card_info["cost"])
-#	if card_info["type"] == "construct":
-#		$Card2/Attack.text = str(card_info["attack"])
-#		$Card2/Defense.text = str(card_info["defense"])
-#	$Card2/KeywordA.text = card_info["keywordA"]
-#	$Card2/KeywordB.text = card_info["keywordB"]
-#
-#
-#	card_info = get_card_info(hand[4])
-#	$Card6/TextureButton.texture_normal = load("res://" + card_info["type"] + "_card_base.png")
-#	$Card6/Name.text = card_info["name"]
-#	$Card6/CostSquare/Cost.text = str(card_info["cost"])
-#	if card_info["type"] == "construct":
-#		$Card6/Attack.text = str(card_info["attack"])
-#		$Card6/Defense.text = str(card_info["defense"])
-#	$Card6/KeywordA.text = card_info["keywordA"]
-#	$Card6/KeywordB.text = card_info["keywordB"]
