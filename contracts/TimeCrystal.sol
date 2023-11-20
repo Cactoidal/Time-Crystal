@@ -452,56 +452,29 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         // Player Take Turn
         else if (players[player].upkeepType == requestType.TAKE_TURN) {
             performData = abi.encode(false, "");
-            bytes memory actions = currentSession[msg.sender].updateBytes;
-            bytes memory hand = playerHands[currentSession[msg.sender].sessionId];
+    
             bytes[] memory playerField = currentSession[player].playerField;
             bytes[] memory opponentField = currentSession[player].opponentField;
 
-            uint handSize = hand.length / 2;
-            if (handSize > 6) {
+            //Hand can't contain more than 6 cards
+            if ( !IGameLogic(gameAutomation).checkHandSize( playerHands[currentSession[msg.sender].sessionId] ) ) {
                 return (upkeepNeeded, performData);
             }
-            uint8 handIndex = 0;
-            bytes[] memory arrHand = new bytes[](handSize);
-            for (uint8 i = 0; i < handSize; i++) {
-                bytes memory card = new bytes(2);
-                card[0] = hand[handIndex];
-                handIndex += 1;
-                card[1] = hand[handIndex];
-                handIndex += 1;
-                arrHand[i] = card;
-            }
+            
+            (uint8 leadByte1, 
+            uint8 leadByte2, 
+            bytes[] memory hand, 
+            bytes[] memory handActions, 
+            bytes[] memory fieldActions) = IGameLogic(gameAutomation).getData(playerHands[currentSession[msg.sender].sessionId], currentSession[msg.sender].updateBytes);
 
-            uint8 leadByte1 = uint8(actions[0]);
-            uint8 leadByte2 = uint8(actions[1]);
-            //no more than 4 actions allowed
+            //No more than 4 actions allowed
             if (leadByte1 + leadByte2 > 4) {
                 return (upkeepNeeded, performData);
-            }
-            uint8 index = 2;
-            bytes[] memory handActions = new bytes[](leadByte1);
-            bytes[] memory fieldActions = new bytes[](leadByte2);
-            for (uint8 j = 0; j < leadByte1 + leadByte2; j++) {
-                bytes memory action = new bytes(4);
-                action[0] = actions[index];
-                index += 1;
-                action[1] = actions[index];
-                index += 1;
-                action[2] = actions[index];
-                index += 1;
-                action[3] = actions[index];
-                index += 1;
-                if (j < leadByte1) {
-                    handActions[j] = action;
-                }
-                else {
-                    fieldActions[j-leadByte1] = action;
-                }
             }
             
             //check validity of actions using card type and target
             //internal functions to avoid stack errors
-            if (!IGameLogic(gameAutomation).checkHandActions(leadByte1, arrHand, handActions, playerField, opponentField)) {
+            if (!IGameLogic(gameAutomation).checkHandActions(leadByte1, hand, handActions, playerField, opponentField)) {
                 return (upkeepNeeded, performData);
             }
 
@@ -509,7 +482,18 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 return (upkeepNeeded, performData);
             }
            
-            playerField = IGameLogic(gameAutomation).doHandActions(leadByte2, fieldActions, playerField, opponentField);
+            uint8[4] memory destructible;
+            uint8[4] memory damaged;
+            uint8 destructionIndex;
+
+            (playerField,
+            destructible,
+            damaged,
+            destructionIndex) = IGameLogic(gameAutomation).doHandActions(leadByte1, fieldActions, playerField, opponentField);
+
+            (playerField,
+            destructible,
+            damaged) = IGameLogic(gameAutomation).doFieldActions(leadByte2, fieldActions, playerField, opponentField, destructible, damaged, destructionIndex);
 
             //will need to encode the new player hand, the player field, the opponent field, and life totals           
                 
@@ -537,68 +521,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     return result;
 }
 
-
-    function checkHandActions (uint8 leadByte, bytes[] memory _hand, bytes[] memory handActions, bytes[] memory playerField, bytes[] memory opponentField) internal view returns (bool) {
-        bytes[] memory hand = _hand;
-        uint handSize = hand.length;
-        uint playerFieldSize = playerField.length;
-        uint opponentFieldSize = opponentField.length;
-        for (uint8 k = 0; k < leadByte; k++) {
-            bytes memory cardId = new bytes(2);
-            uint8 targetTeam;
-            uint8 targetIndex;
-            cardId[0] = handActions[k][0];
-            cardId[1] = handActions[k][1];
-            targetTeam = uint8(handActions[k][2]);
-            targetIndex = uint8(handActions[k][3]);
-            cardTraits memory targetCard = cards[string(opponentField[targetIndex])];
-            bool exists = false;
-            uint8 selector;
-            //check if hand contains acting card
-
-            for (uint8 l = 0; l < handSize; l++) {
-                if (keccak256(cardId) == keccak256(hand[l])) {
-                    exists = true;
-                    selector = l;
-                    }
-                }
-
-            if (exists == false) {
-                return(false);
-                }
-            else {
-                hand[selector] = hand[hand.length - 1];
-                hand[hand.length - 1] = new bytes(2);
-                }
-
-            //validate action by card type and target
-            //7: No Target  8: Opponent is Target   9: Player is Target
-            if (targetTeam == 8) {
-                if (targetIndex >= opponentFieldSize) {
-                    return(false);
-                    }
-                }
-            else if (targetTeam == 9) {
-                if (targetIndex >= playerFieldSize) {
-                        return(false);
-                    }
-                }
-
-            cardTraits memory card = cards[string(cardId)];
-            //This is the player turn, so automatically these types of cards enter the player field
-            if (card.cardType == cType.CRYSTAL || card.cardType == cType.CONSTRUCT) {
-                if (playerFieldSize == 9) {
-                    return(false);
-                }
-                else {
-                    playerFieldSize += 1;
-                    }
-                }
-
-        }
-
-    return(true);
-  }
 
     function doHandActions (uint8 leadByte, bytes[] memory handActions, bytes[] memory _playerField, bytes[] memory _opponentField) internal view returns (bytes[] memory) {
         bytes[] memory playerField = _playerField;
@@ -648,43 +570,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         }
         return(playerField);
     }
-
-   function checkFieldActions (uint8 leadByte, bytes[] memory fieldActions, bytes[] memory _playerField, bytes[] memory opponentField) internal pure returns (bool) {
-        bytes[] memory playerField = _playerField;
-        uint playerFieldSize = playerField.length;
-        uint opponentFieldSize = opponentField.length;
-        for (uint8 k = 0; k < leadByte; k++) {
-            uint8 unitIndex;
-            uint8 unitAction;
-            uint8 targetTeam;
-            uint8 targetIndex;
-            unitIndex = uint8(fieldActions[k][0]);
-            unitAction = uint8(fieldActions[k][1]);
-            targetTeam = uint8(fieldActions[k][2]);
-            targetIndex = uint8(fieldActions[k][3]);
-        
-            if (unitIndex >= playerFieldSize) {
-                return false;
-            }
-            
-
-            //validate action by card type and target
-            //7: No Target  8: Opponent is Target   9: Player is Target
-            if (targetTeam == 8) {
-                if (targetIndex >= opponentFieldSize) {
-                    return(false);
-                    }
-                }
-            else if (targetTeam == 9) {
-                if (targetIndex >= playerFieldSize) {
-                        return(false);
-                    }
-                }
-
-            //cardTraits memory card = cards[string(playerField[unitIndex])];
-                }
-    return(true);
-  }
 
 
 
