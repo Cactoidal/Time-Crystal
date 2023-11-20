@@ -411,3 +411,16 @@ Add on top of this that I'm encoding a gigantic amount of data, right after writ
 I don't want to drop everything I've done so far, but perhaps I need to reevaluate aspects of how this game is supposed to work.  No matter what, I do want to at least use the secret randomness idea.  This is always going to be expensive, because each game session uses its own seed, iv, and nonce.  That said, when kept minimal, it's only a couple hundred thousand gas.
 
 Maybe there's something I can do.  Then again, looking at Arbitrum, at this current moment I can see 10 million gas transactions going for about $2 each, which isn't so bad.  I'll have to think about it.
+___
+
+There are two big drawbacks, but there is actually a way to call Functions without encoding arguments, and still get a different result each time.
+
+How?  By using `eth_call`.  A fully encoded CBOR request could include an HTTPRequest to a hardcoded RPC node (or several) to retrieve data.  This eth_call would retrieve data from hardcoded on-chain variables changed by the player, which would serve as the arguments for the job.
+
+The first drawback is the necessity for a queue.  Because the oracle must read from a single global variable, players will have to wait in line for their request to be executed.  This is not a horrible problem to have, since it is unlikely that players would need to wait long, and potentially there could be different "lanes" for executing the same job.
+
+The other, major problem of course is the reliance on an RPC node.
+
+RPC nodes are just APIs.  While they cannot forge transactions, they can provide false information.  They could be wrong, or malicious.  This risk can be somewhat minimized by aggregating results from multiple RPC nodes of good reputation.
+
+What we don't want is the "evil RPC" that provides false data, conferring an unfair advantage or potentially compromising the system's security.  For example, providing the same seed or iv twice to generate secret randomness, instead of using the on-chain seed + iv as intended.
