@@ -326,6 +326,12 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         players[player].upkeepType = requestType.OPPONENT_TURN;
         emit AwaitingAutomation(player);
     }
+     else if (pendingRequests[requestId] == requestType.OPPONENT_TURN) {
+        address player = requestIdbyRequester[requestId];
+        gameUpdates[currentSession[player].sessionId] = response;
+        players[player].upkeepType = requestType.OPPONENT_TURN;
+        emit AwaitingAutomation(player);
+    }
     else if (pendingRequests[requestId] == requestType.REGISTER_OPPONENT) {
         address player = requestIdbyRequester[requestId];
         players[player].inQueue = false;
@@ -473,7 +479,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             }
             
             //check validity of actions using card type and target
-            //internal functions to avoid stack errors
             if (!IGameLogic(gameAutomation).checkHandActions(leadByte1, hand, handActions, playerField, opponentField)) {
                 return (upkeepNeeded, performData);
             }
@@ -504,6 +509,8 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             //will need to encode the new player hand, the player field, the opponent field, and life totals           
 
             //in addition to the player fields, hand still needs to be modified properly
+            //Namely, it needs to be convered from an array of bytes to just bytes
+            //and what about pending attacks?
             performData = abi.encode(player, requestType.TAKE_TURN, abi.encode(hand, playerField, opponentField, playerHealthMod, opponentHealthMod));
             
             return (upkeepNeeded, performData);
@@ -511,6 +518,14 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
         // Opponent Take Turn
         else if (players[player].upkeepType == requestType.OPPONENT_TURN) {
+
+            //gameUpdates[currentSession[player].sessionId] contains the bytes from the oracle
+
+            //after validating, the Automations DON will do the same changes as above, including modifying
+            //the player hand.
+
+            //there should be a check here to see if the game is over
+            //players[player].inQueue = false;
         }
     
   }
@@ -527,57 +542,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     
     return result;
 }
-
-
-    function doHandActions (uint8 leadByte, bytes[] memory handActions, bytes[] memory _playerField, bytes[] memory _opponentField) internal view returns (bytes[] memory) {
-        bytes[] memory playerField = _playerField;
-        bytes[] memory opponentField = _opponentField;
-        uint playerFieldSize = playerField.length;
-        uint opponentFieldSize = opponentField.length;
-        uint8 destructionIndex;
-        uint8[4] memory destructible = [9,9,9,9];
-        uint8[4] memory damaged = [9,9,9,9];
-        for (uint8 k = 0; k < leadByte; k++) {
-            bytes memory cardId = new bytes(2);
-            uint8 targetTeam;
-            uint8 targetIndex;
-            cardId[0] = handActions[k][0];
-            cardId[1] = handActions[k][1];
-            targetTeam = uint8(handActions[k][2]);
-            targetIndex = uint8(handActions[k][3]);
-            cardTraits memory targetCard = cards[string(opponentField[targetIndex])];
-            cardTraits memory card = cards[string(cardId)];
-            //This is the player turn, so automatically these types of cards enter the player field
-            if (card.cardType == cType.CRYSTAL || card.cardType == cType.CONSTRUCT) {
-                bytes[] memory newPlayerField = new bytes[](playerFieldSize + 1);
-                for (uint8 i = 0; i < playerFieldSize; i++) {
-                    newPlayerField[i] = playerField[i];
-                }
-                newPlayerField[playerFieldSize] = cardId;
-                playerFieldSize++;
-                playerField = newPlayerField;
-            }
-            
-            if (card.keywordA == cardKeyword.DESTROY) {
-                destructible[destructionIndex] = targetIndex;
-                destructionIndex++;
-            }
-            else if (card.keywordA == cardKeyword.DAMAGE1) {
-                if (targetCard.defense == 1) {
-                    destructible[destructionIndex] = targetIndex;
-                    destructionIndex++;
-                }
-                else {
-                    damaged[destructionIndex] = targetIndex;
-                    destructionIndex++;
-                }
-             }
-
-    
-        }
-        return(playerField);
-    }
-
 
 
 
@@ -599,7 +563,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         }
 
         else if (upkeepType == requestType.REGISTER_PLAYER) {
-
+            players[player].inQueue = false;
             (bool valid, string memory deck) = abi.decode(params, (bool, string));
             if (valid == true) {
                 players[player].playerDecks.push(deck);
@@ -611,18 +575,57 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
 
         else if (upkeepType == requestType.TAKE_TURN) {
-            (uint[5] memory _newHand, string memory _handJSON) =  abi.decode(params, (uint[5], string));
-            currentSession[player].playerHand = _newHand;
-            currentSession[player].sessionId = sessionId;
+            (bytes memory _hand, 
+            bytes[] memory _playerField, 
+            bytes[] memory _opponentField, 
+            uint8 playerHealthMod, 
+            uint8 opponentHealthMod) = abi.decode(params, (bytes, bytes[], bytes[], uint8, uint8));
 
-            //playerHands.push(_handJSON);
+            playerHands[currentSession[player].sessionId] = _hand;
+            currentSession[player].playerField = _playerField;
+            currentSession[player].opponentField = _opponentField;
 
-            players[player].inQueue = false;
+            //since these values might be positive or negative, I'll probably need to use int instead
+            currentSession[player].playerHealth -= playerHealthMod;
+            currentSession[player].opponentHealth -= opponentHealthMod;
 
-            sessionId++;
+            //there should be a check here to see if the game is over.
+            // if so,
+            //players[player].inQueue = false;
+            //players[player].inGame = false;
+
+            //otherwise,
+
+            //Now the Functions oracle is called.  Either the CBOR encoding will happen in the read function,
+            //or it will happen here.
+
+            //s_lastRequestId = _sendRequest(params, subscriptionId, callbackGasLimit, donId);
+            //requestIdbyRequester[s_lastRequestId] = player;
+            //pendingRequests[s_lastRequestId] = requestType.OPPONENT_TURN;
 
             emit UpkeepFulfilled(performData);
 
+        }
+
+        else if (upkeepType == requestType.OPPONENT_TURN) {
+            (bytes memory _hand, 
+            bytes[] memory _playerField, 
+            bytes[] memory _opponentField, 
+            uint8 playerHealthMod, 
+            uint8 opponentHealthMod) = abi.decode(params, (bytes, bytes[], bytes[], uint8, uint8));
+
+            playerHands[currentSession[player].sessionId] = _hand;
+            currentSession[player].playerField = _playerField;
+            currentSession[player].opponentField = _opponentField;
+
+            //since these values might be positive or negative, I'll probably need to use int instead
+            currentSession[player].playerHealth -= playerHealthMod;
+            currentSession[player].opponentHealth -= opponentHealthMod;
+
+            //there should be a check here to see if the game is over
+
+            //otherwise, it is now the player's turn
+            players[player].inQueue = false;
         }
         
         
