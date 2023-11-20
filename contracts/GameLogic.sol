@@ -99,7 +99,11 @@ contract GameLogic is ConfirmedOwner {
     }
 
 
-    function checkHandActions (uint8 leadByte, bytes[] memory _hand, bytes[] memory handActions, bytes[] memory playerField, bytes[] memory opponentField) external view returns (bool) {
+    function checkHandActions (uint8 leadByte, 
+    bytes[] memory _hand, 
+    bytes[] memory handActions, 
+    bytes[] memory playerField, 
+    bytes[] memory opponentField) external view returns (bool) {
         bytes[] memory hand = _hand;
         uint handSize = hand.length;
         uint playerFieldSize = playerField.length;
@@ -162,7 +166,10 @@ contract GameLogic is ConfirmedOwner {
   }
 
   
-  function checkFieldActions (uint8 leadByte, bytes[] memory fieldActions, bytes[] memory _playerField, bytes[] memory opponentField) external pure returns (bool) {
+  function checkFieldActions (uint8 leadByte, 
+  bytes[] memory fieldActions, 
+  bytes[] memory _playerField, 
+  bytes[] memory opponentField) external pure returns (bool) {
         bytes[] memory playerField = _playerField;
         uint playerFieldSize = playerField.length;
         uint opponentFieldSize = opponentField.length;
@@ -204,7 +211,10 @@ contract GameLogic is ConfirmedOwner {
 
 
 
-  function doHandActions (uint8 _leadByte, bytes[] memory _handActions, bytes[] memory _playerField, bytes[] memory _opponentField) external view returns (bytes[] memory, uint8[4] memory, uint8[4] memory, uint8) {
+  function doHandActions (uint8 _leadByte, 
+  bytes[] memory _handActions, 
+  bytes[] memory _playerField, 
+  bytes[] memory _opponentField) external view returns (bytes[] memory, uint8[4] memory, uint8[4] memory, uint8) {
         uint8 leadByte = _leadByte;
         bytes[] memory handActions = _handActions;
         bytes[] memory playerField = _playerField;
@@ -271,12 +281,12 @@ contract GameLogic is ConfirmedOwner {
     function applyEffects (bytes[] memory _playerField, 
     bytes[] memory _opponentField, 
     uint8[4] memory _destructible, 
-    uint8[4] memory _damaged, 
-    uint8 playerHealth, 
-    uint8 opponentHealth) external view returns (bytes[] memory, bytes[] memory, uint8, uint8) {
+    uint8[4] memory _damaged) external view returns (bytes[] memory, bytes[] memory, uint8, uint8) {
 
+        uint8 playerHealthMod = 3;
+        uint8 opponentHealthMod = 3;
 
-        return (_playerField, _opponentField, playerHealth, opponentHealth);
+        return (_playerField, _opponentField, playerHealthMod, opponentHealthMod);
     }
 
 }
