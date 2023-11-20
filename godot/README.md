@@ -439,6 +439,6 @@ Since the range of secret random values is limited, it will be trivial for the p
 
 All they have to do is provide the secret password and the secret random value, and it can be hashed on-chain and compared to the hash committed by the oracle.
 
-The other idea is similar, but the information is not secret.  Instead, the oracle commits the hash, and then off-chain Automation can cycle through hashes of the possible outputs until it finds the correct one.  It can then encode the correct values into performData.
+The other idea is similar, but the information is not secret.  Instead, the oracle commits the hash, and then off-chain Automation can cycle through hashes of the possible outputs until it finds the correct one.  It can then encode the correct values into performData.  Or, just like above, the player could do it locally until they find the hash.
 
 This could potentially be used to exceed Function's 32 byte return limit.  I don't know if this has any other practical purpose.
