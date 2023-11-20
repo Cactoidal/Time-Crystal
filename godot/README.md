@@ -421,6 +421,6 @@ The first drawback is the necessity for a queue.  Because the oracle must read f
 
 The other, major problem of course is the reliance on an RPC node.
 
-RPC nodes are just APIs.  While they cannot forge transactions, they can provide false information.  They could be wrong, or malicious.  This risk can be somewhat minimized by aggregating results from multiple RPC nodes of good reputation.
+RPC nodes are just APIs.  While they cannot manipulate or forge outgoing transactions, they can return false information.  They could be wrong, or malicious.  This risk can be somewhat minimized by aggregating results from multiple RPC nodes of good reputation.
 
 What we don't want is the "evil RPC" that provides false data, conferring an unfair advantage or potentially compromising the system's security.  For example, providing the same seed or iv twice to generate secret randomness, instead of using the on-chain seed + iv as intended.
