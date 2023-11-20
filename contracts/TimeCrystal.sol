@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.20;
 
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "./ILogAutomation.sol";
-import "./IGameLogic.sol";
+import "ILogAutomation.sol";
+import "IGameLogic.sol";
 
 contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   using FunctionsRequest for FunctionsRequest.Request;
@@ -25,7 +25,8 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   string public register_opponent_source;
   FunctionsRequest.Location public secretsLocation;
   bytes encryptedSecretsReference;
-  uint64 subscriptionId = 1600;
+    //uint64 subscriptionId = 1600;
+  uint64 subscriptionId = 1686;
   uint32 callbackGasLimit = 300000;
   
 
@@ -93,19 +94,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         cardKeyword[] ability;
     }
 
-    struct gameSessionOLD {
-        string[] playerHand;
-        uint8 playerHealth;
-        uint8 opponentHealth;
-        string[] playerCards;
-        string[] opponentCards;
-        bytes updateBytes;
-        validationType updateType;
-        bool updateInFlight;
-        cardActions pendingActions;
-        uint8 currentTurn;
-  }
-
   struct gameSession {
     uint8 playerHealth;
     uint8 opponentHealth;
@@ -114,6 +102,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     uint[] playerHand;
     string handJSON;
     uint8[] fieldCards;
+    uint sessionId;
 
     bytes updateBytes;
     validationType updateType;
@@ -128,7 +117,9 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     mapping (address => Player) public players;
     uint opponentId;
     mapping (uint => address) public opponents;
+    uint sessionId;
     mapping (address => gameSession) public currentSession;
+    string[] playerHands;
 
     struct Opponent {
         string key;
@@ -209,6 +200,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     newSession.counter = _counter;
     newSession.nonce = gameNonce;
     gameNonce++;
+   
 
     currentSession[msg.sender] = newSession;
 
@@ -232,7 +224,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   }
 
 
-
+    //put indices of cards here
   function playerTakeTurn (bytes memory _actions) external {
     require (players[msg.sender].inGame == true);
     require (players[msg.sender].inQueue == false);
@@ -281,7 +273,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
      //return currentSession[msg.sender].playerHand;
     //these work but they are returning only the first index, how to get the whole array?
     function getPlayerCards() public view returns (string memory) {
-        return currentSession[msg.sender].handJSON;
+        return playerHands[currentSession[msg.sender].sessionId];
     }
 
     function getFieldCards() public view returns (uint8[] memory) {
@@ -462,8 +454,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 }
 
 
-
-//is forwarding enabled on testnet?
     function performUpkeep(
         bytes calldata performData
     ) external {
@@ -485,8 +475,13 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         else if (upkeepType == requestType.START_GAME) {
             (uint[5] memory _newHand, string memory _handJSON) =  abi.decode(params, (uint[5], string));
             currentSession[player].playerHand = _newHand;
-            currentSession[player].handJSON = _handJSON;
+            currentSession[player].sessionId = sessionId;
+
+            playerHands.push(_handJSON);
+
             players[player].inQueue = false;
+
+            sessionId++;
 
             emit UpkeepFulfilled(performData);
 
