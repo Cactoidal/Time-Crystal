@@ -409,3 +409,5 @@ If there is a way to alter the parameters in a pre-encoded message, then perhaps
 Add on top of this that I'm encoding a gigantic amount of data, right after writing that data on-chain, and the costs per transaction really start to balloon.
 
 I don't want to drop everything I've done so far, but perhaps I need to reevaluate aspects of how this game is supposed to work.  No matter what, I do want to at least use the secret randomness idea.  This is always going to be expensive, because each game session uses its own seed, iv, and nonce.  That said, when kept minimal, it's only a couple hundred thousand gas.
+
+I'll see if I can come up with anything.
