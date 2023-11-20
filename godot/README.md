@@ -374,13 +374,13 @@ I've been thinking more about how to encode the action bytes.  There will need t
 1)  First lead byte, encoding the number of actions played from the hand
 2)  Second lead byte, encoding the number of actions played from the field
 3)  Hand actions encoded in 4-byte chunks.  Hand actions are split into 3 parts:  the card id, the target team (7 is no target, 8 is the OPPONENT, and 9 is the PLAYER), and the index of the target in that team's unit array
-4)  Field actions encoded in 2-byte chunks.  Field actions are split into 2 parts: the actor's index in the unit array, and the type of action (1 is attack, 2 is the ability defined in keywordB)
+4)  Field actions encoded in 4-byte chunks.  Field actions are split into 4 parts: the actor's index in the unit array, the type of action (1 is attack, 2 is the ability defined in keywordB), the target team, and the target index.  Attacking doesn't need to specify a target.
 5)  Trailing byte, signifying the return from the oracle.  Only matters when returning the bytes from the OPPONENT's turn.  By default this will be 1, representing 1 drawn card for the PLAYER.
 6) Drawn cards, in the form of card ids
 
 The two lead bytes added together must equal 4 or less, or the actions will be rejected.  Here is an example diagram where I break down an example string, in this case returned from the Functions oracle which has just computed the OPPONENT's actions:
 
-![18diagram](https://github.com/Cactoidal/Time-Crystal/assets/115384394/29517a52-401f-4cb4-89bf-2f730dd9c4c0)
+![18diagram](https://github.com/Cactoidal/Time-Crystal/assets/115384394/fba47c40-09aa-40e2-9370-9fc62158e159)
 
 
 
