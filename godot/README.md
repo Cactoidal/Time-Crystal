@@ -386,7 +386,7 @@ I can see places where this could be made more efficient (perhaps the trailing b
 
 Ultimately the Automation DON needs to "update the game state" by commiting a JSON string containing all of the game data, for use by Godot and by the Functions oracle.
 
-Potentially, if all game logic is validated by Automation, this JSON "snapshot" should actually be sufficient for on-chain validation, since in theory the Automation DON could break it down as part of the checkLog function.  I'll find out if that's feasible. 
+Potentially, if all game logic is validated by Automation, this JSON "snapshot" should actually be sufficient for on-chain validation as well, since in theory the Automation DON could break it down as part of the checkLog function.  I'll find out if that's feasible. 
 
 
 
