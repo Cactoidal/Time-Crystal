@@ -485,6 +485,8 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             uint8[4] memory destructible;
             uint8[4] memory damaged;
             uint8 destructionIndex;
+            uint8 playerHealthMod;
+            uint8 opponentHealthMod;
 
             (playerField,
             destructible,
@@ -495,11 +497,16 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             destructible,
             damaged) = IGameLogic(gameAutomation).doFieldActions(leadByte2, fieldActions, playerField, opponentField, destructible, damaged, destructionIndex);
 
+            (playerField,
+            opponentField,
+            playerHealthMod,
+            opponentHealthMod) = IGameLogic(gameAutomation).applyEffects(playerField, opponentField, destructible, damaged);
             //will need to encode the new player hand, the player field, the opponent field, and life totals           
-                
-            //performData = abi.encode(player, requestType.TAKE_TURN, abi.encode(newCards, cardsJSON));
-            //upkeepNeeded = true;
-            //return (upkeepNeeded, performData);
+
+            //in addition to the player fields, hand still needs to be modified properly
+            performData = abi.encode(player, requestType.TAKE_TURN, abi.encode(hand, playerField, opponentField, playerHealthMod, opponentHealthMod));
+            
+            return (upkeepNeeded, performData);
         }
 
         // Opponent Take Turn
