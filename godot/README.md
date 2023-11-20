@@ -410,4 +410,4 @@ Add on top of this that I'm encoding a gigantic amount of data, right after writ
 
 I don't want to drop everything I've done so far, but perhaps I need to reevaluate aspects of how this game is supposed to work.  No matter what, I do want to at least use the secret randomness idea.  This is always going to be expensive, because each game session uses its own seed, iv, and nonce.  That said, when kept minimal, it's only a couple hundred thousand gas.
 
-I'll see if I can come up with anything.
+Then again, looking at Arbitrum, at this current moment I can see 10 million gas transactions going for about $2 each, which isn't so bad.  I'll have to think about it.
