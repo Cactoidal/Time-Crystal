@@ -204,7 +204,9 @@ contract GameLogic is ConfirmedOwner {
 
 
 
-  function doHandActions (uint8 leadByte, bytes[] memory handActions, bytes[] memory _playerField, bytes[] memory _opponentField) external view returns (bytes[] memory) {
+  function doHandActions (uint8 _leadByte, bytes[] memory _handActions, bytes[] memory _playerField, bytes[] memory _opponentField) external view returns (bytes[] memory, uint8[4] memory, uint8[4] memory, uint8) {
+        uint8 leadByte = _leadByte;
+        bytes[] memory handActions = _handActions;
         bytes[] memory playerField = _playerField;
         bytes[] memory opponentField = _opponentField;
         uint playerFieldSize = playerField.length;
@@ -250,7 +252,31 @@ contract GameLogic is ConfirmedOwner {
 
     
         }
-        return(playerField);
+        return(playerField, destructible, damaged, destructionIndex);
+    }
+
+    function doFieldActions (uint8 leadByte, 
+    bytes[] memory fieldActions, 
+    bytes[] memory _playerField, 
+    bytes[] memory _opponentField, 
+    uint8[4] memory _destructible, 
+    uint8[4] memory _damaged, 
+    uint8 destructionIndex) external view returns (bytes[] memory, uint8[4] memory, uint8[4] memory) {
+
+        return ( _playerField, _destructible, _damaged);
+    }
+
+
+
+    function applyEffects (bytes[] memory _playerField, 
+    bytes[] memory _opponentField, 
+    uint8[4] memory _destructible, 
+    uint8[4] memory _damaged, 
+    uint8 playerHealth, 
+    uint8 opponentHealth) external view returns (bytes[] memory, bytes[] memory, uint8, uint8) {
+
+
+        return (_playerField, _opponentField, playerHealth, opponentHealth);
     }
 
 }
