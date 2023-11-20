@@ -394,6 +394,8 @@ Starting today's log early, but I think it's warranted.  Part of the challenge h
 
 Godot, I've now realized, doesn't need neat strings packaged for it on-chain by Automation: it can read the raw bytes just fine by itself. It also doesn't need to be reminded of the game state like the oracle does, because Godot itself can track the game state locally.  So that problem is solved.
 
+___
 
+The game logic is getting quite long!  I've now moved it over into a separate interface contract, since the main contract was getting too large.  When evaluating checkLog, the Automation DON can handle operations totalling up to 6.5 million gas.  Hopefully that will be enough.  Testing all of this should be interesting.
 
 
