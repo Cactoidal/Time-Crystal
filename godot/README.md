@@ -388,6 +388,12 @@ Ultimately the Automation DON needs to "update the game state" by commiting a JS
 
 Potentially, if all game logic is validated by Automation, this JSON "snapshot" should actually be sufficient for on-chain validation as well, since in theory the Automation DON could break it down as part of the checkLog function.  I'll find out if that's feasible. 
 
+## Day 13
+
+Starting today's log early, but I think it's warranted.  Part of the challenge has been architecting a smart contract that can validate gameplay, tell the oracle what's going on, and help Godot show the game's state to the player.
+
+Godot, I've now realized, doesn't need neat strings packaged for it on-chain by Automation: it can read the raw bytes just fine by itself. It also doesn't need to be reminded of the game state like the oracle does, because Godot itself can track the game state locally.  So that problem is solved.
+
 
 
 
