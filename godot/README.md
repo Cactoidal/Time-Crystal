@@ -392,7 +392,7 @@ Potentially, if all game logic is validated by Automation, this JSON "snapshot" 
 
 Starting today's log early, but I think it's warranted.  Part of the challenge has been architecting a smart contract that can validate gameplay, tell the oracle what's going on, and help Godot show the game's state to the player.
 
-Godot, I've now realized, doesn't need neat strings packaged for it on-chain by Automation: it can read the raw bytes just fine by itself. It also doesn't need to be reminded of the game state like the oracle does, because Godot itself can track the game state locally.  So that problem is solved.
+Godot, I've now realized, doesn't need neat JSON strings packaged for it on-chain by Automation: it can read the raw bytes just fine by itself. It also doesn't need to be reminded of the game state like the oracle does, because Godot itself can track the game state locally.  So that problem is solved.
 
 ___
 
