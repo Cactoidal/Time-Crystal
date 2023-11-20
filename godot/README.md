@@ -382,6 +382,12 @@ The two lead bytes added together must equal 4 or less, or the actions will be r
 
 ![18diagram](https://github.com/Cactoidal/Time-Crystal/assets/115384394/fba47c40-09aa-40e2-9370-9fc62158e159)
 
+I can see places where this could be made more efficient (perhaps the trailing byte should just be a third lead byte; perhaps attacks and abilities with no target can skip the target bytes entirely), so I'll revisit the design while I'm writing the contract.
+
+Ultimately the Automation DON needs to "update the game state" by commiting a JSON string (for use by Godot and by the Functions oracle) of all the game data.
+
+Potentially, if all game logic is validated by Automation, this JSON "snapshot" should be sufficient by itself, since in theory the Automation DON could break it down as part of the checkLog function.  I'll find out if that's feasible. 
+
 
 
 
