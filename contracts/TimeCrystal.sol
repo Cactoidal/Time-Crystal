@@ -41,12 +41,15 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     for (uint z = 0; z < _cards.length; z++) {
         cards[Strings.toString(z + 10)] = _cards[z];
     }
+    initialize();
   }
 
   enum requestType {
     TAKE_TURN,
+    OPPONENT_TURN,
     START_GAME,
-    REGISTER_OPPONENT
+    REGISTER_OPPONENT,
+    REGISTER_PLAYER
   }
   
 
@@ -70,13 +73,11 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     uint gameNonce = 1;
     string public playerDeck;
 
-    enum validationType {
-    PLAYER,
-    OPPONENT
-  }
+    uint8[] baseInventory = [10,11,12,13,14,15,16,17,18,19,20];
 
   struct Player {
     uint8[] inventory;
+    string pendingDeck;
     string[] playerDecks;
     Opponent[] opponentDecks;
     bool inQueue;
@@ -101,11 +102,12 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     uint opponentDeckId;
     uint[] playerHand;
     string handJSON;
-    uint8[] fieldCards;
+    bytes[] playerField;
+    bytes[] opponentField;
+    string[] pendingAttacks;
     uint sessionId;
 
     bytes updateBytes;
-    validationType updateType;
     
     
     uint seed;
@@ -117,9 +119,10 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     mapping (address => Player) public players;
     uint opponentId;
     mapping (uint => address) public opponents;
-    uint sessionId;
+    uint sessionId = 1;
     mapping (address => gameSession) public currentSession;
-    string[] playerHands;
+    bytes[] playerHands;
+    bytes[] gameUpdates;
 
     struct Opponent {
         string key;
@@ -128,28 +131,32 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         bool registered;
     }
 
+    
+
     function registerPlayer() public {
         require (players[msg.sender].registered == false);
         players[msg.sender].registered = true;
-        players[msg.sender].inventory = [10,11,12,13,14,15,16,17,18,19,20];
-        createPlayerDeck([0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,10]);
+        players[msg.sender].inventory = baseInventory;
+        //generate seeds
+        createPlayerDeck("10,10,11,11,12,12,13,13,14,14,15,15,16,16,17,17,18,18,19,20");
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual override {
         
     }
 
-    function createPlayerDeck(uint8[20] memory cardIndices) public {
-        uint8[] memory inventory = players[msg.sender].inventory;
-        string memory newDeck = "";
-        for (uint y = 0; y < 20; y++) {
-            newDeck = string.concat(newDeck, Strings.toString(inventory[cardIndices[y]]));
-            if (y != 19) {
-                newDeck = string.concat(newDeck, ",");
-            }
-        }
-        players[msg.sender].playerDecks.push(newDeck);
+    function createPlayerDeck(string memory _deck) public {
+        require (players[msg.sender].inGame == false);
+        require (players[msg.sender].inQueue == false);
+        players[msg.sender].inQueue = true;
+        players[msg.sender].pendingDeck = _deck;
+
+        players[msg.sender].upkeepType = requestType.REGISTER_PLAYER;
+
+        emit AwaitingAutomation(msg.sender);
+        
     }
+    
 
     //RSA-encrypted AES key, AES-encrypted deck/logic, and the iv used to encrypt
     //all provided as base64 strings
@@ -224,13 +231,14 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   }
 
 
-    //put indices of cards here
   function playerTakeTurn (bytes memory _actions) external {
     require (players[msg.sender].inGame == true);
     require (players[msg.sender].inQueue == false);
     players[msg.sender].inQueue = true;
-    currentSession[msg.sender].updateType = validationType.PLAYER;
     currentSession[msg.sender].updateBytes = _actions;
+    
+    players[msg.sender].upkeepType = requestType.TAKE_TURN;
+
     emit AwaitingAutomation(msg.sender);
   }
 
@@ -270,14 +278,22 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
   }
 
-     //return currentSession[msg.sender].playerHand;
-    //these work but they are returning only the first index, how to get the whole array?
-    function getPlayerCards() public view returns (string memory) {
-        return playerHands[currentSession[msg.sender].sessionId];
+
+   
+    function getPlayerHand() public view returns (string memory) {
+        string memory hand;
+        if (currentSession[msg.sender].sessionId != 0) {
+            hand = abi.decode(playerHands[currentSession[msg.sender].sessionId], (string));
+            }
+        return hand;
     }
 
-    function getFieldCards() public view returns (uint8[] memory) {
-        return currentSession[msg.sender].fieldCards;
+    function getUpdate() public view returns (string memory) {
+        string memory update;
+        if (currentSession[msg.sender].sessionId != 0) {
+            update = abi.decode(gameUpdates[currentSession[msg.sender].sessionId], (string));
+        }
+        return update;
     }
 
    function resetGame() public {
@@ -297,16 +313,17 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     
     if (pendingRequests[requestId] == requestType.START_GAME) {
         address player = requestIdbyRequester[requestId];
-        currentSession[player].updateBytes = response;
-        players[player].upkeepType = requestType.START_GAME;
-
-        emit AwaitingAutomation(player);
+        playerHands.push(response);
+        gameUpdates.push("");
+        currentSession[player].sessionId = sessionId;
+        players[player].inQueue = false;
+        sessionId++;
     }
 
     else if (pendingRequests[requestId] == requestType.TAKE_TURN) {
         address player = requestIdbyRequester[requestId];
         currentSession[player].updateBytes = response;
-        currentSession[player].updateType = validationType.OPPONENT;
+        players[player].upkeepType = requestType.OPPONENT_TURN;
         emit AwaitingAutomation(player);
     }
     else if (pendingRequests[requestId] == requestType.REGISTER_OPPONENT) {
@@ -357,8 +374,8 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     cType cardType;
     uint8 attack;
     uint8 defense;
-    cardKeyword traitA;
-    cardKeyword traitB;
+    cardKeyword keywordA;
+    cardKeyword keywordB;
     uint8 energyCost;
   }
 
@@ -366,13 +383,6 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
   mapping (string => cardTraits) cards;
 
-  function getQueueStatus(address _player) external view returns (bool) {
-        return players[_player].inQueue;
-  }
-
-   function getPlayerInventory(address _player) external view returns (uint8[] memory) {
-        return players[_player].inventory;
-  }
 
 
   function checkLog(
@@ -380,8 +390,9 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     bytes memory checkData
   ) external view returns (bool upkeepNeeded, bytes memory performData) {
         address player = address(uint160(uint256(log.topics[1])));
+        upkeepNeeded = true;
         
-
+        // Register Opponent
         if (players[player].upkeepType == requestType.REGISTER_OPPONENT) {
             uint8[] memory inventory = players[player].inventory;
             string memory inventoryString = "";
@@ -407,35 +418,108 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             req.setArgs(args);
     
             performData = abi.encode(player, requestType.REGISTER_OPPONENT, req.encodeCBOR());
-            upkeepNeeded = true;
             return (upkeepNeeded, performData);
         }
-        else if (players[player].upkeepType == requestType.START_GAME) {
-            bytes memory response = currentSession[player].updateBytes;
-            uint[5] memory newCards;
-            string memory cardsJSON = "{";
-            uint8 jsonIndex = 1;
-            uint index = 0;
-            for (uint8 i = 0; i < 5; i++) {
+
+        // Register Player
+        else if (players[player].upkeepType == requestType.REGISTER_PLAYER) {
+            uint8[] memory inventory = players[player].inventory;
+            bytes memory pendingDeck = bytes(players[player].pendingDeck);
+            bool valid = true;
+            uint8 index = 0;
+            for (uint8 i = 0; i < 20; i++) {
                 bytes memory card = new bytes(2);
-                card[0] = response[index];
+                card[0] = pendingDeck[index];
                 index += 1;
-                card[1] = response[index];
-                index += 1;
+                card[1] = pendingDeck[index];
+                index += 2;
                 string memory newCard = string(card);
-                newCards[i] = strToUint(newCard);
-                cardsJSON = string.concat(cardsJSON, '"', Strings.toString(jsonIndex), '"', ":", '"', newCard, '"');
-                jsonIndex++;
-                if (i != 4) {
-                    cardsJSON = string.concat(cardsJSON, ",");
+                uint8 comparator = uint8(strToUint(newCard));
+                bool inInventory = false;
+                for (uint k = 0; k < inventory.length; k++) {
+                    if (comparator == inventory[k]) {
+                        inInventory = true;
+                    }
                 }
-                else {
-                    cardsJSON = string.concat(cardsJSON, "}");
+                if (inInventory == false) {
+                        valid = false;
                 }
             }
-            performData = abi.encode(player, requestType.START_GAME, abi.encode(newCards, cardsJSON));
-            upkeepNeeded = true;
+            performData = abi.encode(player, requestType.REGISTER_PLAYER, abi.encode(valid, players[player].pendingDeck));
             return (upkeepNeeded, performData);
+            }
+
+        // Player Take Turn
+        else if (players[player].upkeepType == requestType.TAKE_TURN) {
+            performData = abi.encode(false, "");
+            bytes memory actions = currentSession[msg.sender].updateBytes;
+            bytes memory hand = playerHands[currentSession[msg.sender].sessionId];
+            bytes[] memory playerField = currentSession[player].playerField;
+            bytes[] memory opponentField = currentSession[player].opponentField;
+
+            uint handSize = hand.length / 2;
+            if (handSize > 6) {
+                return (upkeepNeeded, performData);
+            }
+            uint8 handIndex = 0;
+            bytes[] memory arrHand = new bytes[](handSize);
+            for (uint8 i = 0; i < handSize; i++) {
+                bytes memory card = new bytes(2);
+                card[0] = hand[handIndex];
+                handIndex += 1;
+                card[1] = hand[handIndex];
+                handIndex += 1;
+                arrHand[i] = card;
+            }
+
+            uint8 leadByte1 = uint8(actions[0]);
+            uint8 leadByte2 = uint8(actions[1]);
+            //no more than 4 actions allowed
+            if (leadByte1 + leadByte2 > 4) {
+                return (upkeepNeeded, performData);
+            }
+            uint8 index = 2;
+            bytes[] memory handActions = new bytes[](leadByte1);
+            bytes[] memory fieldActions = new bytes[](leadByte2);
+            for (uint8 j = 0; j < leadByte1 + leadByte2; j++) {
+                bytes memory action = new bytes(4);
+                action[0] = actions[index];
+                index += 1;
+                action[1] = actions[index];
+                index += 1;
+                action[2] = actions[index];
+                index += 1;
+                action[3] = actions[index];
+                index += 1;
+                if (j < leadByte1) {
+                    handActions[j] = action;
+                }
+                else {
+                    fieldActions[j-leadByte1] = action;
+                }
+            }
+            
+            //check validity of actions using card type and target
+            //internal functions to avoid stack errors
+            if (!IGameLogic(gameAutomation).checkHandActions(leadByte1, arrHand, handActions, playerField, opponentField)) {
+                return (upkeepNeeded, performData);
+            }
+
+            if (!IGameLogic(gameAutomation).checkFieldActions(leadByte2, fieldActions, playerField, opponentField)) {
+                return (upkeepNeeded, performData);
+            }
+           
+            playerField = IGameLogic(gameAutomation).doHandActions(leadByte2, fieldActions, playerField, opponentField);
+
+            //will need to encode the new player hand, the player field, the opponent field, and life totals           
+                
+            //performData = abi.encode(player, requestType.TAKE_TURN, abi.encode(newCards, cardsJSON));
+            //upkeepNeeded = true;
+            //return (upkeepNeeded, performData);
+        }
+
+        // Opponent Take Turn
+        else if (players[player].upkeepType == requestType.OPPONENT_TURN) {
         }
     
   }
@@ -452,6 +536,157 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     
     return result;
 }
+
+
+    function checkHandActions (uint8 leadByte, bytes[] memory _hand, bytes[] memory handActions, bytes[] memory playerField, bytes[] memory opponentField) internal view returns (bool) {
+        bytes[] memory hand = _hand;
+        uint handSize = hand.length;
+        uint playerFieldSize = playerField.length;
+        uint opponentFieldSize = opponentField.length;
+        for (uint8 k = 0; k < leadByte; k++) {
+            bytes memory cardId = new bytes(2);
+            uint8 targetTeam;
+            uint8 targetIndex;
+            cardId[0] = handActions[k][0];
+            cardId[1] = handActions[k][1];
+            targetTeam = uint8(handActions[k][2]);
+            targetIndex = uint8(handActions[k][3]);
+            cardTraits memory targetCard = cards[string(opponentField[targetIndex])];
+            bool exists = false;
+            uint8 selector;
+            //check if hand contains acting card
+
+            for (uint8 l = 0; l < handSize; l++) {
+                if (keccak256(cardId) == keccak256(hand[l])) {
+                    exists = true;
+                    selector = l;
+                    }
+                }
+
+            if (exists == false) {
+                return(false);
+                }
+            else {
+                hand[selector] = hand[hand.length - 1];
+                hand[hand.length - 1] = new bytes(2);
+                }
+
+            //validate action by card type and target
+            //7: No Target  8: Opponent is Target   9: Player is Target
+            if (targetTeam == 8) {
+                if (targetIndex >= opponentFieldSize) {
+                    return(false);
+                    }
+                }
+            else if (targetTeam == 9) {
+                if (targetIndex >= playerFieldSize) {
+                        return(false);
+                    }
+                }
+
+            cardTraits memory card = cards[string(cardId)];
+            //This is the player turn, so automatically these types of cards enter the player field
+            if (card.cardType == cType.CRYSTAL || card.cardType == cType.CONSTRUCT) {
+                if (playerFieldSize == 9) {
+                    return(false);
+                }
+                else {
+                    playerFieldSize += 1;
+                    }
+                }
+
+        }
+
+    return(true);
+  }
+
+    function doHandActions (uint8 leadByte, bytes[] memory handActions, bytes[] memory _playerField, bytes[] memory _opponentField) internal view returns (bytes[] memory) {
+        bytes[] memory playerField = _playerField;
+        bytes[] memory opponentField = _opponentField;
+        uint playerFieldSize = playerField.length;
+        uint opponentFieldSize = opponentField.length;
+        uint8 destructionIndex;
+        uint8[4] memory destructible = [9,9,9,9];
+        uint8[4] memory damaged = [9,9,9,9];
+        for (uint8 k = 0; k < leadByte; k++) {
+            bytes memory cardId = new bytes(2);
+            uint8 targetTeam;
+            uint8 targetIndex;
+            cardId[0] = handActions[k][0];
+            cardId[1] = handActions[k][1];
+            targetTeam = uint8(handActions[k][2]);
+            targetIndex = uint8(handActions[k][3]);
+            cardTraits memory targetCard = cards[string(opponentField[targetIndex])];
+            cardTraits memory card = cards[string(cardId)];
+            //This is the player turn, so automatically these types of cards enter the player field
+            if (card.cardType == cType.CRYSTAL || card.cardType == cType.CONSTRUCT) {
+                bytes[] memory newPlayerField = new bytes[](playerFieldSize + 1);
+                for (uint8 i = 0; i < playerFieldSize; i++) {
+                    newPlayerField[i] = playerField[i];
+                }
+                newPlayerField[playerFieldSize] = cardId;
+                playerFieldSize++;
+                playerField = newPlayerField;
+            }
+            
+            if (card.keywordA == cardKeyword.DESTROY) {
+                destructible[destructionIndex] = targetIndex;
+                destructionIndex++;
+            }
+            else if (card.keywordA == cardKeyword.DAMAGE1) {
+                if (targetCard.defense == 1) {
+                    destructible[destructionIndex] = targetIndex;
+                    destructionIndex++;
+                }
+                else {
+                    damaged[destructionIndex] = targetIndex;
+                    destructionIndex++;
+                }
+             }
+
+    
+        }
+        return(playerField);
+    }
+
+   function checkFieldActions (uint8 leadByte, bytes[] memory fieldActions, bytes[] memory _playerField, bytes[] memory opponentField) internal pure returns (bool) {
+        bytes[] memory playerField = _playerField;
+        uint playerFieldSize = playerField.length;
+        uint opponentFieldSize = opponentField.length;
+        for (uint8 k = 0; k < leadByte; k++) {
+            uint8 unitIndex;
+            uint8 unitAction;
+            uint8 targetTeam;
+            uint8 targetIndex;
+            unitIndex = uint8(fieldActions[k][0]);
+            unitAction = uint8(fieldActions[k][1]);
+            targetTeam = uint8(fieldActions[k][2]);
+            targetIndex = uint8(fieldActions[k][3]);
+        
+            if (unitIndex >= playerFieldSize) {
+                return false;
+            }
+            
+
+            //validate action by card type and target
+            //7: No Target  8: Opponent is Target   9: Player is Target
+            if (targetTeam == 8) {
+                if (targetIndex >= opponentFieldSize) {
+                    return(false);
+                    }
+                }
+            else if (targetTeam == 9) {
+                if (targetIndex >= playerFieldSize) {
+                        return(false);
+                    }
+                }
+
+            //cardTraits memory card = cards[string(playerField[unitIndex])];
+                }
+    return(true);
+  }
+
+
 
 
     function performUpkeep(
@@ -471,13 +706,24 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
         }
 
+        else if (upkeepType == requestType.REGISTER_PLAYER) {
 
-        else if (upkeepType == requestType.START_GAME) {
+            (bool valid, string memory deck) = abi.decode(params, (bool, string));
+            if (valid == true) {
+                players[player].playerDecks.push(deck);
+            }
+
+            emit UpkeepFulfilled(performData);
+
+        }
+
+
+        else if (upkeepType == requestType.TAKE_TURN) {
             (uint[5] memory _newHand, string memory _handJSON) =  abi.decode(params, (uint[5], string));
             currentSession[player].playerHand = _newHand;
             currentSession[player].sessionId = sessionId;
 
-            playerHands.push(_handJSON);
+            //playerHands.push(_handJSON);
 
             players[player].inQueue = false;
 
@@ -511,6 +757,14 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
        forwarder = _forwarder;
     }
 
+    bool initialized;
+    function initialize() public {
+        if (!initialized) {
+            initialized = true;
+            playerHands.push("");
+            gameUpdates.push("");
+        }
+    }
 
 
   event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
