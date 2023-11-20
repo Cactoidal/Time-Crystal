@@ -50,10 +50,56 @@ contract GameLogic is ConfirmedOwner {
 
     }
 
+    function checkHandSize(bytes memory _hand) external pure returns (bool) {
+        bool valid = true;
+        uint handSize = _hand.length / 2;
+        if (handSize > 6) {
+            valid = false;
+        }
+        return (valid);
+    }
+
+    function getData(bytes memory hand, bytes memory actions) external pure returns (uint8, uint8, bytes[] memory, bytes[] memory, bytes[] memory) {
+            uint handSize = hand.length;
+            uint8 handIndex = 0;
+            bytes[] memory arrHand = new bytes[](handSize);
+            for (uint8 i = 0; i < handSize; i++) {
+                bytes memory card = new bytes(2);
+                card[0] = hand[handIndex];
+                handIndex += 1;
+                card[1] = hand[handIndex];
+                handIndex += 1;
+                arrHand[i] = card;
+            }
+
+            uint8 leadByte1 = uint8(actions[0]);
+            uint8 leadByte2 = uint8(actions[1]);
+           
+            uint8 index = 2;
+            bytes[] memory handActions = new bytes[](leadByte1);
+            bytes[] memory fieldActions = new bytes[](leadByte2);
+            for (uint8 j = 0; j < leadByte1 + leadByte2; j++) {
+                bytes memory action = new bytes(4);
+                action[0] = actions[index];
+                index += 1;
+                action[1] = actions[index];
+                index += 1;
+                action[2] = actions[index];
+                index += 1;
+                action[3] = actions[index];
+                index += 1;
+                if (j < leadByte1) {
+                    handActions[j] = action;
+                }
+                else {
+                    fieldActions[j-leadByte1] = action;
+                }
+            }
+            return(leadByte1, leadByte2, arrHand, handActions, fieldActions);
+    }
 
 
-
-    function checkHandActions (uint8 leadByte, bytes[] memory _hand, bytes[] memory handActions, bytes[] memory playerField, bytes[] memory opponentField) internal view returns (bool) {
+    function checkHandActions (uint8 leadByte, bytes[] memory _hand, bytes[] memory handActions, bytes[] memory playerField, bytes[] memory opponentField) external view returns (bool) {
         bytes[] memory hand = _hand;
         uint handSize = hand.length;
         uint playerFieldSize = playerField.length;
@@ -116,7 +162,7 @@ contract GameLogic is ConfirmedOwner {
   }
 
   
-  function checkFieldActions (uint8 leadByte, bytes[] memory fieldActions, bytes[] memory _playerField, bytes[] memory opponentField) internal pure returns (bool) {
+  function checkFieldActions (uint8 leadByte, bytes[] memory fieldActions, bytes[] memory _playerField, bytes[] memory opponentField) external pure returns (bool) {
         bytes[] memory playerField = _playerField;
         uint playerFieldSize = playerField.length;
         uint opponentFieldSize = opponentField.length;
@@ -158,7 +204,7 @@ contract GameLogic is ConfirmedOwner {
 
 
 
-  function doHandActions (uint8 leadByte, bytes[] memory handActions, bytes[] memory _playerField, bytes[] memory _opponentField) internal view returns (bytes[] memory) {
+  function doHandActions (uint8 leadByte, bytes[] memory handActions, bytes[] memory _playerField, bytes[] memory _opponentField) external view returns (bytes[] memory) {
         bytes[] memory playerField = _playerField;
         bytes[] memory opponentField = _opponentField;
         uint playerFieldSize = playerField.length;
