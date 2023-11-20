@@ -398,4 +398,5 @@ ___
 
 The game logic is getting quite long!  I've now moved it over into a separate interface contract, since the main contract was getting too large.  When evaluating checkLog, the Automation DON can handle operations totalling up to 6.5 million gas.  Hopefully that will be enough.  Testing all of this should be interesting.
 
+Still have a ways to go, but I'm happy to report that by using an interface, I seem to have defeated the "stack to deep" error.
 
