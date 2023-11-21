@@ -445,6 +445,8 @@ The other idea is similar, but the information is not secret.  Instead, the orac
 
 This could potentially be used to exceed Function's 32 byte return limit.  I don't know if this has any other practical purpose.
 
+___
+
 ### Happy Birthday
 
 I believe I'm describing a "birthday attack" as a way of deriving information from the hash, because the player's computer is brute-force guessing the dealt cards.
