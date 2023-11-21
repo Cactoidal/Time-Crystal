@@ -466,3 +466,13 @@ When a player plays a card or uses an item, the contract will assume that the mo
 Only the winner will need to prove their hand was valid.  While this means that a player could play and win a game with cards they don't actually have, when they fail to prove they possessed those cards, the loser will receive the rewards of victory instead.  
 
 As another deterrent, there will be some kind of deposit system as well, with a winner's failure to prove resulting in the losing player receiving an additional reward at the cheater's expense.
+
+## Day 14
+
+The `eth_call` idea is interesting, but I'm going to shelve it for now.
+
+I've done some reading on gas optimization, storage slots, and Yul.  Time to take some of these newer ideas and draft another smart contract.  The new plan is to move away from an "asynchronous" PvP game to a 1v1 realtime head-to-head match.
+
+Each player has their own secret win condition, and their task is to declare a valid victory faster than their opponent.  They'll need to work toward their own objective while trying to discern what their opponent's win condition is, and what they can do to slow them down.
+
+While I'm now moving to a model where every individual action now requires a transaction, those transactions should hopefully be much less expensive, and the intent is for game sessions to be quick.  My other goal is to keep validation logic simpler and easier to audit.  We'll see how this works out.
