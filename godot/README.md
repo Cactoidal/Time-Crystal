@@ -453,7 +453,7 @@ I believe I'm describing a "birthday attack" as a way of deriving information fr
 
 Because the player provided the secret password component of the hash, and they know their own deck, it is fairly trivial to repeatedly cycle through all of the possible cards until they arrive at the combination matching the hash.
 
-With a deck of 13 cards, guessing 6 cards each with the maximum value in the range, it takes my computer about 15 seconds to run the numbers until it finds the colliding hash.  I'm sure this could be much better optimized, but for now, it's sufficient.
+With a 16 byte password, a deck of 13 cards, guessing 6 cards each with the maximum value in the range, it takes my computer about 15 seconds to generate 3,712,930 hashes and find the colliding hash.  I'm sure this could be much better optimized, but for now, it's sufficient.
 
 Another interesting benefit: it's possible to append additional secret information that has been put there by the player.
 
