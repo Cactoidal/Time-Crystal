@@ -444,3 +444,23 @@ All they have to do is provide the secret password and the secret random value, 
 The other idea is similar, but the information is not secret.  Instead, the oracle commits the hash, and off-chain Automation can cycle through hashes of the possible outputs until it finds the correct one.  It can then encode the correct values into performData.  Or, just like above, the player could do it locally until they find the hash.
 
 This could potentially be used to exceed Function's 32 byte return limit.  I don't know if this has any other practical purpose.
+
+### Happy Birthday
+
+I believe I'm describing a "birthday attack" as a way of deriving information from the hash, because the player's computer is brute-force guessing the dealt cards.
+
+Because the player provided the secret password component of the hash, and they know their own deck, it is fairly trivial to repeatedly cycle through all of the possible cards until they arrive at the combination matching the hash.
+
+With a deck of 13 cards, guessing 6 cards each with the maximum value in the range, it takes my computer about 15 seconds to run the numbers until it finds the colliding hash.  I'm sure this could be much better optimized, but for now, it's sufficient.
+
+Another interesting benefit: it's possible to append additional secret information that has been put there by the player.
+
+In addition to providing the password, for example, the player could secretly choose some items from their inventory.  This information could be encrypted and sent along with the user's on-chain inventory, for the oracle to validate.  If the check passes, the oracle will append the chosen items to the randomly dealt cards before hashing.
+
+This could translate into a PvP game where a player has some randomly dealt secret cards, a random secret objective, and some secret items they've hand-picked to help them out.
+
+When players play a card or use an item, the contract will assume that the move is valid.  Only at the very end of the game will the player need to prove that all of their moves were valid: by committing the password, the secret cards and objective, and their secret inventory, to be hashed on-chain and compared to the hash committed by the oracle.
+
+Only the winner will need to prove their hand was valid.  While this means that a player could play and win a game with cards they don't actually have, when they fail to prove they possessed those cards, the loser will receive the rewards of victory instead.  
+
+As another deterrent, there will be some kind of deposit system as well, with a winner's failure to prove resulting in the losing player receiving an additional reward at the cheater's expense.
