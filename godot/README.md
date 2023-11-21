@@ -461,7 +461,7 @@ In addition to providing the password, for example, the player could secretly ch
 
 This could translate into a PvP game where a player has some randomly dealt secret cards, a random secret objective, and some secret items they've hand-picked to help them out.
 
-When players play a card or use an item, the contract will assume that the move is valid.  Only at the very end of the game will the player need to prove that all of their moves were valid: by committing the password, the secret cards and objective, and their secret inventory, to be hashed on-chain and compared to the hash committed by the oracle.
+When a player plays a card or uses an item, the contract will assume that the move is valid.  Only at the very end of the game will the player need to prove that all of their moves were valid: by committing the password, the secret cards and objective, and their secret inventory, to be hashed on-chain and compared to the hash committed by the oracle.
 
 Only the winner will need to prove their hand was valid.  While this means that a player could play and win a game with cards they don't actually have, when they fail to prove they possessed those cards, the loser will receive the rewards of victory instead.  
 
