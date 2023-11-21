@@ -457,7 +457,7 @@ With a 16 byte password, a deck of 13 cards, guessing 6 cards each with the maxi
 
 Another interesting benefit: it's possible to append additional secret information that has been put there by the player.
 
-In addition to providing the password, for example, the player could secretly choose some items from their inventory.  This information could be encrypted and sent along with the user's on-chain inventory, for the oracle to validate.  If the check passes, the oracle will append the chosen items to the randomly dealt cards before hashing.
+In addition to providing the password, for example, the player could secretly choose some items from their inventory.  This information could be encrypted and sent along with the user's on-chain inventory for the oracle to validate.  If the check passes, the oracle will append the chosen items to the randomly dealt cards before hashing.
 
 This could translate into a PvP game where a player has some randomly dealt secret cards, a random secret objective, and some secret items they've hand-picked to help them out.
 
