@@ -125,6 +125,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     // Assigns the players their index in the dueling match arrays.
     // Is there a way to make this more efficient?
     function startGame() internal {
+        matchIndex++;
         currentMatch[matchmaker[0]] = matchIndex;
         isPlayer1[matchmaker[0]] = true;
         currentOpponent[matchmaker[0]] = matchmaker[1];
@@ -135,7 +136,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         currentOpponent[matchmaker[1]] = matchmaker[0];
         player2.push(bytes(""));
         matchmaker[1] = address(0x0);
-        matchIndex++;
     }
 
     // Evaluates the effect of a card.  All cards are assumed to be valid.
