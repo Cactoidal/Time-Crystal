@@ -13,6 +13,9 @@ import "IGameLogic.sol";
 contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   using FunctionsRequest for FunctionsRequest.Request;
 
+
+  //            CHAINLINK AUTOMATION, FUNCTIONS, AND VRF VARIABLES          //
+
   bytes32 public donId;
   address private forwarder;
   address public gameAutomation;
@@ -51,6 +54,10 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
   }
 
+    
+
+    //          GAME STATE VARIABLES        //
+
     mapping (address => string) keys;
     mapping (address => bytes) public hands;
     mapping (address => uint[]) vrfSeeds;
@@ -75,7 +82,11 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         CHECK_VICTORY
     }
 
-    // Register the user AES key and banked VRF values.
+
+    //                 PLAYER GAME INTERACTIONS              //
+
+
+    // Register the player AES key and banked VRF values.
     // RSA-encrypted AES key is provided as a base64 string.
     function registerPlayerKey(string calldata _key) external {
         keys[msg.sender] = _key;
@@ -134,7 +145,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
-
     // End the game by providing the constituent values of your oracle-generated hash.
     // Automation will check your win condition, and the validity of your cards.
     function declareVictory(bytes calldata secret) external {
@@ -154,6 +164,14 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         emit AwaitingAutomation(msg.sender);
     }
 
+
+
+    //              VRF REQUEST FULFILMENT              //
+
+    // 10 VRF values are banked for use as seeds when asking Chainlink Functions for a random hand.
+    // This is also the payment gateway for the player.  Players must provide LINK upfront to cover
+    // the cost of Chainlink services used during play.
+ 
     function requestRandomWords() private {
         //pay LINK to cover 10 matches here
         uint256 requestId = COORDINATOR.requestRandomWords(
@@ -163,7 +181,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             callbackGasLimit,
             10
             );
-            vrfRequestIdbyRequester[requestId] = msg.sender;
+        vrfRequestIdbyRequester[requestId] = msg.sender;
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual override {
@@ -172,9 +190,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
 
 
-//            FUNCTIONS REQUEST FULFILLMENT            //
 
 
+    //            FUNCTIONS REQUEST FULFILLMENT            //
+
+
+    // Provides a secret hand drawn from a secretly shuffled deck.  Also contains secret inventory selected by the player.
+    // Asks Chainlink Automation to move the player into matchmaking.
     function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
 
         address player = functionsRequestIdbyRequester[requestId];
@@ -194,7 +216,10 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   }
 
 
-//  AUTOMATION AND GAMEPLAY VALIDATION  //
+
+
+
+    //       AUTOMATION AND GAMEPLAY VALIDATION          //
 
     enum cType {
     CONSTRUCT, //persistent units
@@ -229,7 +254,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     cardKeyword keywordB;
     uint8 energyCost;
   }
-
 
 
     mapping (string => cardTraits) cards;
@@ -312,7 +336,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 }
             }
 
-        if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
+        else if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
 
             // Declare winner and disburse reward / deposit
 
@@ -334,10 +358,12 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
  
 
-  /**
-   * @notice Set the DON ID
-   * @param newDonId New DON ID
-   */
+
+
+    //          MAINTENANCE FUNCTIONS AND EVENTS            //
+
+
+
     function setDonId(bytes32 newDonId) external onlyOwner {
         donId = newDonId;
   }
