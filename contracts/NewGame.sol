@@ -49,7 +49,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     for (uint z = 0; z < _cards.length; z++) {
         cards[Strings.toString(z + 10)] = _cards[z];
     }
-    initialize();
   }
 
     mapping (address => string) keys;
@@ -69,6 +68,12 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     mapping (bytes32 => address) public functionsRequestIdbyRequester;
     mapping (uint => address) public vrfRequestIdbyRequester;
+    mapping (address => upkeepType) pendingUpkeep;
+
+    enum upkeepType {
+        MATCHMAKING,
+        CHECK_VICTORY
+    }
 
     // Register the user AES key and banked VRF values.
     // RSA-encrypted AES key is provided as a base64 string.
@@ -77,8 +82,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         requestRandomWords();
   }
 
+    // The player needs to provide a deposit to deter griefing and self-farming.
+    // This is either a separate function (a pool from which the deposit can be slashed)
+    // Or the deposit is provided when getting the hand.
+
     // Prepare for a game by asking the oracle for a SHA256 hash containing secret information.
     // Encrypted secret password + inventory, and iv are provided as base64 strings.
+    // The Functions callback will trigger the Automation DON, pushing the player into the matchmaking queue.
     function getHand(string calldata secrets, string calldata iv) external {
         require (inGame[msg.sender] == false);
         require (inQueue[msg.sender] == false);
@@ -86,7 +96,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         if (vrfSeeds[msg.sender].length == 0) {
             revert("Call VRF");
         }
-        //pay LINK here
+
         inQueue[msg.sender] = true;
 
         FunctionsRequest.Request memory req;
@@ -108,89 +118,53 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         functionsRequestIdbyRequester[s_lastRequestId] = msg.sender;
     }
 
-    // Joins the matchmaking room.
-    // Potentially this could be internal and triggered by Functions callback, but it may be too expensive
-    function joinGame() external {
-        require(inGame[msg.sender] == false);
-        inGame[msg.sender] = true;
-        if (matchmaker[0] == address(0x0)) {
-            matchmaker[0] = msg.sender;
-        }
-        else {
-            matchmaker[1] = msg.sender;
-            startGame();
-        }
-    }
-
-    // Assigns the players their index in the dueling match arrays.
-    // Is there a way to make this more efficient?
-    function startGame() internal {
-        matchIndex++;
-        currentMatch[matchmaker[0]] = matchIndex;
-        isPlayer1[matchmaker[0]] = true;
-        currentOpponent[matchmaker[0]] = matchmaker[1];
-        player1.push(bytes(""));
-        matchmaker[0] = address(0x0);
-        currentMatch[matchmaker[1]] = matchIndex;
-        isPlayer1[matchmaker[1]] = false;
-        currentOpponent[matchmaker[1]] = matchmaker[0];
-        player2.push(bytes(""));
-        matchmaker[1] = address(0x0);
-    }
 
     // Evaluates the effect of a card.  All cards are assumed to be valid.
     // Players must wait 3 blocks in between cards.
+    // Note to self: keep it simple.
     function makeMove() external {
         require(inGame[msg.sender] == true);
+        require(inQueue[msg.sender] == false);
         require(lastCommit[msg.sender] + 3 <= block.number);
+        lastCommit[msg.sender] = block.number;
+        if (isPlayer1[msg.sender]) {
+
+        }
 
     }
 
 
 
     // End the game by providing the constituent values of your oracle-generated hash.
-    // If the win condition has been fulfilled, Automation will check your values against the cards you have played.
+    // Automation will check your win condition, and the validity of your cards.
     function declareVictory(bytes calldata secret) external {
-        //potentially the secret could come in as bytes32 instead
+        //potentially the secret could come in as bytes32 instead, or a string
+        require(inQueue[msg.sender] == false);
         require(keccak256(abi.encode(hands[msg.sender])) == keccak256(abi.encode(sha256(secret))));
 
-        // The game ends
+        // The game immediately ends and goes to Automation to determine the winner
+        address opponent = currentOpponent[msg.sender];
 
-        // Extract win condition
-        //secret[secret.length-1]
-        //if valid:
+        inQueue[opponent] = true;
+        inGame[opponent] = false;
+        inQueue[msg.sender] = true;
+        inGame[msg.sender] = false;
 
-        // Evaluate the player's cards against the provided secret
-        // if bytes32, I could send as a topic
+        pendingUpkeep[msg.sender] = upkeepType.CHECK_VICTORY;
         emit AwaitingAutomation(msg.sender);
-
-        //else:
-        //other player wins automatically
-        // declareWinner(currentOpponent[msg.sender])
-    }
-
-    function declareWinner(address winner) internal {
-
-        inQueue[winner] = false;
-        inGame[winner] = false;
-        hands[winner] = bytes("");
-
-        inQueue[currentOpponent[winner]] = false;
-        inGame[currentOpponent[winner]] = false;
-        hands[currentOpponent[winner]] = bytes("");
     }
 
     function requestRandomWords() private {
-        //pay LINK here
+        //pay LINK to cover 10 matches here
         uint256 requestId = COORDINATOR.requestRandomWords(
-    s_keyHash,
-    s_subscriptionId,
-    requestConfirmations,
-    callbackGasLimit,
-    20
-  );
-  vrfRequestIdbyRequester[requestId] = msg.sender;
-}
+            s_keyHash,
+            s_subscriptionId,
+            requestConfirmations,
+            callbackGasLimit,
+            10
+            );
+            vrfRequestIdbyRequester[requestId] = msg.sender;
+    }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual override {
         vrfSeeds[vrfRequestIdbyRequester[requestId]] = randomWords;
@@ -203,10 +177,17 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
 
-        
-        inQueue[functionsRequestIdbyRequester[requestId]] = false;
-        hands[functionsRequestIdbyRequester[requestId]] = response;
-            
+        address player = functionsRequestIdbyRequester[requestId];
+
+        // Response is a SHA256 hash against which the player will run a birthday attack
+        // to extract the encoded secret random cards
+        hands[player] = response;
+
+        // Moves player to matchmaking queue
+        if (err.length == 0) {
+            pendingUpkeep[player] = upkeepType.MATCHMAKING;
+            emit AwaitingAutomation(player);
+            }
     
         s_lastError = err;
         emit RequestFulfilled(requestId, response);
@@ -256,10 +237,24 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     function checkLog(
     Log calldata log,
     bytes memory checkData
-  ) external pure returns (bool upkeepNeeded, bytes memory performData) {
+  ) external view returns (bool upkeepNeeded, bytes memory performData) {
         address player = address(uint160(uint256(log.topics[1])));
         upkeepNeeded = true;
         performData = abi.encode("");
+        if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
+
+        }
+        if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
+            // Extract win condition
+            //secret[secret.length-1]
+            //if valid:
+            // Evaluate the player's cards against the provided secret
+
+            //else:
+            //other player wins automatically
+            // declareWinner(currentOpponent[msg.sender])
+
+        }
         //currentOpponent[player]
         //performData = abi.encode(player, requestType.REGISTER_PLAYER, abi.encode(stuff));
         return (upkeepNeeded, performData);
@@ -280,22 +275,60 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
 
 
+    // Evaluates the player's provided secrets against the actions they used in the game.
     function performUpkeep(
         bytes calldata performData
     ) external {
-       // require(msg.sender == forwarder);
+        require(msg.sender == forwarder);
 
         (address player, bytes memory params) = abi.decode(performData, (address, bytes));
         
-        //declareWinner(player)
-        //or
-        //declareWinner(currentOpponent(player))
-        
-        //removes player 1 and player 2 from queue and game
-        //currentOpponent[player]
-        //sets their hands to bytes("")
+        if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
+            address _player1 = matchmaker[0];
+            address _player2 = matchmaker[1];
+            if (_player1 == address(0x0)) {
+                matchmaker[0] = player;
+                }
+            else {
+                matchmaker[1] = player;
 
-            emit UpkeepFulfilled(performData);
+                matchIndex++;
+
+                currentMatch[_player1] = matchIndex;
+                isPlayer1[_player1] = true;
+                currentOpponent[_player1] = matchmaker[1];
+                player1.push(bytes(""));
+                inQueue[_player1] = false;
+                inGame[_player1] = true;
+                matchmaker[0] = address(0x0);
+
+                currentMatch[_player2] = matchIndex;
+                isPlayer1[_player2] = false;
+                currentOpponent[_player2] = matchmaker[0];
+                player2.push(bytes(""));
+                inQueue[_player2] = false;
+                inGame[_player2] = true;
+                matchmaker[1] = address(0x0); 
+                }
+            }
+
+        if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
+
+            // Declare winner and disburse reward / deposit
+
+            // Reinitialize both players
+            inQueue[player] = false;
+            inGame[player] = false;
+            hands[player] = bytes("");
+
+            address opponent = currentOpponent[player];
+
+            inQueue[opponent] = false;
+            inGame[opponent] = false;
+            hands[opponent] = bytes("");
+            }
+
+        emit UpkeepFulfilled(performData);
 
         }
 
@@ -318,15 +351,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         address _forwarder
     ) public onlyOwner {
        forwarder = _forwarder;
-    }
-
-    bool initialized;
-    function initialize() public {
-        if (!initialized) {
-            initialized = true;
-            //playerHands.push("");
-            //gameUpdates.push("");
-        }
     }
 
 
