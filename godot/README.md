@@ -402,7 +402,7 @@ Still have a ways to go, but I'm happy to report that by using an interface, I s
 
 But.  I do need to contend with reality.  While it's great that I can shave off millions of gas using Automation, if the round trip cost for a turn still runs over 1 million gas, there is a problem in my design.  Right now there are supposed to be 15 turns in a typical match.  This isn't going to be scalable if it costs 10 LINK just to play 1 game.
 
-The issue here is the sheer volume of data that must be posted to the chain and/or operated on every single turn.  Chainlink Functions, especially automated Functions, really shines when requests are pre-encoded.  This is best suited for requests that always use the same parameters, and which call some external API that will provide a variable response.
+The issue here is the sheer volume of data that must be posted to the chain and/or operated on every single turn.  Chainlink Functions, especially automated Functions, really shines when requests are pre-encoded.  This is best suited for requests that always use the same parameters, and which call some external API that provides a variable response.
 
 If there is a way to alter the parameters in a pre-encoded message, then perhaps I could get around this problem with minimal additional gas costs.  But as it stands, unless I'm mistaken, if I want to have custom parameters for each and every Functions call, then I need to CBOR-encode my entire call every single time.
 
