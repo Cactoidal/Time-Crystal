@@ -26,7 +26,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     string public source;
     FunctionsRequest.Location public secretsLocation;
     bytes encryptedSecretsReference;
-    uint64 subscriptionId = 1600;
+    //uint64 subscriptionId = 1600;
+    uint64 subscriptionId = 1686;
     uint32 callbackGasLimit = 300000;
 
     uint64 s_subscriptionId;
@@ -48,7 +49,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         }
     }
 
-    
 
     //          GAME STATE VARIABLES        //
 
@@ -61,6 +61,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     mapping (address => address) public currentOpponent;
     mapping (address => bool) public isPlayer1;
     mapping (address => uint) public lastCommit;
+    mapping (string => bool) public usedCSPRNGIvs;
+    uint ivNonce;
 
     //Test
     string public testWin = "Not yet";
@@ -96,11 +98,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     // Prepare for a game by asking the oracle for a SHA256 hash containing secret information.
     // Encrypted secret password + inventory, and iv are provided as base64 strings.
+    // In addition, another (unique) iv must be passed in for use by the CSPRNG key.
     // The Functions callback will trigger the Automation DON, pushing the player into the matchmaking queue.
-    function getHand(string calldata secrets, string calldata iv) external {
+    function getHand(string calldata secrets, string calldata secretsIv, string calldata csprngIv) external {
         require (inGame[msg.sender] == false);
         require (inQueue[msg.sender] == false);
         require (hands[msg.sender].length == 0);
+        require (usedCSPRNGIvs[csprngIv] == false);
 
         uint[] memory seeds = vrfSeeds[msg.sender];
 
@@ -108,6 +112,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             revert("Call VRF");
         }
 
+        usedCSPRNGIvs[csprngIv] = true;
         inQueue[msg.sender] = true;
 
         //Test
@@ -121,12 +126,14 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         string[] memory args = new string[](4);
         args[0] = keys[msg.sender];
         args[1] = secrets;
-        args[2] = iv;
+        args[2] = secretsIv;
         args[3] = Strings.toString(seeds[seeds.length - 1]);
+        args[4] = csprngIv;
+        args[5] = Strings.toString(ivNonce);
         //args[4] = on-chain deck
+        ivNonce++;
         vrfSeeds[msg.sender].pop();
         
-
         req.setArgs(args);
         //req.setBytesArgs(args);
 
