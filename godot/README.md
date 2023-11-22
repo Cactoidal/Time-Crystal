@@ -487,7 +487,7 @@ Every time the player wants to join a game, they will encrypt a secret password 
 
 At the same time, the Functions callback will trigger Automation to push the player into a matchmaking queue.  As soon as another player is available, the match begins immediately.  Players submit moves, one move allowed every 3 blocks, until they achieve their secret winning condition.
 
-A player can declare victory by providing the full string of their secret passphrase, dealt cards, inventory, and win condition.  This gets hashed on-chain and compared to the hash put there by the oracle.  If they match, the game immediately ends, and Automation is called to evaluate the game state
+A player can declare victory by providing the full string of their secret passphrase, dealt cards, inventory, and win condition.  This gets hashed on-chain and compared to the hash put there by the oracle.  If they match, the game immediately ends, and Automation is called to evaluate the game state.
 
 If the declaring player has a game state satisfying the win condition, and only played cards available in their secret hand and inventory, the Automation DON will award them the victory.  Otherwise, the opponent wins instead.
 
