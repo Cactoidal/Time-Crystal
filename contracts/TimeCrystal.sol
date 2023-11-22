@@ -32,12 +32,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     uint64 subscriptionId = 1686;
     uint32 callbackGasLimit = 300000;
 
-    uint64 s_subscriptionId;
+    uint64 vrf_subscriptionId = 7168;
     address s_owner;
     VRFCoordinatorV2Interface COORDINATOR;
     address vrfCoordinator = 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625;
     bytes32 s_keyHash = 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c;
     uint16 requestConfirmations = 3;
+    uint32 vrfCallbackGasLimit = 500000;
 
     address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
   
@@ -47,6 +48,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         source = _source;
         secretsLocation = _location;
         encryptedSecretsReference = _reference;
+        COORDINATOR = VRFCoordinatorV2Interface(0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625);
      //   for (uint z = 0; z < _cards.length; z++) {
      //       cards[Strings.toString(z + 10)] = _cards[z];
      //   }
@@ -101,9 +103,9 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         string memory _key = abi.decode(_data, (string));
         uint256 requestId = COORDINATOR.requestRandomWords(
             s_keyHash,
-            s_subscriptionId,
+            vrf_subscriptionId,
             requestConfirmations,
-            callbackGasLimit,
+            vrfCallbackGasLimit,
             10
             );
         keys[_sender] = _key;
@@ -138,7 +140,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         req.secretsLocation = secretsLocation;
         req.encryptedSecretsReference = encryptedSecretsReference;
 
-        string[] memory args = new string[](4);
+        string[] memory args = new string[](6);
         args[0] = keys[msg.sender];
         args[1] = secrets;
         args[2] = secretsIv;
@@ -255,6 +257,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     // Banks 10 VRF values
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual override {
         vrfSeeds[vrfRequestIdbyRequester[requestId]] = randomWords;
+        emit VRFFulfilled(requestId);
     }
 
 
@@ -475,6 +478,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
+    event VRFFulfilled(uint indexed _id);
     event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
     event AwaitingAutomation(address indexed _player);
     event UpkeepFulfilled(bytes indexed _performData);
