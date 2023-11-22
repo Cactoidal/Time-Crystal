@@ -29,8 +29,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     string public register_opponent_source;
     FunctionsRequest.Location public secretsLocation;
     bytes encryptedSecretsReference;
-    //uint64 subscriptionId = 1600;
-    uint64 subscriptionId = 1686;
+    uint64 subscriptionId = 1600;
+    //uint64 subscriptionId = 1686;
     uint32 callbackGasLimit = 300000;
 
     uint64 s_subscriptionId;
