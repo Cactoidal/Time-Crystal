@@ -30,53 +30,6 @@
 				"internalType": "bytes",
 				"name": "_reference",
 				"type": "bytes"
-			},
-			{
-				"components": [
-					{
-						"internalType": "uint8",
-						"name": "cardNumber",
-						"type": "uint8"
-					},
-					{
-						"internalType": "string",
-						"name": "cardName",
-						"type": "string"
-					},
-					{
-						"internalType": "enum TimeCrystal.cType",
-						"name": "cardType",
-						"type": "uint8"
-					},
-					{
-						"internalType": "uint8",
-						"name": "attack",
-						"type": "uint8"
-					},
-					{
-						"internalType": "uint8",
-						"name": "defense",
-						"type": "uint8"
-					},
-					{
-						"internalType": "enum TimeCrystal.cardKeyword",
-						"name": "keywordA",
-						"type": "uint8"
-					},
-					{
-						"internalType": "enum TimeCrystal.cardKeyword",
-						"name": "keywordB",
-						"type": "uint8"
-					},
-					{
-						"internalType": "uint8",
-						"name": "energyCost",
-						"type": "uint8"
-					}
-				],
-				"internalType": "struct TimeCrystal.cardTraits[]",
-				"name": "_cards",
-				"type": "tuple[]"
 			}
 		],
 		"stateMutability": "nonpayable",
@@ -550,6 +503,29 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_value",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "_data",
+				"type": "bytes"
+			}
+		],
+		"name": "onTokenTransfer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "owner",
 		"outputs": [
@@ -589,19 +565,6 @@
 			}
 		],
 		"name": "rawFulfillRandomWords",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_key",
-				"type": "string"
-			}
-		],
-		"name": "registerPlayerKey",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
