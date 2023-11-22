@@ -18,19 +18,15 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     bytes32 public donId;
     address private forwarder;
-    address public gameAutomation;
 
     bytes32 public s_lastRequestId;
     bytes public s_lastResponse;
     bytes public s_lastError;
 
-    string public start_game_source;
-    string public take_turn_source;
-    string public register_opponent_source;
+    string public source;
     FunctionsRequest.Location public secretsLocation;
     bytes encryptedSecretsReference;
     uint64 subscriptionId = 1600;
-    //uint64 subscriptionId = 1686;
     uint32 callbackGasLimit = 300000;
 
     uint64 s_subscriptionId;
@@ -42,14 +38,11 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
   
-    constructor(address _vrfCoordinator, address router, address _gameAutomation, bytes32 _donId, string memory _source,  string memory _source2, string memory _source3, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
+    constructor(address _vrfCoordinator, address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
         donId = _donId;
-        start_game_source = _source;
-        take_turn_source = _source2;
-        register_opponent_source = _source3;
+        source = _source;
         secretsLocation = _location;
         encryptedSecretsReference = _reference;
-        gameAutomation = _gameAutomation;
         for (uint z = 0; z < _cards.length; z++) {
             cards[Strings.toString(z + 10)] = _cards[z];
         }
@@ -121,7 +114,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         testWin = "Not yet";
 
         FunctionsRequest.Request memory req;
-        req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, start_game_source);
+        req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, source);
         req.secretsLocation = secretsLocation;
         req.encryptedSecretsReference = encryptedSecretsReference;
 
