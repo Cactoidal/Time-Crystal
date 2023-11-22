@@ -313,7 +313,64 @@ NewFuture(Ok(()))
 
 }
 
+#[method]
+fn check_queue(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
 
+let vec = &key.to_vec();
+
+let keyset = &vec[..]; 
+
+let prewallet : LocalWallet = LocalWallet::from_bytes(&keyset).unwrap();
+    
+let wallet: LocalWallet = prewallet.with_chain_id(chain_id);
+
+let user_address = wallet.address();
+
+let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
+
+let contract_address: Address = time_crystal_address.to_string().parse().unwrap();
+
+let client = SignerMiddleware::new(provider, wallet);
+
+let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
+
+let calldata = contract.in_queue(user_address).calldata().unwrap();
+
+let return_string: GodotString = calldata.to_string().into();
+
+return_string
+
+}
+
+
+#[method]
+fn check_in_game(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
+
+let vec = &key.to_vec();
+
+let keyset = &vec[..]; 
+
+let prewallet : LocalWallet = LocalWallet::from_bytes(&keyset).unwrap();
+    
+let wallet: LocalWallet = prewallet.with_chain_id(chain_id);
+
+let user_address = wallet.address();
+
+let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
+
+let contract_address: Address = time_crystal_address.to_string().parse().unwrap();
+
+let client = SignerMiddleware::new(provider, wallet);
+
+let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
+
+let calldata = contract.in_game(user_address).calldata().unwrap();
+
+let return_string: GodotString = calldata.to_string().into();
+
+return_string
+
+}
 
 #[method]
 fn get_player_cards(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
