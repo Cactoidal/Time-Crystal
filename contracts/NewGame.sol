@@ -7,52 +7,54 @@ import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "ILogAutomation.sol";
 import "IGameLogic.sol";
 
 contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
-  using FunctionsRequest for FunctionsRequest.Request;
+    using FunctionsRequest for FunctionsRequest.Request;
 
 
-  //            CHAINLINK AUTOMATION, FUNCTIONS, AND VRF VARIABLES          //
+    //            CHAINLINK AUTOMATION, FUNCTIONS, AND VRF VARIABLES          //
 
-  bytes32 public donId;
-  address private forwarder;
-  address public gameAutomation;
+    bytes32 public donId;
+    address private forwarder;
+    address public gameAutomation;
 
-  bytes32 public s_lastRequestId;
-  bytes public s_lastResponse;
-  bytes public s_lastError;
+    bytes32 public s_lastRequestId;
+    bytes public s_lastResponse;
+    bytes public s_lastError;
 
-  string public start_game_source;
-  string public take_turn_source;
-  string public register_opponent_source;
-  FunctionsRequest.Location public secretsLocation;
-  bytes encryptedSecretsReference;
+    string public start_game_source;
+    string public take_turn_source;
+    string public register_opponent_source;
+    FunctionsRequest.Location public secretsLocation;
+    bytes encryptedSecretsReference;
     //uint64 subscriptionId = 1600;
-  uint64 subscriptionId = 1686;
-  uint32 callbackGasLimit = 300000;
+    uint64 subscriptionId = 1686;
+    uint32 callbackGasLimit = 300000;
 
-  uint64 s_subscriptionId;
+    uint64 s_subscriptionId;
     address s_owner;
     VRFCoordinatorV2Interface COORDINATOR;
     address vrfCoordinator = 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625;
     bytes32 s_keyHash = 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c;
     uint16 requestConfirmations = 3;
-  
 
-  constructor(address _vrfCoordinator, address router, address _gameAutomation, bytes32 _donId, string memory _source,  string memory _source2, string memory _source3, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
-    donId = _donId;
-    start_game_source = _source;
-    take_turn_source = _source2;
-    register_opponent_source = _source3;
-    secretsLocation = _location;
-    encryptedSecretsReference = _reference;
-    gameAutomation = _gameAutomation;
-    for (uint z = 0; z < _cards.length; z++) {
-        cards[Strings.toString(z + 10)] = _cards[z];
+    address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
+  
+    constructor(address _vrfCoordinator, address router, address _gameAutomation, bytes32 _donId, string memory _source,  string memory _source2, string memory _source3, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
+        donId = _donId;
+        start_game_source = _source;
+        take_turn_source = _source2;
+        register_opponent_source = _source3;
+        secretsLocation = _location;
+        encryptedSecretsReference = _reference;
+        gameAutomation = _gameAutomation;
+        for (uint z = 0; z < _cards.length; z++) {
+            cards[Strings.toString(z + 10)] = _cards[z];
+        }
     }
-  }
 
     
 
@@ -67,6 +69,9 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     mapping (address => address) public currentOpponent;
     mapping (address => bool) public isPlayer1;
     mapping (address => uint) public lastCommit;
+
+    //Test
+    string public testWin = "Not yet";
 
     address[2] matchmaker;
     uint matchIndex;
@@ -83,7 +88,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
-    //                 PLAYER GAME INTERACTIONS              //
+    //                 PLAYER GAME INTERACTIONS                 //
 
 
     // Register the player AES key and banked VRF values.
@@ -109,6 +114,9 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         }
 
         inQueue[msg.sender] = true;
+
+        //Test
+        testWin = "Not yet";
 
         FunctionsRequest.Request memory req;
         req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, start_game_source);
@@ -166,14 +174,54 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
 
 
-    //              VRF REQUEST FULFILMENT              //
+    //              GODOT VIEW FUNCTIONS            //
+
+
+    // Public Getters:
+
+    //      keys(msg.sender)
+
+    //      Retrieves the SHA256 hash of the player's secret password, random cards, and inventory.
+    //      hands(msg.sender)
+
+    //      inQueue(msg.sender)
+
+    //      inGame(msg.sender)
+
+    //      eth.blockNumber 
+
+    //      testWin()
+
+    function seeBoard() public view returns (bytes memory) {
+        if (isPlayer1[msg.sender] == true) {
+            return player1[currentMatch[msg.sender]];
+        }
+        else {
+            return player2[currentMatch[msg.sender]];
+        }
+    }
+
+    function seeOpponentBoard() public view returns (bytes memory) {
+        if (isPlayer1[msg.sender] == true) {
+            return player2[currentMatch[msg.sender]];
+        }
+        else {
+            return player1[currentMatch[msg.sender]];
+        }
+    }
+
+
+
+    //              VRF REQUEST FULFILLMENT              //
 
     // 10 VRF values are banked for use as seeds when asking Chainlink Functions for a random hand.
     // This is also the payment gateway for the player.  Players must provide LINK upfront to cover
     // the cost of Chainlink services used during play.
  
     function requestRandomWords() private {
-        //pay LINK to cover 10 matches here
+        // pay LINK to cover 10 matches here
+        // player must approve allowance first
+        IERC20(LINKToken).transferFrom(msg.sender, address(this), 1e18);
         uint256 requestId = COORDINATOR.requestRandomWords(
             s_keyHash,
             s_subscriptionId,
@@ -298,8 +346,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
-
-    // Evaluates the player's provided secrets against the actions they used in the game.
+    // MATCHMAKING: Moves the player into the queue, and starts a game if two players are ready.
+    // CHECK_VICTORY: Evaluates the player's win condition, and their secret cards against their used cards.
     function performUpkeep(
         bytes calldata performData
     ) external {
@@ -308,6 +356,9 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         (address player, bytes memory params) = abi.decode(performData, (address, bytes));
         
         if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
+            // Test Opponent
+            matchmaker[0] = vrfCoordinator;
+
             address _player1 = matchmaker[0];
             address _player2 = matchmaker[1];
             if (_player1 == address(0x0)) {
@@ -350,6 +401,10 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             inQueue[opponent] = false;
             inGame[opponent] = false;
             hands[opponent] = bytes("");
+
+
+            //Test 
+            testWin = "You won!";
             }
 
         emit UpkeepFulfilled(performData);
@@ -377,6 +432,10 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         address _forwarder
     ) public onlyOwner {
        forwarder = _forwarder;
+    }
+
+    function withdrawLink() external {
+        IERC20(LINKToken).transferFrom(address(this), owner(), IERC20(LINKToken).balanceOf(address(this)));
     }
 
 
