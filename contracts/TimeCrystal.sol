@@ -61,6 +61,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     mapping (address => address) public currentOpponent;
     mapping (address => bool) public isPlayer1;
     mapping (address => uint) public lastCommit;
+    mapping (address => string) pendingHand;
     mapping (string => bool) public usedCSPRNGIvs;
     uint ivNonce;
 
@@ -159,11 +160,12 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     // End the game by providing the constituent values of your oracle-generated hash.
     // Automation will check your win condition, and the validity of your cards.
-    function declareVictory(bytes calldata secret) external {
-        //potentially the secret could come in as bytes32 instead, or a string
+    function declareVictory(string calldata secret) external {
+        //potentially the secret could come in as bytes32 instead
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
-        require(keccak256(abi.encode(hands[msg.sender])) == keccak256(abi.encode(sha256(secret))));
+        //hand may need to be abi.encoded?
+        require(keccak256(hands[msg.sender]) == keccak256(abi.encode(sha256(abi.encode(secret)))));
 
         // The game immediately ends and goes to Automation to determine the winner
         address opponent = currentOpponent[msg.sender];
@@ -172,6 +174,9 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         inGame[opponent] = false;
         inQueue[msg.sender] = true;
         inGame[msg.sender] = false;
+
+        //potentially this secret could be passed to the event instead
+        pendingHand[msg.sender] = secret;
 
         pendingUpkeep[msg.sender] = upkeepType.CHECK_VICTORY;
         emit AwaitingAutomation(msg.sender);
@@ -326,19 +331,30 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   ) external view returns (bool upkeepNeeded, bytes memory performData) {
         address player = address(uint160(uint256(log.topics[1])));
         upkeepNeeded = true;
-        performData = abi.encode("");
         if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
-
+            performData = abi.encode(player);
         }
         if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
+            bytes memory hand = bytes(pendingHand[msg.sender]);
             // Extract win condition
             //secret[secret.length-1]
+            bytes1 winCondition = hand[hand.length - 1];
+            bytes memory fieldCards;
             //if valid:
             // Evaluate the player's cards against the provided secret
-
-            //else:
+            if (isPlayer1[player]) {
+                fieldCards = player1[currentMatch[player]];
+            }
+            else {
+                fieldCards = player2[currentMatch[player]];
+            }
+            //else, or if cards invalid:
             //other player wins automatically
-            // declareWinner(currentOpponent[msg.sender])
+            
+            //Test
+            address winner = player;
+
+            performData = abi.encode(winner);
 
         }
         //currentOpponent[player]
@@ -367,7 +383,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     ) external {
         require(msg.sender == forwarder);
 
-        (address player, bytes memory params) = abi.decode(performData, (address, bytes));
+        (address player) = abi.decode(performData, (address));
         
         if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
             // Test Opponent
@@ -381,6 +397,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             else {
                 matchmaker[1] = player;
 
+                //is the array empty in the beginning? or does it have index 0
                 matchIndex++;
 
                 currentMatch[_player1] = matchIndex;
@@ -404,6 +421,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         else if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
 
             // Declare winner and disburse reward / deposit
+
+            // the encoded address "player" is the winner, while the opponent has lost
 
             // Reinitialize both players
             inQueue[player] = false;
