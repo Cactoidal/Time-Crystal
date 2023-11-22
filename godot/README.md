@@ -485,7 +485,7 @@ Instead, the player now registers their AES key once, by encrypting it with the 
 
 Every time the player wants to join a game, they will encrypt a secret password (and some inventory choices) and query the Functions oracle for some secret randomness.  This secret returns as a hash, against which the player can run a birthday attack to extract the 5 cards plus a secret winning condition.
 
-At the same time, the Functions callback will trigger Automation to push the player into a matchmaking queue.  As soon as another player is available, the match begins immediately.  Players submit moves, one move allowed every 3 blocks, until they achieve their secret winning condition.
+Simultaneously, the Functions callback will trigger Automation to push the player into a matchmaking queue.  As soon as another player is available, the match begins immediately.  Players submit moves, one move allowed every 3 blocks, until they achieve their secret winning condition.
 
 A player can declare victory by providing the full string of their secret passphrase, dealt cards, inventory, and win condition.  This gets hashed on-chain and compared to the hash put there by the oracle.  If they match, the game immediately ends, and Automation is called to evaluate the game state.
 
