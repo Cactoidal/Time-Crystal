@@ -4,361 +4,293 @@ pragma solidity 0.8.20;
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "ILogAutomation.sol";
 import "IGameLogic.sol";
 
-contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
-  using FunctionsRequest for FunctionsRequest.Request;
+contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
+    using FunctionsRequest for FunctionsRequest.Request;
 
-  bytes32 public donId;
-  address private forwarder;
-  address public gameAutomation;
 
-  bytes32 public s_lastRequestId;
-  bytes public s_lastResponse;
-  bytes public s_lastError;
+    //            CHAINLINK AUTOMATION, FUNCTIONS, AND VRF VARIABLES          //
 
-  string public start_game_source;
-  string public take_turn_source;
-  string public register_opponent_source;
-  FunctionsRequest.Location public secretsLocation;
-  bytes encryptedSecretsReference;
+    bytes32 public donId;
+    address private forwarder;
+    address public gameAutomation;
+
+    bytes32 public s_lastRequestId;
+    bytes public s_lastResponse;
+    bytes public s_lastError;
+
+    string public start_game_source;
+    string public take_turn_source;
+    string public register_opponent_source;
+    FunctionsRequest.Location public secretsLocation;
+    bytes encryptedSecretsReference;
     //uint64 subscriptionId = 1600;
-  uint64 subscriptionId = 1686;
-  uint32 callbackGasLimit = 300000;
+    uint64 subscriptionId = 1686;
+    uint32 callbackGasLimit = 300000;
+
+    uint64 s_subscriptionId;
+    address s_owner;
+    VRFCoordinatorV2Interface COORDINATOR;
+    address vrfCoordinator = 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625;
+    bytes32 s_keyHash = 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c;
+    uint16 requestConfirmations = 3;
+
+    address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
   
-
-  constructor(address _vrfCoordinator, address router, address _gameAutomation, bytes32 _donId, string memory _source,  string memory _source2, string memory _source3, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
-    donId = _donId;
-    start_game_source = _source;
-    take_turn_source = _source2;
-    register_opponent_source = _source3;
-    secretsLocation = _location;
-    encryptedSecretsReference = _reference;
-    gameAutomation = _gameAutomation;
-    for (uint z = 0; z < _cards.length; z++) {
-        cards[Strings.toString(z + 10)] = _cards[z];
-    }
-    initialize();
-  }
-
-  enum requestType {
-    TAKE_TURN,
-    OPPONENT_TURN,
-    START_GAME,
-    REGISTER_OPPONENT,
-    REGISTER_PLAYER
-  }
-  
-
-  mapping (bytes32 => address) public requestIdbyRequester;
-
-  uint public nonceCounter = 1;
-  mapping (bytes32 => requestType) public pendingRequests;
-  mapping (uint => bool) public usedSeeds;
-  mapping (string => bool) usedCounters;
-
-
-//             NEW GAME STUFF             //    
-
-    //temp
-    string[3] public currentOpponent;
-    uint8 public currentTurn = 1;
-    string[] public opponentCards;
-    string[] public playerCards;
-    uint public gameSeed;
-    string public gameCounter;
-    uint gameNonce = 1;
-    string public playerDeck;
-
-    uint8[] baseInventory = [10,11,12,13,14,15,16,17,18,19,20];
-
-  struct Player {
-    uint8[] inventory;
-    string pendingDeck;
-    string[] playerDecks;
-    Opponent[] opponentDecks;
-    bool inQueue;
-    bool inGame;
-    uint VRFindex;
-    uint[] VRFseeds;
-    bool registered;
-    requestType upkeepType;
-  }
-
-  struct cardActions {
-        string[] doers;
-        string[] targets;
-        uint[] action;
-        cardKeyword[] ability;
-    }
-
-  struct gameSession {
-    uint8 playerHealth;
-    uint8 opponentHealth;
-    address opponent;
-    uint opponentDeckId;
-    uint[] playerHand;
-    string handJSON;
-    bytes[] playerField;
-    bytes[] opponentField;
-    string[] pendingAttacks;
-    uint sessionId;
-
-    bytes updateBytes;
-    
-    
-    uint seed;
-    string counter;
-    uint nonce;
-    uint8 currentTurn;
-  }
-
-    mapping (address => Player) public players;
-    uint opponentId;
-    mapping (uint => address) public opponents;
-    uint sessionId = 1;
-    mapping (address => gameSession) public currentSession;
-    bytes[] playerHands;
-    bytes[] gameUpdates;
-
-    struct Opponent {
-        string key;
-        string deck;
-        string iv;
-        bool registered;
+    constructor(address _vrfCoordinator, address router, address _gameAutomation, bytes32 _donId, string memory _source,  string memory _source2, string memory _source3, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
+        donId = _donId;
+        start_game_source = _source;
+        take_turn_source = _source2;
+        register_opponent_source = _source3;
+        secretsLocation = _location;
+        encryptedSecretsReference = _reference;
+        gameAutomation = _gameAutomation;
+        for (uint z = 0; z < _cards.length; z++) {
+            cards[Strings.toString(z + 10)] = _cards[z];
+        }
     }
 
     
 
-    function registerPlayer() public {
-        require (players[msg.sender].registered == false);
-        players[msg.sender].registered = true;
-        players[msg.sender].inventory = baseInventory;
-        //generate seeds
-        createPlayerDeck("10,10,11,11,12,12,13,13,14,14,15,15,16,16,17,17,18,18,19,20");
+    //          GAME STATE VARIABLES        //
+
+    mapping (address => string) keys;
+    mapping (address => bytes) public hands;
+    mapping (address => uint[]) vrfSeeds;
+    mapping (address => bool) public inGame;
+    mapping (address => bool) public inQueue;
+    mapping (address => uint) public currentMatch;
+    mapping (address => address) public currentOpponent;
+    mapping (address => bool) public isPlayer1;
+    mapping (address => uint) public lastCommit;
+
+    //Test
+    string public testWin = "Not yet";
+
+    address[2] matchmaker;
+    uint matchIndex;
+    bytes[] player1;
+    bytes[] player2;
+
+    mapping (bytes32 => address) public functionsRequestIdbyRequester;
+    mapping (uint => address) public vrfRequestIdbyRequester;
+    mapping (address => upkeepType) pendingUpkeep;
+
+    enum upkeepType {
+        MATCHMAKING,
+        CHECK_VICTORY
+    }
+
+
+    //                 PLAYER GAME INTERACTIONS                 //
+
+
+    // Register the player AES key and banked VRF values.
+    // RSA-encrypted AES key is provided as a base64 string.
+    function registerPlayerKey(string calldata _key) external {
+        keys[msg.sender] = _key;
+        requestRandomWords();
+  }
+
+    // The player needs to provide a deposit to deter griefing and self-farming.
+    // This is either a separate function (a pool from which the deposit can be slashed)
+    // Or the deposit is provided when getting the hand.
+
+    // Prepare for a game by asking the oracle for a SHA256 hash containing secret information.
+    // Encrypted secret password + inventory, and iv are provided as base64 strings.
+    // The Functions callback will trigger the Automation DON, pushing the player into the matchmaking queue.
+    function getHand(string calldata secrets, string calldata iv) external {
+        require (inGame[msg.sender] == false);
+        require (inQueue[msg.sender] == false);
+        require (hands[msg.sender].length == 0);
+
+        uint[] memory seeds = vrfSeeds[msg.sender];
+
+        if (seeds.length == 0) {
+            revert("Call VRF");
+        }
+
+        inQueue[msg.sender] = true;
+
+        //Test
+        testWin = "Not yet";
+
+        FunctionsRequest.Request memory req;
+        req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, start_game_source);
+        req.secretsLocation = secretsLocation;
+        req.encryptedSecretsReference = encryptedSecretsReference;
+
+        string[] memory args = new string[](4);
+        args[0] = keys[msg.sender];
+        args[1] = secrets;
+        args[2] = iv;
+        args[3] = Strings.toString(seeds[seeds.length - 1]);
+        //args[4] = on-chain deck
+        vrfSeeds[msg.sender].pop();
+        
+
+        req.setArgs(args);
+        //req.setBytesArgs(args);
+
+        s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
+        functionsRequestIdbyRequester[s_lastRequestId] = msg.sender;
+    }
+
+
+    // Evaluates the effect of a card.  All cards are assumed to be valid.
+    // Players must wait 3 blocks in between cards.
+    // Note to self: keep it simple.
+    function makeMove() external {
+        require(inGame[msg.sender] == true);
+        require(inQueue[msg.sender] == false);
+        require(lastCommit[msg.sender] + 3 <= block.number);
+        lastCommit[msg.sender] = block.number;
+        if (isPlayer1[msg.sender]) {
+
+        }
+
+    }
+
+
+    // End the game by providing the constituent values of your oracle-generated hash.
+    // Automation will check your win condition, and the validity of your cards.
+    function declareVictory(bytes calldata secret) external {
+        //potentially the secret could come in as bytes32 instead, or a string
+        require(inQueue[msg.sender] == false);
+        require(keccak256(abi.encode(hands[msg.sender])) == keccak256(abi.encode(sha256(secret))));
+
+        // The game immediately ends and goes to Automation to determine the winner
+        address opponent = currentOpponent[msg.sender];
+
+        inQueue[opponent] = true;
+        inGame[opponent] = false;
+        inQueue[msg.sender] = true;
+        inGame[msg.sender] = false;
+
+        pendingUpkeep[msg.sender] = upkeepType.CHECK_VICTORY;
+        emit AwaitingAutomation(msg.sender);
+    }
+
+
+
+    //              GODOT VIEW FUNCTIONS            //
+
+
+    // Public Getters:
+
+    //      keys(msg.sender)
+
+    //      Retrieves the SHA256 hash of the player's secret password, random cards, and inventory.
+    //      hands(msg.sender)
+
+    //      inQueue(msg.sender)
+
+    //      inGame(msg.sender)
+
+    //      eth.blockNumber 
+
+    //      testWin()
+
+    function seeBoard() public view returns (bytes memory) {
+        if (isPlayer1[msg.sender] == true) {
+            return player1[currentMatch[msg.sender]];
+        }
+        else {
+            return player2[currentMatch[msg.sender]];
+        }
+    }
+
+    function seeOpponentBoard() public view returns (bytes memory) {
+        if (isPlayer1[msg.sender] == true) {
+            return player2[currentMatch[msg.sender]];
+        }
+        else {
+            return player1[currentMatch[msg.sender]];
+        }
+    }
+
+    function hasSeedsRemaining() public view returns (bool) {
+        if (vrfSeeds[msg.sender].length > 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+
+
+    //              VRF REQUEST FULFILLMENT              //
+
+    // 10 VRF values are banked for use as seeds when asking Chainlink Functions for a random hand.
+    // This is also the payment gateway for the player.  Players must provide LINK upfront to cover
+    // the cost of Chainlink services used during play.
+ 
+    function requestRandomWords() private {
+        // pay LINK to cover 10 matches here
+        // player must approve allowance first
+        IERC20(LINKToken).transferFrom(msg.sender, address(this), 1e18);
+        uint256 requestId = COORDINATOR.requestRandomWords(
+            s_keyHash,
+            s_subscriptionId,
+            requestConfirmations,
+            callbackGasLimit,
+            10
+            );
+        vrfRequestIdbyRequester[requestId] = msg.sender;
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual override {
-        
-    }
-
-    function createPlayerDeck(string memory _deck) public {
-        require (players[msg.sender].inGame == false);
-        require (players[msg.sender].inQueue == false);
-        players[msg.sender].inQueue = true;
-        players[msg.sender].pendingDeck = _deck;
-
-        players[msg.sender].upkeepType = requestType.REGISTER_PLAYER;
-
-        emit AwaitingAutomation(msg.sender);
-        
-    }
-    
-
-    //RSA-encrypted AES key, AES-encrypted deck/logic, and the iv used to encrypt
-    //all provided as base64 strings
-    //automation will submit after manipulating inventory into an array of strings
-    function registerOpponentDeck(string calldata _key, string calldata _deck, string calldata _iv) public {
-        require (players[msg.sender].registered == true);
-        require (players[msg.sender].inGame == false);
-        require (players[msg.sender].inQueue == false);
-        players[msg.sender].inQueue = true;
-
-        Opponent memory newOpponentDeck;
-        newOpponentDeck.key = _key;
-        newOpponentDeck.deck = _deck;
-        newOpponentDeck.iv = _iv;
-
-        players[msg.sender].opponentDecks.push(newOpponentDeck);
-        players[msg.sender].upkeepType = requestType.REGISTER_OPPONENT;
-
-        emit AwaitingAutomation(msg.sender);
-
+        vrfSeeds[vrfRequestIdbyRequester[requestId]] = randomWords;
     }
 
 
-    //counter here is a base64 string
-    //seed will eventually come from VRF and be validated
-    //I will need to validate the counter later
-    function startGame (uint _seed, string calldata _counter, uint _deckId, uint _opponentId, uint _opponentDeckId) external {
-    //require (usedCounters[_counter] == false);
-    //require (usedSeeds[_seed] == false);
-    //usedSeeds[_seed] = true;
-    //usedCounters[_counter] = true;
-    require (players[msg.sender].inQueue == false);
-    require (players[msg.sender].inGame == false);
-    require (players[opponents[_opponentId]].opponentDecks[_opponentDeckId].registered == true);
-    //require (players[player] != players[opponents[_opponentId]]);
-
-    players[msg.sender].inGame = true;
-    players[msg.sender].inQueue = true;
-
-    gameSession memory newSession;
-
-    newSession.playerHealth = 15;
-    newSession.opponentHealth = 15;
-    newSession.currentTurn = 1;
-    newSession.opponent = opponents[_opponentId];
-    newSession.opponentDeckId = _opponentDeckId;
-    newSession.seed = _seed;
-    newSession.counter = _counter;
-    newSession.nonce = gameNonce;
-    gameNonce++;
-   
-
-    currentSession[msg.sender] = newSession;
-
-    FunctionsRequest.Request memory req;
-    req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, start_game_source);
-    req.secretsLocation = secretsLocation;
-    req.encryptedSecretsReference = encryptedSecretsReference;
-    
-    string[] memory args = new string[](4);
-    args[0] = Strings.toString(_seed);
-    args[1] = _counter;
-    args[2] = Strings.toString(gameNonce);
-    args[3] = players[msg.sender].playerDecks[_deckId];
-
-    req.setArgs(args);
-    //req.setBytesArgs(args);
-
-    s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
-    requestIdbyRequester[s_lastRequestId] = msg.sender;
-    pendingRequests[s_lastRequestId] = requestType.START_GAME;
-  }
-
-
-  function playerTakeTurn (bytes memory _actions) external {
-    require (players[msg.sender].inGame == true);
-    require (players[msg.sender].inQueue == false);
-    players[msg.sender].inQueue = true;
-    currentSession[msg.sender].updateBytes = _actions;
-    
-    players[msg.sender].upkeepType = requestType.TAKE_TURN;
-
-    emit AwaitingAutomation(msg.sender);
-  }
 
 
 
-    //time to move this into checkUpkeep
-    function progressGame (uint8 _action, address _player) public {
-
-    FunctionsRequest.Request memory req;
-    req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, take_turn_source);
-    req.secretsLocation = secretsLocation;
-    req.encryptedSecretsReference = encryptedSecretsReference;
-
-    string[] memory args = new string[](9);
-    args[0] = playerCards[_action];
-    args[1] = currentOpponent[0];
-    args[2] = currentOpponent[1];
-    args[3] = currentOpponent[2];
-    args[4] = Strings.toString(currentSession[_player].currentTurn);
-    args[5] = Strings.toString(currentSession[_player].seed);
-    args[6] = currentSession[_player].counter;
-    args[7] = Strings.toString(currentSession[_player].nonce);
-    args[8] = playerDeck;
-
-    playerCards[_action] = playerCards[playerCards.length - 1];
-    playerCards.pop();
-
-    currentTurn += 1;
-
-    req.setArgs(args);
-    //req.setBytesArgs(args);
-
-    s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
-    requestIdbyRequester[s_lastRequestId] = _player;
-    pendingRequests[s_lastRequestId] = requestType.TAKE_TURN;
+    //            FUNCTIONS REQUEST FULFILLMENT            //
 
 
-  }
+    // Provides a secret hand drawn from a secretly shuffled deck.  Also contains secret inventory selected by the player.
+    // Asks Chainlink Automation to move the player into matchmaking.
+    function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
 
+        address player = functionsRequestIdbyRequester[requestId];
 
-   
-    function getPlayerHand() public view returns (string memory) {
-        string memory hand;
-        if (currentSession[msg.sender].sessionId != 0) {
-            hand = abi.decode(playerHands[currentSession[msg.sender].sessionId], (string));
+        // Response is a SHA256 hash against which the player will run a birthday attack
+        // to extract the encoded secret random cards
+        hands[player] = response;
+
+        // Moves player to matchmaking queue
+        if (err.length == 0) {
+            pendingUpkeep[player] = upkeepType.MATCHMAKING;
+            emit AwaitingAutomation(player);
             }
-        return hand;
-    }
-
-    function getUpdate() public view returns (string memory) {
-        string memory update;
-        if (currentSession[msg.sender].sessionId != 0) {
-            update = abi.decode(gameUpdates[currentSession[msg.sender].sessionId], (string));
-        }
-        return update;
-    }
-
-   function resetGame() public {
-        currentTurn = 1;
-        string[] memory empty;
-        opponentCards = empty;
-        playerCards = empty;
-    }
-
-
-
-
-//            FUNCTIONS REQUEST FULFILLMENT            //
-
-
-  function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
     
-    if (pendingRequests[requestId] == requestType.START_GAME) {
-        address player = requestIdbyRequester[requestId];
-        playerHands.push(response);
-        gameUpdates.push("");
-        currentSession[player].sessionId = sessionId;
-        players[player].inQueue = false;
-        sessionId++;
-    }
-
-    else if (pendingRequests[requestId] == requestType.TAKE_TURN) {
-        address player = requestIdbyRequester[requestId];
-        currentSession[player].updateBytes = response;
-        players[player].upkeepType = requestType.OPPONENT_TURN;
-        emit AwaitingAutomation(player);
-    }
-     else if (pendingRequests[requestId] == requestType.OPPONENT_TURN) {
-        address player = requestIdbyRequester[requestId];
-        gameUpdates[currentSession[player].sessionId] = response;
-        players[player].upkeepType = requestType.OPPONENT_TURN;
-        emit AwaitingAutomation(player);
-    }
-    else if (pendingRequests[requestId] == requestType.REGISTER_OPPONENT) {
-        address player = requestIdbyRequester[requestId];
-        players[player].inQueue = false;
-        uint valid = abi.decode(response, (uint));
-        if (valid == 1) {
-            players[player].opponentDecks[players[player].opponentDecks.length - 1].registered = true;
-            opponents[opponentId] = player;
-            opponentId++;
-        }
-    }
-    
-    s_lastResponse = response;
-    s_lastError = err;
-    emit RequestFulfilled(requestId, response);
+        s_lastError = err;
+        emit RequestFulfilled(requestId, response);
   }
 
 
-//  AUTOMATION AND GAMEPLAY VALIDATION  //
 
-  enum cType {
+
+
+    //       AUTOMATION AND GAMEPLAY VALIDATION          //
+
+    enum cType {
     CONSTRUCT, //persistent units
     CRYSTAL,  //persistent structures
     POWER, //tactical spells
     ORACLE //strategic spells
   }
 
-  enum cardKeyword {
+    enum cardKeyword {
     NONE,
     DESTROY,  //destroy target
     DAMAGE1,  //deal 1 damage to target
@@ -374,7 +306,7 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     //QUERY
   }
 
-  struct cardTraits {
+    struct cardTraits {
     uint8 cardNumber;
     string cardName;
     cType cardType;
@@ -386,148 +318,32 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
   }
 
 
+    mapping (string => cardTraits) cards;
 
-  mapping (string => cardTraits) cards;
-
-
-
-  function checkLog(
+    function checkLog(
     Log calldata log,
     bytes memory checkData
   ) external view returns (bool upkeepNeeded, bytes memory performData) {
         address player = address(uint160(uint256(log.topics[1])));
         upkeepNeeded = true;
-        
-        // Register Opponent
-        if (players[player].upkeepType == requestType.REGISTER_OPPONENT) {
-            uint8[] memory inventory = players[player].inventory;
-            string memory inventoryString = "";
-            for (uint y = 0; y < inventory.length; y++) {
-                inventoryString = string.concat(inventoryString, Strings.toString(inventory[y]));
-                if (y != inventory.length - 1) {
-                    inventoryString = string.concat(inventoryString, ",");
-                }
-            }
+        performData = abi.encode("");
+        if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
 
-            FunctionsRequest.Request memory req;
-            req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, register_opponent_source);
-            req.secretsLocation = secretsLocation;
-            req.encryptedSecretsReference = encryptedSecretsReference;
-
-    
-            string[] memory args = new string[](4);
-            args[0] = players[player].opponentDecks[players[player].opponentDecks.length - 1].key;
-            args[1] = players[player].opponentDecks[players[player].opponentDecks.length - 1].deck;
-            args[2] = players[player].opponentDecks[players[player].opponentDecks.length - 1].iv;
-            args[3] = inventoryString;
-
-            req.setArgs(args);
-    
-            performData = abi.encode(player, requestType.REGISTER_OPPONENT, req.encodeCBOR());
-            return (upkeepNeeded, performData);
         }
+        if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
+            // Extract win condition
+            //secret[secret.length-1]
+            //if valid:
+            // Evaluate the player's cards against the provided secret
 
-        // Register Player
-        else if (players[player].upkeepType == requestType.REGISTER_PLAYER) {
-            uint8[] memory inventory = players[player].inventory;
-            bytes memory pendingDeck = bytes(players[player].pendingDeck);
-            bool valid = true;
-            uint8 index = 0;
-            for (uint8 i = 0; i < 20; i++) {
-                bytes memory card = new bytes(2);
-                card[0] = pendingDeck[index];
-                index += 1;
-                card[1] = pendingDeck[index];
-                index += 2;
-                string memory newCard = string(card);
-                uint8 comparator = uint8(strToUint(newCard));
-                bool inInventory = false;
-                for (uint k = 0; k < inventory.length; k++) {
-                    if (comparator == inventory[k]) {
-                        inInventory = true;
-                    }
-                }
-                if (inInventory == false) {
-                        valid = false;
-                }
-            }
-            performData = abi.encode(player, requestType.REGISTER_PLAYER, abi.encode(valid, players[player].pendingDeck));
-            return (upkeepNeeded, performData);
-            }
+            //else:
+            //other player wins automatically
+            // declareWinner(currentOpponent[msg.sender])
 
-        // Player Take Turn
-        else if (players[player].upkeepType == requestType.TAKE_TURN) {
-            performData = abi.encode(false, "");
-    
-            bytes[] memory playerField = currentSession[player].playerField;
-            bytes[] memory opponentField = currentSession[player].opponentField;
-
-            //Hand can't contain more than 6 cards
-            if ( !IGameLogic(gameAutomation).checkHandSize( playerHands[currentSession[msg.sender].sessionId] ) ) {
-                return (upkeepNeeded, performData);
-            }
-            
-            (uint8 leadByte1, 
-            uint8 leadByte2, 
-            bytes[] memory hand, 
-            bytes[] memory handActions, 
-            bytes[] memory fieldActions) = IGameLogic(gameAutomation).getData(playerHands[currentSession[msg.sender].sessionId], currentSession[msg.sender].updateBytes);
-
-            //No more than 4 actions allowed
-            if (leadByte1 + leadByte2 > 4) {
-                return (upkeepNeeded, performData);
-            }
-            
-            //check validity of actions using card type and target
-            if (!IGameLogic(gameAutomation).checkHandActions(leadByte1, hand, handActions, playerField, opponentField)) {
-                return (upkeepNeeded, performData);
-            }
-
-            if (!IGameLogic(gameAutomation).checkFieldActions(leadByte2, fieldActions, playerField, opponentField)) {
-                return (upkeepNeeded, performData);
-            }
-           
-            uint8[4] memory destructible;
-            uint8[4] memory damaged;
-            uint8 destructionIndex;
-            uint8 playerHealthMod;
-            uint8 opponentHealthMod;
-
-            (playerField,
-            destructible,
-            damaged,
-            destructionIndex) = IGameLogic(gameAutomation).doHandActions(leadByte1, fieldActions, playerField, opponentField);
-
-            (playerField,
-            destructible,
-            damaged) = IGameLogic(gameAutomation).doFieldActions(leadByte2, fieldActions, playerField, opponentField, destructible, damaged, destructionIndex);
-
-            (playerField,
-            opponentField,
-            playerHealthMod,
-            opponentHealthMod) = IGameLogic(gameAutomation).applyEffects(playerField, opponentField, destructible, damaged);
-            //will need to encode the new player hand, the player field, the opponent field, and life totals           
-
-            //in addition to the player fields, hand still needs to be modified properly
-            //Namely, it needs to be convered from an array of bytes to just bytes
-            //and what about pending attacks?
-            performData = abi.encode(player, requestType.TAKE_TURN, abi.encode(hand, playerField, opponentField, playerHealthMod, opponentHealthMod));
-            
-            return (upkeepNeeded, performData);
         }
-
-        // Opponent Take Turn
-        else if (players[player].upkeepType == requestType.OPPONENT_TURN) {
-
-            //gameUpdates[currentSession[player].sessionId] contains the bytes from the oracle
-
-            //after validating, the Automations DON will do the same changes as above, including modifying
-            //the player hand.
-
-            //there should be a check here to see if the game is over
-            //players[player].inQueue = false;
-        }
-    
+        //currentOpponent[player]
+        //performData = abi.encode(player, requestType.REGISTER_PLAYER, abi.encode(stuff));
+        return (upkeepNeeded, performData);
   }
 
   //credit: stackoverflow
@@ -541,108 +357,88 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
     
     return result;
-}
+    }
 
 
-
+    // MATCHMAKING: Moves the player into the queue, and starts a game if two players are ready.
+    // CHECK_VICTORY: Evaluates the player's win condition, and their secret cards against their used cards.
     function performUpkeep(
         bytes calldata performData
     ) external {
-       // require(msg.sender == forwarder);
+        require(msg.sender == forwarder);
 
-        (address player, requestType upkeepType, bytes memory params) = abi.decode(performData, (address, requestType, bytes));
+        (address player, bytes memory params) = abi.decode(performData, (address, bytes));
         
-        if (upkeepType == requestType.REGISTER_OPPONENT) {
+        if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
+            // Test Opponent
+            matchmaker[0] = vrfCoordinator;
 
-            s_lastRequestId = _sendRequest(params, subscriptionId, callbackGasLimit, donId);
-            requestIdbyRequester[s_lastRequestId] = player;
-            pendingRequests[s_lastRequestId] = requestType.REGISTER_OPPONENT;
+            address _player1 = matchmaker[0];
+            address _player2 = matchmaker[1];
+            if (_player1 == address(0x0)) {
+                matchmaker[0] = player;
+                }
+            else {
+                matchmaker[1] = player;
 
-            emit UpkeepFulfilled(performData);
+                matchIndex++;
 
-        }
+                currentMatch[_player1] = matchIndex;
+                isPlayer1[_player1] = true;
+                currentOpponent[_player1] = matchmaker[1];
+                player1.push(bytes(""));
+                inQueue[_player1] = false;
+                inGame[_player1] = true;
+                matchmaker[0] = address(0x0);
 
-        else if (upkeepType == requestType.REGISTER_PLAYER) {
-            players[player].inQueue = false;
-            (bool valid, string memory deck) = abi.decode(params, (bool, string));
-            if (valid == true) {
-                players[player].playerDecks.push(deck);
+                currentMatch[_player2] = matchIndex;
+                isPlayer1[_player2] = false;
+                currentOpponent[_player2] = matchmaker[0];
+                player2.push(bytes(""));
+                inQueue[_player2] = false;
+                inGame[_player2] = true;
+                matchmaker[1] = address(0x0); 
+                }
             }
 
-            emit UpkeepFulfilled(performData);
+        else if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
+
+            // Declare winner and disburse reward / deposit
+
+            // Reinitialize both players
+            inQueue[player] = false;
+            inGame[player] = false;
+            hands[player] = bytes("");
+
+            address opponent = currentOpponent[player];
+
+            inQueue[opponent] = false;
+            inGame[opponent] = false;
+            hands[opponent] = bytes("");
+
+
+            //Test 
+            testWin = "You won!";
+            }
+
+        emit UpkeepFulfilled(performData);
 
         }
-
-
-        else if (upkeepType == requestType.TAKE_TURN) {
-            (bytes memory _hand, 
-            bytes[] memory _playerField, 
-            bytes[] memory _opponentField, 
-            uint8 playerHealthMod, 
-            uint8 opponentHealthMod) = abi.decode(params, (bytes, bytes[], bytes[], uint8, uint8));
-
-            playerHands[currentSession[player].sessionId] = _hand;
-            currentSession[player].playerField = _playerField;
-            currentSession[player].opponentField = _opponentField;
-
-            //since these values might be positive or negative, I'll probably need to use int instead
-            currentSession[player].playerHealth -= playerHealthMod;
-            currentSession[player].opponentHealth -= opponentHealthMod;
-
-            //there should be a check here to see if the game is over.
-            // if so,
-            //players[player].inQueue = false;
-            //players[player].inGame = false;
-
-            //otherwise,
-
-            //Now the Functions oracle is called.  Either the CBOR encoding will happen in the read function,
-            //or it will happen here.
-
-            //s_lastRequestId = _sendRequest(params, subscriptionId, callbackGasLimit, donId);
-            //requestIdbyRequester[s_lastRequestId] = player;
-            //pendingRequests[s_lastRequestId] = requestType.OPPONENT_TURN;
-
-            emit UpkeepFulfilled(performData);
-
-        }
-
-        else if (upkeepType == requestType.OPPONENT_TURN) {
-            (bytes memory _hand, 
-            bytes[] memory _playerField, 
-            bytes[] memory _opponentField, 
-            uint8 playerHealthMod, 
-            uint8 opponentHealthMod) = abi.decode(params, (bytes, bytes[], bytes[], uint8, uint8));
-
-            playerHands[currentSession[player].sessionId] = _hand;
-            currentSession[player].playerField = _playerField;
-            currentSession[player].opponentField = _opponentField;
-
-            //since these values might be positive or negative, I'll probably need to use int instead
-            currentSession[player].playerHealth -= playerHealthMod;
-            currentSession[player].opponentHealth -= opponentHealthMod;
-
-            //there should be a check here to see if the game is over
-
-            //otherwise, it is now the player's turn
-            players[player].inQueue = false;
-        }
-        
-        
-    }
 
  
 
-  /**
-   * @notice Set the DON ID
-   * @param newDonId New DON ID
-   */
-  function setDonId(bytes32 newDonId) external onlyOwner {
-    donId = newDonId;
+
+
+    //          MAINTENANCE FUNCTIONS AND EVENTS            //
+
+
+
+    function setDonId(bytes32 newDonId) external onlyOwner {
+        donId = newDonId;
   }
 
-  function updateSecret(bytes calldata _secrets) external onlyOwner {
-    encryptedSecretsReference = _secrets;
+    function updateSecret(bytes calldata _secrets) external onlyOwner {
+        encryptedSecretsReference = _secrets;
   }
 
    
@@ -652,22 +448,14 @@ contract RemixTester is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
        forwarder = _forwarder;
     }
 
-    bool initialized;
-    function initialize() public {
-        if (!initialized) {
-            initialized = true;
-            playerHands.push("");
-            gameUpdates.push("");
-        }
+    function withdrawLink() external {
+        IERC20(LINKToken).transferFrom(address(this), owner(), IERC20(LINKToken).balanceOf(address(this)));
     }
 
 
-  event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
-  event AwaitingAutomation(address indexed _player);
-  event UpkeepFulfilled(bytes indexed _performData);
-  event AwaitingGameLogic(address indexed _player);
-
-
+    event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
+    event AwaitingAutomation(address indexed _player);
+    event UpkeepFulfilled(bytes indexed _performData);
 
   
 }
