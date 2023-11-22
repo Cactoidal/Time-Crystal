@@ -477,7 +477,7 @@ Each player has their own secret win condition, and their task is to declare a v
 
 While I'm now moving to a model where every individual action now requires a transaction, those transactions should hopefully be much less expensive, and the intent is for game sessions to be quick.  My other goal is to keep validation logic simpler and easier to audit.  We'll see how this works out.
 
-## Day 17
+## Day 15
 
 New contract has taken shape.  It's much cleaner and better organized, and no longer does the game need to query the oracle during every single turn.
 
