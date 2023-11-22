@@ -6,9 +6,11 @@ import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/Confir
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
+
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "ILogAutomation.sol";
+import "IERC677.sol";
 
 contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     using FunctionsRequest for FunctionsRequest.Request;
@@ -39,14 +41,15 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
   
-    constructor(address _vrfCoordinator, address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
+    //cardTraits[] memory _cards as final argument
+    constructor(address _vrfCoordinator, address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference) FunctionsClient(router) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
         donId = _donId;
         source = _source;
         secretsLocation = _location;
         encryptedSecretsReference = _reference;
-        for (uint z = 0; z < _cards.length; z++) {
-            cards[Strings.toString(z + 10)] = _cards[z];
-        }
+     //   for (uint z = 0; z < _cards.length; z++) {
+     //       cards[Strings.toString(z + 10)] = _cards[z];
+     //   }
     }
 
 
@@ -86,20 +89,31 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     //                 PLAYER GAME INTERACTIONS                 //
 
 
-    // Register the player AES key and banked VRF values.
-    // RSA-encrypted AES key is provided as a base64 string.
-    function registerPlayerKey(string calldata _key) external {
-        keys[msg.sender] = _key;
-        requestRandomWords();
-  }
+    // transferAndCall executes the following:
+    // Registers the player AES key.  RSA-encrypted AES key is provided as a base64 string.
+    // Calls VRF. 10 VRF values are banked for use as seeds when asking Chainlink Functions for a random hand.
+    // This is also the payment gateway for the player.  Players provide LINK upfront to cover the cost of services.
+      function onTokenTransfer(address _sender, uint _value, bytes memory _data) external {
+        require(msg.sender == LINKToken);
+        // pay LINK to cover 10 matches here
+        // turned off for testing
+        //require(_value == 1e18);
+        string memory _key = abi.decode(_data, (string));
+        uint256 requestId = COORDINATOR.requestRandomWords(
+            s_keyHash,
+            s_subscriptionId,
+            requestConfirmations,
+            callbackGasLimit,
+            10
+            );
+        keys[_sender] = _key;
+        vrfRequestIdbyRequester[requestId] = _sender;
+    }
 
-    // The player needs to provide a deposit to deter griefing and self-farming.
-    // This is either a separate function (a pool from which the deposit can be slashed)
-    // Or the deposit is provided when getting the hand.
 
-    // Prepare for a game by asking the oracle for a SHA256 hash containing secret information.
-    // Encrypted secret password + inventory, and iv are provided as base64 strings.
-    // In addition, another (unique) iv must be passed in for use by the CSPRNG key.
+    // Prepare for a match by asking the Functions oracle for a SHA256 hash containing secret information.
+    // AES-encrypted secret password + inventory, and iv are provided as base64 strings.
+    // In addition, another (unique) iv must be passed for use by the CSPRNG key.
     // The Functions callback will trigger the Automation DON, pushing the player into the matchmaking queue.
     function getHand(string calldata secrets, string calldata secretsIv, string calldata csprngIv) external {
         require (inGame[msg.sender] == false);
@@ -131,7 +145,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         args[3] = Strings.toString(seeds[seeds.length - 1]);
         args[4] = csprngIv;
         args[5] = Strings.toString(ivNonce);
-        //args[4] = on-chain deck
+        //args[6] = on-chain deck
         ivNonce++;
         vrfSeeds[msg.sender].pop();
         
@@ -141,6 +155,11 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
         functionsRequestIdbyRequester[s_lastRequestId] = msg.sender;
     }
+
+
+    // The player needs to provide a deposit to deter griefing and self-farming.
+    // This is either a separate function (a pool from which the deposit can be slashed)
+    // Or the deposit is provided when getting the hand.
 
 
     // Evaluates the effect of a card.  All cards are assumed to be valid.
@@ -233,24 +252,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     //              VRF REQUEST FULFILLMENT              //
 
-    // 10 VRF values are banked for use as seeds when asking Chainlink Functions for a random hand.
-    // This is also the payment gateway for the player.  Players must provide LINK upfront to cover
-    // the cost of Chainlink services used during play.
- 
-    function requestRandomWords() private {
-        // pay LINK to cover 10 matches here
-        // player must approve allowance first
-        IERC20(LINKToken).transferFrom(msg.sender, address(this), 1e18);
-        uint256 requestId = COORDINATOR.requestRandomWords(
-            s_keyHash,
-            s_subscriptionId,
-            requestConfirmations,
-            callbackGasLimit,
-            10
-            );
-        vrfRequestIdbyRequester[requestId] = msg.sender;
-    }
-
+    // Banks 10 VRF values
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual override {
         vrfSeeds[vrfRequestIdbyRequester[requestId]] = randomWords;
     }
@@ -342,6 +344,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             bytes memory fieldCards;
             //if valid:
             // Evaluate the player's cards against the provided secret
+            // The inventory cards could also be evaluated here, rather than in the Functions step, we'll see
             if (isPlayer1[player]) {
                 fieldCards = player1[currentMatch[player]];
             }
@@ -468,7 +471,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
     function withdrawLink() external {
-        IERC20(LINKToken).transferFrom(address(this), owner(), IERC20(LINKToken).balanceOf(address(this)));
+        IERC20(LINKToken).transfer(owner(), IERC20(LINKToken).balanceOf(address(this)));
     }
 
 
