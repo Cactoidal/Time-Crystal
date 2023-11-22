@@ -161,6 +161,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     // Automation will check your win condition, and the validity of your cards.
     function declareVictory(bytes calldata secret) external {
         //potentially the secret could come in as bytes32 instead, or a string
+        require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
         require(keccak256(abi.encode(hands[msg.sender])) == keccak256(abi.encode(sha256(secret))));
 
