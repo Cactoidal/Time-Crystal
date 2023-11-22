@@ -53,6 +53,12 @@ abigen!(
     event_derives(serde::Deserialize, serde::Serialize)
 );
 
+abigen!(
+    LINKTokenABI,
+    "./LINKToken.json",
+    event_derives(serde::Deserialize, serde::Serialize)
+);
+
 struct NewFuture(Result<(), Box<dyn std::error::Error + 'static>>);
 
 impl ToVariant for NewFuture {
@@ -114,7 +120,7 @@ return_string
 
 #[method]
 #[tokio::main]
-async fn register_player_key(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, aes_key: PoolArray<u8>, ui_node: Ref<Spatial>) -> NewFuture {
+async fn register_player_key(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, aes_key: PoolArray<u8>, chainlink_contract: GodotString, ui_node: Ref<Spatial>) -> NewFuture {
 
 let vec = &key.to_vec();
 
@@ -129,10 +135,13 @@ let user_address = wallet.address();
 let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
     
 let contract_address: Address = time_crystal_contract.to_string().parse().unwrap();
-    
+
+let chainlink_address: Address = chainlink_contract.to_string().parse().unwrap();
+
 let client = SignerMiddleware::new(provider, wallet.clone());
-    
-let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
+
+let contract = LINKTokenABI::new(chainlink_address.clone(), Arc::new(client.clone()));
+//let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
     
 let raw_pem = "-----BEGIN PUBLIC KEY-----
         MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvOkgKoC7DhwKMQ9b6m2d
@@ -156,11 +165,14 @@ let encrypted_len = public_rsa_key.public_encrypt(&aes_keyset, &mut encrypted_pl
     
 let base64_player_key = openssl::base64::encode_block(&encrypted_player_key);
 
-let calldata = contract.register_player_key(base64_player_key).calldata().unwrap();
+let key_bytes = AbiEncode::encode(base64_player_key);
+
+let calldata = contract.transfer_and_call(contract_address, 1.into(), key_bytes.into()).calldata().unwrap();
+//let calldata = contract.register_player_key(base64_player_key).calldata().unwrap();
 
 let tx = Eip1559TransactionRequest::new()
     .from(user_address)
-    .to(contract_address) 
+    .to(chainlink_address) 
     .value(0)
     .gas(900000)
     .max_fee_per_gas(_gas_fee)
