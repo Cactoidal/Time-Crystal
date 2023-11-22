@@ -108,7 +108,7 @@ const csprngKey = await crypto.subtle.importKey(
   );
 
 
-// Generate secret randomness and draw 5 cards.
+// Generate secret randomness and draw 5 cards + win condition.
 
 const seed = args[3]
 // from user-supplied Counter
@@ -155,7 +155,7 @@ for (var k = 0; k < 5; k++) {
 // Get win condition.
 let secretWinCondition = secret_value % 9
 
-let result = returnString + phraseAndInventoryArray[1] + secretWinCondition
+let result = returnString + phraseAndInventoryArray[1] + secretWinCondition.toString()
 
 //Get SHA256 Hash and return to contract.
 let hash = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(result)))
