@@ -476,3 +476,19 @@ I've done some reading on gas optimization, storage slots, and Yul.  Time to tak
 Each player has their own secret win condition, and their task is to declare a valid victory faster than their opponent.  They'll need to work toward their own objective while trying to discern what their opponent's win condition is, and what they can do to slow them down.
 
 While I'm now moving to a model where every individual action now requires a transaction, those transactions should hopefully be much less expensive, and the intent is for game sessions to be quick.  My other goal is to keep validation logic simpler and easier to audit.  We'll see how this works out.
+
+## Day 17
+
+New contract has taken shape.  It's much cleaner and better organized, and no longer does the game need to query the oracle during every single turn.
+
+Instead, the player now registers their AES key once, by encrypting it with the DON's public RSA key and putting it on-chain.  At the same time they will generate 10 VRF seed values, and pay upfront for the cost of 10 matches.
+
+Every time the player wants to join a game, they will encrypt a secret password (and some inventory choices) and query the Functions oracle for some secret randomness.  This secret returns as a hash, against which the player can run a birthday attack to extract the 5 cards plus a secret winning condition.
+
+At the same time, the Functions callback will trigger Automation to push the player into a matchmaking queue.  As soon as another player is available, the match begins immediately.  Players submit moves, one move allowed every 3 blocks, until they achieve their secret winning condition.
+
+A player can declare victory by providing the full string of their secret passphrase, dealt cards, inventory, and win condition.  This gets hashed on-chain and compared to the hash put there by the oracle.  If they match, the game immediately ends, and Automation is called to evaluate the game state
+
+If the declaring player has a game state satisfying the win condition, and only played cards available in their secret hand and inventory, the Automation DON will award them the victory.  Otherwise, the opponent wins instead.
+
+While the game logic hasn't been implemented yet, the "frame" of the contract is close to complete, with the three Chainlink services linked together.  Once I have the Rust and Godot components ready, I will try running an "empty game" to test the entire sequence.
