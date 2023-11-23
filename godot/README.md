@@ -492,3 +492,11 @@ A player can declare victory by providing the full string of their secret passph
 If the declaring player has a game state satisfying the win condition, and only played cards available in their secret hand and inventory, the Automation DON will award them the victory.  Otherwise, the opponent wins instead.
 
 While the game logic hasn't been implemented yet, the "frame" of the contract is close to complete, with the three Chainlink services linked together.  Once I have the Rust and Godot components ready, I will try running an "empty game" to test the entire sequence.
+
+## Day 16
+
+### Emanations of a Time Crystal
+
+I've had an idea.
+
+Rather than a PvP game, I'm once more considering a Player vs Oracle game.  Here the PLAYER defines their deck, from which the Functions oracle will draw their hand.  During the course of the game, the Automation DON will draw the remaining cards and play them _against_ the PLAYER.
