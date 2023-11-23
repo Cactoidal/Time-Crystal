@@ -507,4 +507,6 @@ Side note: while I may not end up using the birthday attack idea, I still think 
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/e4841f38-9260-4d2a-934a-52a38a9c06a0
 
+Given the target hash in the upper left, the game cycles through all the possible combinations of cards - appended to the secret passphrase (a bunch of random bytes) and inventory - to get the values producing a matching hash.
+
 You can see that the computation still slows down the game, but doesn't cause it to freeze, which is a big improvement.  The computation also completes almost 5 seconds faster.  Great suggestion!
