@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.22;
 
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
@@ -9,8 +9,10 @@ import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "ILogAutomation.sol";
-import "IERC677.sol";
+import "./ILogAutomation.sol";
+import "./IERC677.sol";
+
+
 
 contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     using FunctionsRequest for FunctionsRequest.Request;
@@ -75,8 +77,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     address[2] matchmaker;
     uint matchIndex;
-    bytes[] player1;
-    bytes[] player2;
+    string[] player1;
+    string[] player2;
 
     mapping (bytes32 => address) public functionsRequestIdbyRequester;
     mapping (uint => address) public vrfRequestIdbyRequester;
@@ -167,13 +169,18 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     // Evaluates the effect of a card.  All cards are assumed to be valid.
     // Players must wait 3 blocks in between cards.
     // Note to self: keep it simple.
-    function makeMove() external {
+    function makeMove(string memory action) external {
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
         require(lastCommit[msg.sender] + 3 <= block.number);
         lastCommit[msg.sender] = block.number;
         if (isPlayer1[msg.sender]) {
-
+            string memory actionString = player1[currentMatch[msg.sender]];
+            actionString = string.concat(actionString, action);
+        }
+        else {
+            string memory actionString = player2[currentMatch[msg.sender]];
+            actionString = string.concat(actionString, action);
         }
 
     }
@@ -196,11 +203,17 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         inQueue[msg.sender] = true;
         inGame[msg.sender] = false;
 
-        //potentially this secret could be passed to the event instead
-        pendingHand[msg.sender] = secret;
+        string memory actionString;
+
+        if (isPlayer1[msg.sender]) {
+            actionString = player1[currentMatch[msg.sender]];
+        }
+        else {
+            actionString = player2[currentMatch[msg.sender]];
+        }
 
         pendingUpkeep[msg.sender] = upkeepType.CHECK_VICTORY;
-        emit AwaitingAutomation(msg.sender);
+        emit AwaitingEvaluation(msg.sender, secret, actionString);
     }
 
 
@@ -223,7 +236,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     //      testWin()
 
-    function seeBoard() public view returns (bytes memory) {
+    function seeBoard() public view returns (string memory) {
         if (isPlayer1[msg.sender] == true) {
             return player1[currentMatch[msg.sender]];
         }
@@ -232,7 +245,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         }
     }
 
-    function seeOpponentBoard() public view returns (bytes memory) {
+    function seeOpponentBoard() public view returns (string memory) {
         if (isPlayer1[msg.sender] == true) {
             return player2[currentMatch[msg.sender]];
         }
@@ -330,43 +343,127 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     mapping (string => cardTraits) cards;
 
+    struct hashMonster {
+        uint HP;
+        uint POW;
+        uint DEF;
+    }
+
     function checkLog(
     Log calldata log,
     bytes memory checkData
   ) external view returns (bool upkeepNeeded, bytes memory performData) {
         address player = address(uint160(uint256(log.topics[1])));
         upkeepNeeded = true;
+        bool valid = true;
         if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
             performData = abi.encode(player);
         }
+
+
         if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
-            bytes memory hand = bytes(pendingHand[msg.sender]);
-            // Extract win condition
-            //secret[secret.length-1]
-            bytes1 winCondition = hand[hand.length - 1];
-            bytes memory fieldCards;
-            //if valid:
-            // Evaluate the player's cards against the provided secret
-            // The inventory cards could also be evaluated here, rather than in the Functions step, we'll see
-            if (isPlayer1[player]) {
-                fieldCards = player1[currentMatch[player]];
+            performData = abi.encode(player, 9999);
+            bytes memory _cards = bytes32ToBytes(log.topics[2]);
+            bytes memory _actions = bytes32ToBytes(log.topics[3]);
+            uint actionsLength = _actions.length;
+            uint actionsCount = actionsLength / 2;
+            if (actionsCount > _cards.length) {
+                valid = false;
             }
             else {
-                fieldCards = player2[currentMatch[player]];
-            }
-            //else, or if cards invalid:
-            //other player wins automatically
-            
-            //Test
-            address winner = player;
+                // Check if actions are valid
+                bytes[5] memory cardList;
+                bytes[] memory actionList = new bytes[](actionsLength);
+                uint8 index = 0;
+                for (uint8 i = 0; i < 5; i++) {
+                    bytes memory newCard = new bytes(2);
+                    newCard[0] = _cards[index];
+                    index += 1;
+                    newCard[1] = _cards[index];
+                    index += 1;
+                    cardList[i] = (newCard);
+                }
+                index = 0;
+                for (uint8 i = 0; i < actionsCount; i++) {
+                    bytes memory action = new bytes(2);
+                    action[0] = _actions[index];
+                    index += 1;
+                    action[1] = _actions[index];
+                    index += 1;
+                    actionList[i] = (action);
+                    bool inHand = false;
+                    for (uint8 d; d < 5; d++) {
+                        if (keccak256(action) == keccak256(cardList[d])) {
+                            inHand = true;
+                        }
+                    }
+                    if (inHand == false) {
+                        valid = false;
+                    }
 
-            performData = abi.encode(winner);
+                    }
+
+                // Get hashMonster
+                uint firstDigit;
+                uint hashNumber = uint(bytes32(hands[player]));
+                for (uint z; z < 10; z++) {
+                    uint number = hashNumber;
+                    while ( number >= 10) {
+                        number /= 10;
+                        }
+                    if (number == z) {
+                    firstDigit = number;
+                    }
+                }
+                hashMonster memory newMonster;
+                if (firstDigit == 1 || firstDigit == 2 || firstDigit == 3) {
+                    newMonster.HP = 100;
+                    newMonster.POW = 20;
+                    newMonster.DEF = 10;
+
+                }
+                if (firstDigit == 4 || firstDigit == 5 || firstDigit == 6) {
+                    newMonster.HP = 20;
+                    newMonster.POW = 100;
+                    newMonster.DEF = 0;
+
+                }
+                if (firstDigit == 7 || firstDigit == 8 || firstDigit == 9) {
+                    newMonster.HP = 50;
+                    newMonster.POW = 75;
+                    newMonster.DEF = 40;
+
+                }
+                // Check Actions against hashMonster
+                // POWER attacks ignore DEF
+                if (valid == true) {
+                    uint totalDamage;
+                    for (uint8 r; r < actionsCount; r++) {
+                        totalDamage += cards[string(actionList[r])].attack;
+                        if (cards[string(actionList[r])].cardType != cType.POWER) {
+                            totalDamage -= newMonster.DEF;
+                            }
+                    
+                        }
+                    if (totalDamage < newMonster.HP) {
+                        valid = false;
+                        }
+                    if (valid == true) {
+                        performData = abi.encode(player, actionsCount * newMonster.POW);
+                        }
+                    }
+
+
+                }
+
+                return (upkeepNeeded, performData);
+            }
 
         }
         //currentOpponent[player]
         //performData = abi.encode(player, requestType.REGISTER_PLAYER, abi.encode(stuff));
-        return (upkeepNeeded, performData);
-  }
+        
+
 
   //credit: stackoverflow
     function strToUint(string memory _str) public pure returns(uint256 result) {
@@ -409,7 +506,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 currentMatch[_player1] = matchIndex;
                 isPlayer1[_player1] = true;
                 currentOpponent[_player1] = matchmaker[1];
-                player1.push(bytes(""));
+                player1.push("");
                 inQueue[_player1] = false;
                 inGame[_player1] = true;
                 matchmaker[0] = address(0x0);
@@ -417,7 +514,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 currentMatch[_player2] = matchIndex;
                 isPlayer1[_player2] = false;
                 currentOpponent[_player2] = matchmaker[0];
-                player2.push(bytes(""));
+                player2.push("");
                 inQueue[_player2] = false;
                 inGame[_player2] = true;
                 matchmaker[1] = address(0x0); 
@@ -450,6 +547,20 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
         }
 
+    //https://ethereum.stackexchange.com/questions/40920/convert-bytes32-to-bytes
+    function bytes32ToBytes(bytes32 data) internal pure returns (bytes memory) {
+        uint i = 0;
+        while (i < 32 && uint8(data[i]) != 0) {
+            ++i;
+        }
+        bytes memory result = new bytes(i);
+        i = 0;
+        while (i < 32 && data[i] != 0) {
+            result[i] = data[i];
+            ++i;
+        }
+        return result;
+    }
  
 
 
@@ -482,6 +593,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
     event AwaitingAutomation(address indexed _player);
     event UpkeepFulfilled(bytes indexed _performData);
+    event AwaitingEvaluation(address indexed _player, string indexed _cards, string indexed _actions);
 
   
 }
