@@ -13,6 +13,7 @@
 // Concatenate the passphrase, cards, and player inventory.
 // Hash the string and return hash as bytes.
 
+
 //https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey
 function str2ab(str) {
     const buf = new ArrayBuffer(str.length);
@@ -65,7 +66,7 @@ const playerKey = await crypto.subtle.importKey(
 
 
 
-// Get the encrypted PLAYER secrets and decrypt them with the key and iv.
+// Get the encrypted PLAYER secret and decrypt it with the key and iv.
   
 const binaryPlayerSecrets = atob(args[1]);
 const binaryPlayerSecretsBytes= str2ab(binaryPlayerSecrets);
@@ -81,12 +82,13 @@ const decryptedSecrets = await crypto.subtle.decrypt(
 
 let decoder = new TextDecoder
 
-let phraseAndInventory = decoder.decode(decryptedSecrets)
+let secretPhrase = decoder.decode(decryptedSecrets)
 
-//Split the two elements
-
-var phraseAndInventoryArray = phraseAndInventory.split(",")
-
+// Check the length
+if (secretPhrase.length != 20) {
+  // Return deliberate error
+  return Functions.encodeUint256("error")
+}
 
 
 // Import the CSPRNG key from DON
@@ -108,7 +110,7 @@ const csprngKey = await crypto.subtle.importKey(
   );
 
 
-// Generate secret randomness and draw 5 cards + win condition.
+// Generate secret randomness and draw 5 deck cards + arcana card.
 
 const seed = args[3]
 // from user-supplied Counter
@@ -137,13 +139,13 @@ for (var i = number_array.length - 1; i >= 0; i--) {
 }
 
 
-// Could be replaced with a custom deck later.
-var deckArray = ["10","11","12","13","14","15","16","17","18","19","20","21","22"]
-var deckLength = 14;
+// Will be replaced with a custom deck later, imported from the contract.
+var deckArray = ["10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","29","30"]
+var deckLength = 20;
 
 // Draw 5 cards.
 // Create a better randomness regeneration later
-var returnString = phraseAndInventoryArray[0]
+var returnString = secretPhrase
 
 for (var k = 0; k < 5; k++) {
     let picked = secret_value % deckLength
@@ -152,10 +154,10 @@ for (var k = 0; k < 5; k++) {
     deckLength -= 1
 }
 
-// Get win condition.
-let secretWinCondition = secret_value % 9
+// Get arcana.
+let arcana = secret_value % 9
 
-let result = returnString + phraseAndInventoryArray[1] + secretWinCondition.toString()
+let result = returnString + arcana.toString()
 
 //Get SHA256 Hash and return to contract.
 let hash = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(result)))
