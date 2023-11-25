@@ -297,7 +297,7 @@ let client = SignerMiddleware::new(provider, wallet.clone());
     
 let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
 
-let calldata = contract.declare_victory(action.to_string()).calldata().unwrap();
+let calldata = contract.make_move(action.to_string()).calldata().unwrap();
 
 let tx = Eip1559TransactionRequest::new()
     .from(user_address)
@@ -650,6 +650,14 @@ fn decode_hex_string (message: GodotString) -> GodotString {
 fn decode_u256_array (message: GodotString) -> GodotString {
     let raw_hex: String = message.to_string();
     let decoded: Vec<U256> = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GodotString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[method]
+fn decode_bytes (message: GodotString) -> GodotString {
+    let raw_hex: String = message.to_string();
+    let decoded: Bytes = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
     let return_string: GodotString = format!("{:?}", decoded).into();
     return_string
 }
