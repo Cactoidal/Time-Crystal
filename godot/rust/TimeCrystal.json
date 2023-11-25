@@ -3,11 +3,6 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "_vrfCoordinator",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
 				"name": "router",
 				"type": "address"
 			},
@@ -30,6 +25,43 @@
 				"internalType": "bytes",
 				"name": "_reference",
 				"type": "bytes"
+			},
+			{
+				"components": [
+					{
+						"internalType": "uint8",
+						"name": "cardNumber",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "cardName",
+						"type": "string"
+					},
+					{
+						"internalType": "enum TimeCrystal.cType",
+						"name": "cardType",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "attack",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "defense",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "energy",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct TimeCrystal.cardTraits[]",
+				"name": "_cards",
+				"type": "tuple[]"
 			}
 		],
 		"stateMutability": "nonpayable",
@@ -410,6 +442,42 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			}
+		],
+		"name": "getHashMonsterStats",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "HP",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "POW",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "DEF",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct TimeCrystal.hashMonster",
+				"name": "monster",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "getOpponent",
 		"outputs": [
@@ -683,46 +751,6 @@
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint8",
-						"name": "cardNumber",
-						"type": "uint8"
-					},
-					{
-						"internalType": "string",
-						"name": "cardName",
-						"type": "string"
-					},
-					{
-						"internalType": "enum TimeCrystal.cType",
-						"name": "cardType",
-						"type": "uint8"
-					},
-					{
-						"internalType": "uint8",
-						"name": "attack",
-						"type": "uint8"
-					},
-					{
-						"internalType": "uint8",
-						"name": "defense",
-						"type": "uint8"
-					}
-				],
-				"internalType": "struct TimeCrystal.cardTraits[]",
-				"name": "_cards",
-				"type": "tuple[]"
-			}
-		],
-		"name": "setCards",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
