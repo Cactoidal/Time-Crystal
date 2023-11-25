@@ -505,7 +505,7 @@ Given the target hash in the upper left, the game cycles through all the possibl
 
 You can see that the computation still slows down the game, but doesn't cause it to freeze, which is a big improvement.  The computation also completes almost 5 seconds faster.
 
-With the improved performance, I can increase the deck size to twenty cards and still keep time to resolution under a minute.
+With the improved performance, I can increase the deck size to twenty cards and still keep maximum time to resolution under a minute.
 
 ## Day 17
 
