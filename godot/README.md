@@ -529,5 +529,5 @@ I need to rewrite my Godot UI to accomodate the changes in gameplay.
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/3cfbe895-99c1-4930-8079-199caf97d5ac
 
-Happy to say that I'm once again able to register Automation upkeeps (thanks Mike), and the matchmaking performUpkeep seems to be working.  Above is a hand getting extracted from a hash.  Next step will be making this all a bit prettier.
+Happy to say that I'm once again able to register Automation upkeeps (thanks Mike), and the matchmaking performUpkeep seems to be working.  Above is the extraction of some raw hand values from an oracle-committed hash.  Next step will be making this all a bit prettier.
 
