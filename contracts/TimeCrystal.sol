@@ -209,17 +209,15 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     // game's end can't already be pending.
     function forceEnd() public {
         require (inGame[msg.sender] == true);
-        require (inQueue[msg.sender] == true);
+        require (inQueue[msg.sender] == false);
         require (block.number >= lastCommit[currentOpponent[msg.sender]] + 7);
         require (whoseTurn[currentMatch[msg.sender]] != msg.sender);
 
-        inQueue[msg.sender] = false;
         inGame[msg.sender] = false;
         hands[msg.sender] = bytes("");
 
         address opponent = currentOpponent[msg.sender];
 
-        inQueue[opponent] = false;
         inGame[opponent] = false;
         hands[opponent] = bytes("");
 
