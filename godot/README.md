@@ -535,3 +535,23 @@ Indeed, also very happy to report that for the first time I was able to run thro
 
 Above is the extraction of some raw hand values from an oracle-committed hash.  Next step will be making this all a bit prettier.
 
+___
+
+Now that the sequence is working, I have time again to think about the gameplay mechanics.  Presently the game is not very strategic, as players just trade moves back and forth.  The fog-of-war about the other player's hand doesn't greatly affect decision-making.
+
+I'm considering a switch to a commit-reveal turn scheme.  Here the players would commit their move as a hash, and once both players have committed, prove their hash by supplying the value.  Ideally (with honest players) this exchange should take less than 90 seconds for a turn, which I don't believe would be any slower than the current back-and-forth design.
+
+On the front end, the player would just commit their move, and once the opponent has also committed, the game will automatically send the reveal transaction.  Visually, this would appear as if both players are executing their move simultaneously; on-chain, it will be impossible for someone to guess their opponent's pending move.
+
+We now have two sources of secrecy: a player won't know what is in their opponent's hand, and they won't know what move they'll be facing each turn.  To make this even more interesting, cards can now have a resource cost, creating a gameplay triangle:
+
+* Offensive cards
+* Defensive cards
+* Resource cards
+
+Players might try to play cautiously, but their opponents might punish that with greedy gameplay, building resources to play powerful cards later on.  Or, a greedy resource player could get punished by an aggressive player, who favors cheap attacking cards.  But an overly aggressive player would be shut down by a patient defensive player.
+
+During the actual gameplay, all of this would be tracked by Godot in a kind of off-chain "phantom state", because on-chain the players are just committing hashes and concatenating their "action string" whenever they reveal.  The contract only validates that 1) the hash of the revealed move matches the hash of the commit, and 2) the revealed move is a string with a valid mapping in the cards array.
+
+Only at the end of the game do the two "action strings" go to Chainlink Automation, which evaluates them with some on-chain logic, checking that the winner's card were actually in their hand, and that they did enough damage to reduce their opponent's HP to zero.  This efficiency is entirely dependent on the Log Trigger and secure forwarder.
+
