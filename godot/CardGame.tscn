@@ -45,14 +45,6 @@ margin_bottom = 274.0
 mouse_default_cursor_shape = 2
 text = "Start Game"
 
-[node name="ResetGame" type="Button" parent="."]
-margin_left = 16.0
-margin_top = 307.0
-margin_right = 192.0
-margin_bottom = 327.0
-mouse_default_cursor_shape = 2
-text = "Reset Game"
-
 [node name="OpponentCard" type="Label" parent="."]
 margin_left = 392.0
 margin_top = 213.0

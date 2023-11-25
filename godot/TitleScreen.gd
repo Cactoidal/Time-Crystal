@@ -10,7 +10,9 @@ var sepolia_rpc = "https://ethereum-sepolia.publicnode.com"
 
 var rpc_list
 
-var time_crystal_contract = "0x4555e826206050150703313aE28A8cff885A522b"
+var time_crystal_contract = "0x1d77EFfA35Dcd3EEd28095bf0f82714C56ed7aD8"
+
+var chainlink_contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789"
 
 var signed_data = ""
 
@@ -90,8 +92,8 @@ func _process(delta):
 	if check_cards_switch == true:
 		check_cards_timer -= delta
 		if check_cards_timer <= 0:
-			check_player_cards()
-			check_field_cards()
+			#check_player_cards()
+			#check_opponent_cards()
 			check_cards_timer = 16
 		
 		
@@ -370,63 +372,59 @@ func estimate_gas_attempted(result, response_code, headers, body):
 	call(tx_function_name)
 
 
-func register_opponent():
-	var deck = tx_parameter[0]
-	var file = File.new()
-	file.open("user://aes", File.READ)
-	var aes_key = file.get_buffer(16)
-	var file2 = File.new()
-	file2.open("user://keystore", File.READ)
-	var content = file2.get_buffer(32)
-	file2.close()
-	TimeCrystal.register_opponent_deck(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, aes_key, deck, self)
+
 
 func register_player():
 	var file = File.new()
 	file.open("user://aes", File.READ)
 	var aes_key = file.get_buffer(16)
+	file.close()
 	var file2 = File.new()
 	file2.open("user://keystore", File.READ)
 	var content = file2.get_buffer(32)
 	file2.close()
-	TimeCrystal.register_player(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, self)
+	TimeCrystal.register_player_key(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, aes_key, chainlink_contract, self)
+	
+	
+func join_matchmaking():
+	var password = tx_parameter[0]
+	var file = File.new()
+	file.open("user://aes", File.READ)
+	var aes_key = file.get_buffer(16)
+	file.close()
+	var file2 = File.new()
+	file2.open("user://keystore", File.READ)
+	var content = file2.get_buffer(32)
+	file2.close()
+	TimeCrystal.get_hand(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, aes_key, password, self)
+
+func make_move():
+	var card = tx_parameter[0]
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	TimeCrystal.make_move(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, card, self)
+
+func declare_victory():
+	var passwordCards = tx_parameter[0]
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	TimeCrystal.make_move(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, passwordCards, self)
 
 func create_player_deck():
 	var deck = tx_parameter[0]
 	var file = File.new()
 	file.open("user://aes", File.READ)
 	var aes_key = file.get_buffer(16)
+	file.close()
 	var file2 = File.new()
 	file2.open("user://keystore", File.READ)
 	var content = file2.get_buffer(32)
 	file2.close()
 	TimeCrystal.create_player_deck(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, deck, self)
-
-func start_new_card_game():
-	var playerDeck = tx_parameter[0]
-	var opponent = tx_parameter[1]
-	var opponentDeck = tx_parameter[2]
-	var file = File.new()
-	file.open("user://keystore", File.READ)
-	var content = file.get_buffer(32)
-	file.close()
-	TimeCrystal.start_game(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, playerDeck, opponent, opponentDeck, self)
-
-func reset_game():
-	var file = File.new()
-	file.open("user://keystore", File.READ)
-	var content = file.get_buffer(32)
-	file.close()
-	TimeCrystal.reset_game(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, self)
-
-
-func play_card():
-	var card_index = tx_parameter[0]
-	var file = File.new()
-	file.open("user://keystore", File.READ)
-	var content = file.get_buffer(32)
-	file.close()
-	TimeCrystal.progress_game(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, int(card_index), self)
 
 
 func check_player_cards():
@@ -455,22 +453,25 @@ func check_player_cards_attempted(result, response_code, headers, body):
 
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
-		print(raw_response)
-		game_board.get_node("YourHand").text = "Your Hand:\n" + TimeCrystal.decode_hex_string(raw_response)
+		var target_hash = TimeCrystal.decode_bytes(raw_response).substr(8).trim_suffix(")")
+		print(target_hash)
+		game_board.get_node("TargetHash").text = "Target Hash:\n" + target_hash
+		game_board.target_hash = target_hash
+		game_board.extract_hand()
 		#game_board.get_node("YourHand").text = "Your Hand:\n" + TimeCrystal.decode_u256_array_from_bytes(raw_response)
 		#print(parse_json(TimeCrystal.decode_hex_string(raw_response)["1"]))
 
-func check_field_cards():
+func check_opponent_cards():
 	var http_request = HTTPRequest.new()
 	$HTTP.add_child(http_request)
 	http_request_delete_tx_read = http_request
-	http_request.connect("request_completed", self, "check_field_cards_attempted")
+	http_request.connect("request_completed", self, "check_opponent_cards_attempted")
 	
 	var file = File.new()
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.get_field_cards(content, sepolia_id, time_crystal_contract, sepolia_rpc)
+	var calldata = TimeCrystal.see_opponent_board(content, sepolia_id, time_crystal_contract, sepolia_rpc)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
@@ -480,7 +481,7 @@ func check_field_cards():
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
 
-func check_field_cards_attempted(result, response_code, headers, body):
+func check_opponent_cards_attempted(result, response_code, headers, body):
 	
 	var get_result = parse_json(body.get_string_from_ascii())
 
@@ -488,6 +489,34 @@ func check_field_cards_attempted(result, response_code, headers, body):
 		var raw_response = get_result.duplicate()["result"]
 		game_board.get_node("OpponentCard").text = "Opponent Played:\n" + TimeCrystal.decode_u256_array(raw_response)
 
+
+func check_won():
+	var http_request = HTTPRequest.new()
+	$HTTP.add_child(http_request)
+	http_request_delete_tx_read = http_request
+	http_request.connect("request_completed", self, "check_won_attempted")
+	
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	var calldata = TimeCrystal.test_win(content, sepolia_id, time_crystal_contract, sepolia_rpc)
+	
+	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
+	
+	var error = http_request.request(sepolia_rpc, 
+	[], 
+	true, 
+	HTTPClient.METHOD_POST, 
+	JSON.print(tx))
+
+func check_won_attempted(result, response_code, headers, body):
+	
+	var get_result = parse_json(body.get_string_from_ascii())
+
+	if response_code == 200:
+		var raw_response = get_result.duplicate()["result"]
+		game_board.get_node("TestWon").text = TimeCrystal.decode_hex_string(raw_response)
 
 
 

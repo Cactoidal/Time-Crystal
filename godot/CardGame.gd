@@ -50,19 +50,39 @@ var action_strings = []
 var oracle_used = false
 
 
+# hand extraction
+
+var deck = [10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
+var password
+var target_hash
+var thread
+var discovered_hand
+var password_cards
+var combination
+var guessHash
 
 
 
 func _ready():
-	$RegisterOpponent.connect("pressed", self, "register_opponent") 
+	
 	$RegisterPlayer.connect("pressed", self, "register_player")
-	$StartGame.connect("pressed", self, "start_game")
-	$ResetGame.connect("pressed", self, "reset_game")
+	$JoinMatchmaking.connect("pressed", self, "join_matchmaking") 
+	$CheckHand.connect("pressed", self, "check_hand") 
+	$MakeMove.connect("pressed", self, "make_move") 
+	$DeclareVictory.connect("pressed", self, "declare_victory")
+	$CheckWon.connect("pressed", self, "check_won")
+	
 	$EndTurn.connect("pressed", self, "open_end_turn_confirm")
 	
 	card_nodes = [$Card1, $Card2, $Card3, $Card4, $Card5, $Card6]
 	board = get_parent().get_node("WorldRotate")
 	board_nodes = board.get_children()
+	
+	randomize()
+	var randomizer = Crypto.new()
+	var bytes = Crypto.new()
+	password = "hello".sha256_text().left(20)
+	#password = (String(bytes.generate_random_bytes(16))).sha256_text().left(20)
 	
 	$Card1/TextureButton.connect("pressed", self, "play_from_hand", [$Card1])
 	$Card2/TextureButton.connect("pressed", self, "play_from_hand", [$Card2])
@@ -80,33 +100,67 @@ func _ready():
 	$TargetConfirm/Confirm.connect("pressed", self, "target_confirmed")
 	$TargetConfirm/Cancel.connect("pressed", self, "target_canceled")
 	
-	get_hand()
+	populate_cards()
 	map_random_spaces()
 	assign_units()
 
-func register_opponent():
-	ethers.start_transaction("register_opponent", [opponentDeck])
+#fix name later
+func join_matchmaking():
+	ethers.start_transaction("join_matchmaking", [password])
 
 func register_player():
 	ethers.start_transaction("register_player")
 
+func check_hand():
+	ethers.check_player_cards()
+	
+func play_card():
+	ethers.start_transaction("make_move", [$CardEntry.text])
+	
+func declare_victory():
+	ethers.start_transaction("declare_victory", [password_cards])
+
+func check_won():
+	ethers.check_won()
+
+
 func create_deck():
 	ethers.start_transaction("create_player_deck", [playerDeck])
 
-func start_game():
-	ethers.start_transaction("start_new_card_game", [playerDeckId, opponentId, opponentDeckId])
-	
-func reset_game():
-	ethers.start_transaction("reset_game")
-
-func play_card():
-	ethers.start_transaction("play_card", [$CardIndex.text])
-
 var confirming_target = false
+
+
+var started = false
 func _process(delta):
 	if confirming_target == false:
 		$Targeting.set_point_position(1, get_global_mouse_position() - Vector2(90,40))
+	if started == true:
+		if got == false:
+			if !thread.is_alive():
+				got = true
+				thread.wait_to_finish()
+				print(guessHash)
+				$YourHand.text = "Your Hand:\n" + combination
 
+var got = false
+func extract_hand():
+	started = true
+	thread = Thread.new()
+	thread.start(self, "extract")
+	
+
+func extract():
+	for number1 in deck:
+			for number2 in deck:
+					for number3 in deck:
+							for number4 in deck:
+									for number5 in deck:
+											for number6 in range(10):
+												var guess = password + String(number1) + String(number2) + String(number3) + String(number4) + String(number5) + String(number6)
+												if guess.sha256_text() == target:
+													combination = guess
+													guessHash = guess.sha256_text()
+													return
 
 #everything has a type, name, and cost
 #constructs have attack and defense, crystals have only defense
@@ -129,7 +183,32 @@ func get_card_info(card_id):
 		19: return {"id": "19", "type": "oracle", "name": "Randomness", "cost": 2, "attack": 0, "defense": 0, "keywordA": "RANDOM", "keywordB": ""}
 		20: return {"id": "20", "type": "oracle", "name": "Knowledge", "cost": 1, "attack": 0, "defense": 0, "keywordA": "DRAW +1", "keywordB": ""}
 
-func get_hand():
+func get_new_card_info(card_id):
+	match card_id:
+		10: return {"id": "10", "type": "normal", "name": "Laser", "cost": 0, "attack": 20, "defense": 0}
+		11: return {"id": "11", "type": "normal", "name": "Energy Wave", "cost": 0, "attack": 20, "defense": 0}
+		12: return {"id": "12", "type": "normal", "name": "Pulsar", "cost": 0, "attack": 30, "defense": 0}
+		13: return {"id": "13", "type": "normal", "name": "Bonk", "cost": 0, "attack": 20, "defense": 0}
+		14: return {"id": "14", "type": "normal", "name": "Irradiate", "cost": 0, "attack": 25, "defense": 0}
+		15: return {"id": "15", "type": "normal", "name": "Cold Glow", "cost": 0, "attack": 15, "defense": 15}
+		16: return {"id": "16", "type": "normal", "name": "Ice Barrier", "cost": 0, "attack": 20, "defense": 20}
+		17: return {"id": "17", "type": "normal", "name": "Sun Guard", "cost": 0, "attack": 20, "defense": 20}
+		18: return {"id": "18", "type": "normal", "name": "Crunch", "cost": 0, "attack": 25, "defense": 0}
+		19: return {"id": "19", "type": "normal", "name": "Rainbow Shroud", "cost": 0, "attack": 20, "defense": 20}
+		20: return {"id": "20", "type": "normal", "name": "Aurora", "cost": 0, "attack": 20, "defense": 20}
+		21: return {"id": "21", "type": "power", "name": "Power Beam", "cost": 0, "attack": 20, "defense": 0}
+		22: return {"id": "22", "type": "power", "name": "Rust", "cost": 0, "attack": 20, "defense": 0}
+		23: return {"id": "23", "type": "normal", "name": "Crystallize", "cost": 0, "attack": 20, "defense": 20}
+		24: return {"id": "24", "type": "normal", "name": "Disrupt", "cost": 0, "attack": 20, "defense": 0}
+		25: return {"id": "25", "type": "power", "name": "Explosion", "cost": 0, "attack": 30, "defense": 0}
+		26: return {"id": "26", "type": "normal", "name": "Crystal Laser", "cost": 0, "attack": 30, "defense": 0}
+		27: return {"id": "27", "type": "power", "name": "Distintegrate", "cost": 0, "attack": 30, "defense": 0}
+		28: return {"id": "28", "type": "normal", "name": "Void Shield", "cost": 0, "attack": 20, "defense": 30}
+		29: return {"id": "29", "type": "normal", "name": "Seeker Missile", "cost": 0, "attack": 30, "defense": 0}
+		30: return {"id": "30", "type": "normal", "name": "Prismatic Cloud", "cost": 0, "attack": 20, "defense": 20}
+		
+
+func populate_cards():
 	var inc_hand = parse_json(your_hand)
 	var new_hand = []
 	for card in inc_hand:
@@ -463,6 +542,9 @@ func revert_action():
 		else:
 			if reverted.attacking == true:
 				reverted.attacking = false;
+				#placeholder until constructs also can use ability from field
+				if reverted.card_info["type"] == "crystal":
+					used_energy -= reverted.card_info["cost"]
 			#elif to preclude removing a same-turn attack following a placement
 			elif reverted.mapped_card != null:
 				var index = card_nodes.find(reverted.mapped_card)
