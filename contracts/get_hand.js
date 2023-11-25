@@ -10,7 +10,7 @@
 // Instantiate the DON Private RSA key.
 // Decrypt the PLAYER AES key, then decrypt the PLAYER secret passphrase and inventory.
 // Generate secret randomness using CSPRNG key and draw 5 cards from the default 20 card deck.
-// Concatenate the passphrase, cards, and player inventory.
+// Concatenate the passphrase and cards.
 // Hash the string and return hash as bytes.
 
 
