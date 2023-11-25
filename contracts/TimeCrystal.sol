@@ -15,6 +15,8 @@ import "./IERC677.sol";
 contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     using FunctionsRequest for FunctionsRequest.Request;
 
+    // SEPOLIA
+
     bytes32 public donId;
     address private forwarder;
 
@@ -37,12 +39,15 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
   
-    constructor(address _vrfCoordinator, address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference) FunctionsClient(router) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
+    constructor(address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(vrfCoordinator) ConfirmedOwner(msg.sender) {
         donId = _donId;
         source = _source;
         secretsLocation = _location;
         encryptedSecretsReference = _reference;
         COORDINATOR = VRFCoordinatorV2Interface(0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625);
+        for (uint z = 0; z < _cards.length; z++) {
+            cards[Strings.toString(z + 10)] = _cards[z];
+        }
     }
 
 
@@ -160,7 +165,10 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         uint matchId = currentMatch[msg.sender];
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
-        require(whoseTurn[matchId] == msg.sender);
+        
+        // Disabled for testing
+        //require(whoseTurn[matchId] == msg.sender);
+        
         require(cards[action].cardNumber != 0);
         lastCommit[msg.sender] = block.number;
         if (isPlayer1[msg.sender]) {
@@ -276,6 +284,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     cType cardType;
     uint8 attack;
     uint8 defense;
+    uint8 energy;
   }
 
     mapping (string => cardTraits) cards;
@@ -346,35 +355,16 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
                     }
 
-                // Get hashMonster
-                uint firstDigit;
-                uint hashNumber = uint(bytes32(hands[player]));
-                for (uint z; z < 10; z++) {
-                    uint number = hashNumber;
-                    while ( number >= 10) {
-                        number /= 10;
-                        }
-                    if (number == z) {
-                    firstDigit = number;
-                    }
-                }
-                hashMonster memory newMonster;
+                // Get hashMonsters
                 // The hash randomly determines if you will be playing CONSTRUCT or CRYSTAL
                 // You should design your deck to play both
                 // Eventually there will be different types of CONSTRUCTs and CRYSTALs
-                if (firstDigit <= 4) {
-                    // Construct
-                    newMonster.HP = 100;
-                    newMonster.POW = 20;
-                    newMonster.DEF = 10;
+                hashMonster memory playerMonster;
+                hashMonster memory opponentMonster;
 
-                }
-                else {
-                    // Crystal
-                    newMonster.HP = 50;
-                    newMonster.POW = 75;
-                    newMonster.DEF = 40;
-                }
+                playerMonster = getHashMonsterStats(getHashMonster(player));
+                opponentMonster = getHashMonsterStats(getHashMonster(currentOpponent[player]));
+
                 // Check Actions against hashMonster
                 // POWER attacks ignore DEF
                 // COUNTER attacks will do extra damage after being hit by a POWER attack
@@ -385,13 +375,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 if (valid == true) {
                     uint totalDamage;
                     for (uint8 r; r < actionsCount; r++) {
-                        totalDamage += cards[string(actionList[r])].attack;
+                        totalDamage += cards[string(actionList[r])].attack * playerMonster.POW;
                         if (cards[string(actionList[r])].cardType != cType.POWER) {
-                            totalDamage -= newMonster.DEF;
+                            totalDamage -= opponentMonster.DEF;
                             }
                     
                         }
-                    if (totalDamage < newMonster.HP) {
+                    if (totalDamage < opponentMonster.HP) {
                         valid = false;
                         }
                     if (valid == true) {
@@ -418,8 +408,10 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         (address player) = abi.decode(performData, (address));
         
         if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
-            // Test Opponent
+            
+            // TEST OPPONENT
             matchmaker[0] = vrfCoordinator;
+            hands[vrfCoordinator] = abi.encodePacked(sha256("test"));
 
             address _player1 = matchmaker[0];
             address _player2 = matchmaker[1];
@@ -531,6 +523,23 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     }
 
+    function getHashMonsterStats(uint id) public pure returns (hashMonster memory monster) {
+        if (id <= 4) {
+            // Construct
+            monster.HP = 100;
+            monster.POW = 20;
+            monster.DEF = 10;
+                }
+        else {
+            // Crystal
+            monster.HP = 50;
+            monster.POW = 75;
+            monster.DEF = 40;
+                }
+        return monster;
+
+    }
+
     function getOpponent() public view returns (address) {
         return currentOpponent[msg.sender];
     }
@@ -575,13 +584,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     function updateSecret(bytes calldata _secrets) external onlyOwner {
         encryptedSecretsReference = _secrets;
   }
-
-    function setCards(cardTraits[] memory _cards) external onlyOwner {
-        for (uint z = 0; z < _cards.length; z++) {
-            cards[Strings.toString(z + 10)] = _cards[z];
-        }
-    }
-
    
     function setForwarderAddress(
         address _forwarder
