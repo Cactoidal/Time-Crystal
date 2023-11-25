@@ -497,7 +497,7 @@ While the game logic hasn't been implemented yet, the "frame" of the contract is
 
 With two weeks remaining, I do need to solidify the game mechanics.  The important thing here is demonstrating the secret randomness, key exchange, and Automation.  I would still like the game to be fun and gas-efficient, but I need to make sure I complete a fully working example in the time I have.
 
-One UX problem with the birthday-attack was the total lock-up of the game while it computed the ~3 million possible hashes.  My cousin however reminded me to use multithreading, which can be implemented in a straightforward manner using [Godot's Thread class](https://docs.godotengine.org/en/3.5/classes/class_thread.html).  
+One UX problem with the birthday-attack was the total lock-up of the game while it computed the ~3 million possible hashes.  Thankfully my cousin reminded me to use multithreading, which can be implemented in a straightforward manner using [Godot's Thread class](https://docs.godotengine.org/en/3.5/classes/class_thread.html).  
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/e4841f38-9260-4d2a-934a-52a38a9c06a0
 
