@@ -10,7 +10,7 @@ var sepolia_rpc = "https://ethereum-sepolia.publicnode.com"
 
 var rpc_list
 
-var time_crystal_contract = "0x1d77EFfA35Dcd3EEd28095bf0f82714C56ed7aD8"
+var time_crystal_contract = "0xaE1C069Ea6AeAEc457DdA7052677c962607eb80F"
 
 var chainlink_contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789"
 
@@ -407,12 +407,12 @@ func make_move():
 	TimeCrystal.make_move(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, card, self)
 
 func declare_victory():
-	var passwordCards = tx_parameter[0]
+	var password_cards = tx_parameter[0]
 	var file = File.new()
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	TimeCrystal.make_move(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, passwordCards, self)
+	TimeCrystal.declare_victory(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, password_cards, self)
 
 func create_player_deck():
 	var deck = tx_parameter[0]

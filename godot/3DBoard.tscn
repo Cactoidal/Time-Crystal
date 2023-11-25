@@ -174,41 +174,53 @@ margin_right = 1025.0
 margin_bottom = 598.0
 color = Color( 0, 0, 0, 1 )
 
-[node name="RegisterOpponent" type="Button" parent="UI"]
-visible = false
+[node name="JoinMatchmaking" type="Button" parent="UI"]
 margin_left = 616.0
 margin_top = 122.0
 margin_right = 792.0
 margin_bottom = 142.0
 mouse_default_cursor_shape = 2
-text = "Register OPPONENT Deck"
+text = "Join Matchmaking"
+
+[node name="CheckHand" type="Button" parent="UI"]
+margin_left = 798.0
+margin_top = 173.0
+margin_right = 974.0
+margin_bottom = 193.0
+mouse_default_cursor_shape = 2
+text = "Check Hand"
+
+[node name="MakeMove" type="Button" parent="UI"]
+margin_left = 623.0
+margin_top = 290.0
+margin_right = 799.0
+margin_bottom = 310.0
+mouse_default_cursor_shape = 2
+text = "Make Move"
+
+[node name="DeclareVictory" type="Button" parent="UI"]
+margin_left = 625.0
+margin_top = 333.0
+margin_right = 801.0
+margin_bottom = 353.0
+mouse_default_cursor_shape = 2
+text = "Declare Victory"
 
 [node name="RegisterPlayer" type="Button" parent="UI"]
-visible = false
 margin_left = 616.0
 margin_top = 67.0
 margin_right = 792.0
 margin_bottom = 87.0
 mouse_default_cursor_shape = 2
-text = "Register PLAYER Deck"
+text = "Register PLAYER"
 
-[node name="StartGame" type="Button" parent="UI"]
-visible = false
-margin_left = 616.0
-margin_top = 281.0
-margin_right = 792.0
-margin_bottom = 301.0
+[node name="CheckWon" type="Button" parent="UI"]
+margin_left = 594.0
+margin_top = 497.0
+margin_right = 770.0
+margin_bottom = 517.0
 mouse_default_cursor_shape = 2
-text = "Start Game"
-
-[node name="ResetGame" type="Button" parent="UI"]
-visible = false
-margin_left = 616.0
-margin_top = 334.0
-margin_right = 792.0
-margin_bottom = 354.0
-mouse_default_cursor_shape = 2
-text = "Reset Game"
+text = "Check Won"
 
 [node name="OpponentCard" type="Label" parent="UI"]
 visible = false
@@ -228,12 +240,18 @@ margin_bottom = 212.0
 text = "You Played:
 "
 
+[node name="TargetHash" type="Label" parent="UI"]
+margin_left = 629.0
+margin_top = 166.0
+margin_right = 743.0
+margin_bottom = 197.0
+text = "Target Hash:"
+
 [node name="YourHand" type="Label" parent="UI"]
-visible = false
-margin_left = 876.0
-margin_top = 268.0
-margin_right = 990.0
-margin_bottom = 299.0
+margin_left = 628.0
+margin_top = 197.0
+margin_right = 742.0
+margin_bottom = 228.0
 text = "Your Hand:
 "
 
@@ -246,12 +264,11 @@ margin_bottom = 418.0
 text = "Pick Card:
 "
 
-[node name="CardIndex" type="LineEdit" parent="UI"]
-visible = false
-margin_left = 756.0
-margin_top = 414.0
-margin_right = 814.0
-margin_bottom = 438.0
+[node name="CardEntry" type="LineEdit" parent="UI"]
+margin_left = 665.0
+margin_top = 241.0
+margin_right = 723.0
+margin_bottom = 265.0
 
 [node name="EndTurn" type="Button" parent="UI"]
 margin_left = 829.0
@@ -508,3 +525,9 @@ margin_right = 233.0
 margin_bottom = 191.0
 mouse_default_cursor_shape = 2
 text = "Cancel"
+
+[node name="TestWon" type="Label" parent="UI"]
+margin_left = 619.0
+margin_top = 535.0
+margin_right = 751.0
+margin_bottom = 567.0

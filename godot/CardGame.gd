@@ -78,9 +78,9 @@ func _ready():
 	board = get_parent().get_node("WorldRotate")
 	board_nodes = board.get_children()
 	
-	randomize()
-	var randomizer = Crypto.new()
-	var bytes = Crypto.new()
+	#randomize()
+	#var randomizer = Crypto.new()
+	#var bytes = Crypto.new()
 	password = "hello".sha256_text().left(20)
 	#password = (String(bytes.generate_random_bytes(16))).sha256_text().left(20)
 	
@@ -114,7 +114,7 @@ func register_player():
 func check_hand():
 	ethers.check_player_cards()
 	
-func play_card():
+func make_move():
 	ethers.start_transaction("make_move", [$CardEntry.text])
 	
 func declare_victory():
@@ -157,8 +157,9 @@ func extract():
 									for number5 in deck:
 											for number6 in range(10):
 												var guess = password + String(number1) + String(number2) + String(number3) + String(number4) + String(number5) + String(number6)
-												if guess.sha256_text() == target:
-													combination = guess
+												if guess.sha256_text() == target_hash:
+													password_cards = guess
+													combination = guess.substr(20)
 													guessHash = guess.sha256_text()
 													return
 
