@@ -151,7 +151,7 @@ let raw_pem = "-----BEGIN PUBLIC KEY-----
         +ue0ZF4EZBfhtviNCzPygokxrlHbEmwmeaa4PJzBc9sWV8chaUarzlYrR+ViD3u+
         4i6tLsMLRHf3DGcQGh/voM3zQPt2Wy/un2IlbM9QSbJfQmBbV5H/CR8fJ/wyjgo6
         dQIDAQAB
-    -----END PUBLIC KEY-----";
+-----END PUBLIC KEY-----";
     
 let public_rsa_key = Rsa::public_key_from_pem(raw_pem.as_bytes()).unwrap();
     
@@ -277,6 +277,58 @@ NewFuture(Ok(()))
 
 #[method]
 #[tokio::main]
+async fn make_move(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, action: GodotString, ui_node: Ref<Spatial>) -> NewFuture {
+
+let vec = &key.to_vec();
+
+let keyset = &vec[..]; 
+         
+let prewallet : LocalWallet = LocalWallet::from_bytes(&keyset).unwrap();
+    
+let wallet: LocalWallet = prewallet.with_chain_id(chain_id);
+    
+let user_address = wallet.address();
+    
+let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
+    
+let contract_address: Address = time_crystal_contract.to_string().parse().unwrap();
+    
+let client = SignerMiddleware::new(provider, wallet.clone());
+    
+let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
+
+let calldata = contract.declare_victory(action.to_string()).calldata().unwrap();
+
+let tx = Eip1559TransactionRequest::new()
+    .from(user_address)
+    .to(contract_address) 
+    .value(0)
+    .gas(900000)
+    .max_fee_per_gas(_gas_fee)
+    .max_priority_fee_per_gas(_gas_fee)
+    .chain_id(chain_id)
+    .nonce(_count)
+    .data(calldata);
+
+let typed_tx: TypedTransaction = TypedTransaction::Eip1559(tx.clone());
+
+let signature = wallet.sign_transaction(&typed_tx).await.unwrap();
+let signed_data = TypedTransaction::rlp_signed(&typed_tx, &signature);
+
+let node: TRef<Spatial> = unsafe { ui_node.assume_safe() };
+
+unsafe {
+    node.call("set_signed_data", &[hex::encode(signed_data).to_variant()])
+};
+
+NewFuture(Ok(()))
+
+}
+
+
+
+#[method]
+#[tokio::main]
 async fn declare_victory(key: PoolArray<u8>, chain_id: u64, time_crystal_contract: GodotString, rpc: GodotString, _gas_fee: u64, _count: u64, _secrets: GodotString, ui_node: Ref<Spatial>) -> NewFuture {
 
 let vec = &key.to_vec();
@@ -324,6 +376,8 @@ unsafe {
 NewFuture(Ok(()))
 
 }
+
+
 
 #[method]
 fn check_queue(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
@@ -489,6 +543,62 @@ let client = SignerMiddleware::new(provider, wallet);
 let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
 
 let calldata = contract.has_seeds_remaining().calldata().unwrap();
+
+let return_string: GodotString = calldata.to_string().into();
+
+return_string
+
+}
+
+#[method]
+fn get_opponent(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
+
+let vec = &key.to_vec();
+
+let keyset = &vec[..]; 
+
+let prewallet : LocalWallet = LocalWallet::from_bytes(&keyset).unwrap();
+    
+let wallet: LocalWallet = prewallet.with_chain_id(chain_id);
+
+let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
+
+let contract_address: Address = time_crystal_address.to_string().parse().unwrap();
+
+let client = SignerMiddleware::new(provider, wallet);
+
+let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
+
+let calldata = contract.get_opponent().calldata().unwrap();
+
+let return_string: GodotString = calldata.to_string().into();
+
+return_string
+
+}
+
+#[method]
+fn get_hash_monster(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString, _player: GodotString) -> GodotString {
+
+let vec = &key.to_vec();
+
+let keyset = &vec[..]; 
+
+let prewallet : LocalWallet = LocalWallet::from_bytes(&keyset).unwrap();
+    
+let wallet: LocalWallet = prewallet.with_chain_id(chain_id);
+
+let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
+
+let contract_address: Address = time_crystal_address.to_string().parse().unwrap();
+
+let client = SignerMiddleware::new(provider, wallet);
+
+let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
+
+let player: Address = _player.to_string().parse().unwrap();
+
+let calldata = contract.get_hash_monster(player).calldata().unwrap();
 
 let return_string: GodotString = calldata.to_string().into();
 
