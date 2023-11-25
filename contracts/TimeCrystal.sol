@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
@@ -101,15 +101,19 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         // turned off for testing
         //require(_value == 1e18);
         string memory _key = abi.decode(_data, (string));
-        uint256 requestId = COORDINATOR.requestRandomWords(
-            s_keyHash,
-            vrf_subscriptionId,
-            requestConfirmations,
-            vrfCallbackGasLimit,
-            10
-            );
+        
+
+       // uint256 requestId = COORDINATOR.requestRandomWords(
+        //    s_keyHash,
+        //    vrf_subscriptionId,
+        //    requestConfirmations,
+        //    vrfCallbackGasLimit,
+        //    10
+        //    );
+
+        vrfSeeds[_sender] = [77777777777, 777777777777, 777777777777, 777777777777, 777777777777];
         keys[_sender] = _key;
-        vrfRequestIdbyRequester[requestId] = _sender;
+        //vrfRequestIdbyRequester[requestId] = _sender;
     }
 
 
@@ -389,9 +393,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
                 }
 
-                return (upkeepNeeded, performData);
             }
-
+            return (upkeepNeeded, performData);
         }
  
 
@@ -411,13 +414,15 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             matchmaker[0] = vrfCoordinator;
             hands[vrfCoordinator] = abi.encodePacked(sha256("test"));
 
-            address _player1 = matchmaker[0];
-            address _player2 = matchmaker[1];
-            if (_player1 == address(0x0)) {
+            
+            if (matchmaker[0] == address(0x0)) {
                 matchmaker[0] = player;
                 }
             else {
                 matchmaker[1] = player;
+
+                address _player1 = matchmaker[0];
+                address _player2 = matchmaker[1];
                 
                 uint newMatchId = matchIndex;
 
@@ -427,7 +432,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 player1.push("");
                 inQueue[_player1] = false;
                 inGame[_player1] = true;
-                matchmaker[0] = address(0x0);
+                
 
                 // To prevent force-ending immediately before a player can act
                 lastCommit[_player1] = block.number;
@@ -440,6 +445,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 player2.push("");
                 inQueue[_player2] = false;
                 inGame[_player2] = true;
+                
+                matchmaker[0] = address(0x0);
                 matchmaker[1] = address(0x0); 
 
                 matchIndex++;
