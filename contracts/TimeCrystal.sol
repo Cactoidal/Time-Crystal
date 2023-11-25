@@ -17,9 +17,6 @@ import "./IERC677.sol";
 contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     using FunctionsRequest for FunctionsRequest.Request;
 
-
-    //            CHAINLINK AUTOMATION, FUNCTIONS, AND VRF VARIABLES          //
-
     bytes32 public donId;
     address private forwarder;
 
@@ -31,16 +28,16 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     FunctionsRequest.Location public secretsLocation;
     bytes encryptedSecretsReference;
     //uint64 subscriptionId = 1600;
-    uint64 subscriptionId = 1686;
-    uint32 callbackGasLimit = 300000;
+    uint64 constant subscriptionId = 1686;
+    uint32 constant callbackGasLimit = 300000;
 
-    uint64 vrf_subscriptionId = 7168;
+    uint64 constant vrf_subscriptionId = 7168;
     address s_owner;
     VRFCoordinatorV2Interface COORDINATOR;
     address vrfCoordinator = 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625;
     bytes32 s_keyHash = 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c;
-    uint16 requestConfirmations = 3;
-    uint32 vrfCallbackGasLimit = 500000;
+    uint16 constant requestConfirmations = 3;
+    uint32 constant vrfCallbackGasLimit = 500000;
 
     address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
   
@@ -57,37 +54,44 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
-    //          GAME STATE VARIABLES        //
+      //            CHAINLINK AUTOMATION, FUNCTIONS, AND VRF VARIABLES        //
 
     mapping (address => string) keys;
     mapping (address => bytes) public hands;
     mapping (address => uint[]) vrfSeeds;
-    mapping (address => bool) public inGame;
-    mapping (address => bool) public inQueue;
-    mapping (address => uint) public currentMatch;
-    mapping (address => address) public currentOpponent;
-    mapping (address => bool) public isPlayer1;
-    mapping (address => uint) public lastCommit;
-    mapping (address => string) pendingHand;
     mapping (string => bool) public usedCSPRNGIvs;
     uint ivNonce;
-
-    //Test
-    string public testWin = "Not yet";
-
-    address[2] matchmaker;
-    uint matchIndex;
-    string[] player1;
-    string[] player2;
 
     mapping (bytes32 => address) public functionsRequestIdbyRequester;
     mapping (uint => address) public vrfRequestIdbyRequester;
     mapping (address => upkeepType) pendingUpkeep;
 
-    enum upkeepType {
+     enum upkeepType {
         MATCHMAKING,
         CHECK_VICTORY
     }
+
+
+    //          GAME STATE VARIABLES        //
+
+    address[2] matchmaker;
+    uint matchIndex;
+    mapping (address => uint) public currentMatch;
+    string[] player1;
+    string[] player2;
+    address[] whoseTurn;
+    mapping (address => bool) public inGame;
+    mapping (address => bool) public inQueue;
+    mapping (address => address) public currentOpponent;
+    mapping (address => bool) public isPlayer1;
+    mapping (address => uint) public lastCommit;
+
+     //Test
+    string public testWin = "Not yet";
+
+
+
+   
 
 
     //                 PLAYER GAME INTERACTIONS                 //
@@ -161,35 +165,31 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
-    // The player needs to provide a deposit to deter griefing and self-farming.
-    // This is either a separate function (a pool from which the deposit can be slashed)
-    // Or the deposit is provided when getting the hand.
-
-
-    // Evaluates the effect of a card.  All cards are assumed to be valid.
-    // Players must wait 3 blocks in between cards.
-    // Note to self: keep it simple.
+    // Card is appended to action string for later evaluation
+    // Card must have a valid mapping in the cards list
     function makeMove(string memory action) external {
+        uint matchId = currentMatch[msg.sender];
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
-        require(lastCommit[msg.sender] + 3 <= block.number);
+        require(whoseTurn[matchId] == msg.sender);
+        require(cards[action].cardNumber != 0);
         lastCommit[msg.sender] = block.number;
         if (isPlayer1[msg.sender]) {
-            string memory actionString = player1[currentMatch[msg.sender]];
+            string memory actionString = player1[matchId];
             actionString = string.concat(actionString, action);
         }
         else {
-            string memory actionString = player2[currentMatch[msg.sender]];
+            string memory actionString = player2[matchId];
             actionString = string.concat(actionString, action);
         }
+        whoseTurn[matchId] = currentOpponent[msg.sender];
 
     }
 
 
     // End the game by providing the constituent values of your oracle-generated hash.
-    // Automation will check your win condition, and the validity of your cards.
+    // Automation will check whether you actually won, and if your played cards were truly in your hand.
     function declareVictory(string calldata secret) external {
-        //potentially the secret could come in as bytes32 instead
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
         //hand may need to be abi.encoded?
@@ -203,17 +203,31 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         inQueue[msg.sender] = true;
         inGame[msg.sender] = false;
 
-        string memory actionString;
-
-        if (isPlayer1[msg.sender]) {
-            actionString = player1[currentMatch[msg.sender]];
-        }
-        else {
-            actionString = player2[currentMatch[msg.sender]];
-        }
-
         pendingUpkeep[msg.sender] = upkeepType.CHECK_VICTORY;
-        emit AwaitingEvaluation(msg.sender, secret, actionString);
+
+        emit AwaitingAutomation(msg.sender, secret);
+    }
+
+    // It must not be your turn, your opponent must not have acted for 7 blocks, and the
+    // game's end can't already be pending.
+    function forceEnd() public {
+        require (inGame[msg.sender] == true);
+        require (inQueue[msg.sender] == true);
+        require (block.number >= lastCommit[currentOpponent[msg.sender]] + 7);
+        require (whoseTurn[currentMatch[msg.sender]] != msg.sender);
+
+        inQueue[msg.sender] = false;
+        inGame[msg.sender] = false;
+        hands[msg.sender] = bytes("");
+
+        address opponent = currentOpponent[msg.sender];
+
+        inQueue[opponent] = false;
+        inGame[opponent] = false;
+        hands[opponent] = bytes("");
+
+        //Test
+        testWin = "You won!";
     }
 
 
@@ -235,6 +249,24 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     //      eth.blockNumber 
 
     //      testWin()
+
+    function getHashMonster(address _player) public view returns (uint number) {
+        uint hashNumber = uint(bytes32(hands[_player]));
+        for (uint z; z < 10; z++) {
+            number = hashNumber;
+            while ( number >= 10) {
+                number /= 10;
+                }
+                if (number == z) {
+                    return number;
+                    }
+                }
+
+    }
+
+    function getOpponent() public view returns (address) {
+        return currentOpponent[msg.sender];
+    }
 
     function seeBoard() public view returns (string memory) {
         if (isPlayer1[msg.sender] == true) {
@@ -280,23 +312,24 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     //            FUNCTIONS REQUEST FULFILLMENT            //
 
 
-    // Provides a secret hand drawn from a secretly shuffled deck.  Also contains secret inventory selected by the player.
+    // Provides a secret hand, drawn from a secretly shuffled deck.
     // Asks Chainlink Automation to move the player into matchmaking.
     function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
 
         address player = functionsRequestIdbyRequester[requestId];
 
         // Response is a SHA256 hash against which the player will run a birthday attack
-        // to extract the encoded secret random cards
+        // to extract the encoded secret random cards.
         hands[player] = response;
 
-        // Moves player to matchmaking queue
+        // Moves player to matchmaking queue.
         if (err.length == 0) {
             pendingUpkeep[player] = upkeepType.MATCHMAKING;
-            emit AwaitingAutomation(player);
+            emit AwaitingAutomation(player, "");
             }
-    
-        s_lastError = err;
+        else {
+            s_lastError = err;
+        }
         emit RequestFulfilled(requestId, response);
   }
 
@@ -307,26 +340,9 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     //       AUTOMATION AND GAMEPLAY VALIDATION          //
 
     enum cType {
-    CONSTRUCT, //persistent units
-    CRYSTAL,  //persistent structures
-    POWER, //tactical spells
-    ORACLE //strategic spells
-  }
-
-    enum cardKeyword {
-    NONE,
-    DESTROY,  //destroy target
-    DAMAGE1,  //deal 1 damage to target
-    DAMAGE2, //deal 2 damage to target
-    REGENERATE2, //spend 2 energy to regenerate
-    HEAL1, //player heals 1 damage 
-    SHIELD, //prevent damage to target
-    AIM, //may pick target when attacking
-    ST_SHIELD, //give shield when entering the field
-    ST_HEAL1, //heals player for 1 when entering the field
-    ST_DAMAGE1 //deals 1 damage to target when entering the field
-    //DRAW
-    //QUERY
+    NORMAL,
+    POWER,
+    COUNTER
   }
 
     struct cardTraits {
@@ -335,11 +351,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     cType cardType;
     uint8 attack;
     uint8 defense;
-    cardKeyword keywordA;
-    cardKeyword keywordB;
     uint8 energyCost;
   }
-
 
     mapping (string => cardTraits) cards;
 
@@ -364,7 +377,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
             performData = abi.encode(player, 9999);
             bytes memory _cards = bytes32ToBytes(log.topics[2]);
-            bytes memory _actions = bytes32ToBytes(log.topics[3]);
+            bytes memory _actions;
+            if (isPlayer1[player]) {
+                _actions = bytes(player1[currentMatch[player]]);
+            }
+            else {
+                _actions = bytes(player2[currentMatch[player]]);
+            }
             uint actionsLength = _actions.length;
             uint actionsCount = actionsLength / 2;
             if (actionsCount > _cards.length) {
@@ -416,26 +435,29 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                     }
                 }
                 hashMonster memory newMonster;
-                if (firstDigit == 1 || firstDigit == 2 || firstDigit == 3) {
+                // The hash randomly determines if you will be playing CONSTRUCT or CRYSTAL
+                // You should design your deck to play both
+                // Eventually there will be different types of CONSTRUCTs and CRYSTALs
+                if (firstDigit <= 4) {
+                    // Construct
                     newMonster.HP = 100;
                     newMonster.POW = 20;
                     newMonster.DEF = 10;
 
                 }
-                if (firstDigit == 4 || firstDigit == 5 || firstDigit == 6) {
-                    newMonster.HP = 20;
-                    newMonster.POW = 100;
-                    newMonster.DEF = 0;
-
-                }
-                if (firstDigit == 7 || firstDigit == 8 || firstDigit == 9) {
+                else {
+                    // Crystal
                     newMonster.HP = 50;
                     newMonster.POW = 75;
                     newMonster.DEF = 40;
-
                 }
                 // Check Actions against hashMonster
                 // POWER attacks ignore DEF
+                // COUNTER attacks will do extra damage after being hit by a POWER attack
+
+                // Winner's HP is NOT checked, because a cheating opponent could have reduced your HP to zero
+                // and attempted to wait you out.  However, the opponent's defensive effects will be fully 
+                // accounted for when checking their HP.
                 if (valid == true) {
                     uint totalDamage;
                     for (uint8 r; r < actionsCount; r++) {
@@ -449,10 +471,9 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                         valid = false;
                         }
                     if (valid == true) {
-                        performData = abi.encode(player, actionsCount * newMonster.POW);
+                        performData = abi.encode(player);
                         }
                     }
-
 
                 }
 
@@ -460,27 +481,11 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             }
 
         }
-        //currentOpponent[player]
-        //performData = abi.encode(player, requestType.REGISTER_PLAYER, abi.encode(stuff));
-        
-
-
-  //credit: stackoverflow
-    function strToUint(string memory _str) public pure returns(uint256 result) {
-    
-    for (uint256 i = 0; i < bytes(_str).length; i++) {
-        if ((uint8(bytes(_str)[i]) - 48) < 0 || (uint8(bytes(_str)[i]) - 48) > 9) {
-            return 0;
-        }
-        result += (uint8(bytes(_str)[i]) - 48) * 10**(bytes(_str).length - i - 1);
-    }
-    
-    return result;
-    }
+ 
 
 
     // MATCHMAKING: Moves the player into the queue, and starts a game if two players are ready.
-    // CHECK_VICTORY: Evaluates the player's win condition, and their secret cards against their used cards.
+    // CHECK_VICTORY: Declares the winner, and removes the players from the game.
     function performUpkeep(
         bytes calldata performData
     ) external {
@@ -499,11 +504,10 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 }
             else {
                 matchmaker[1] = player;
+                
+                uint newMatchId = matchIndex;
 
-                //is the array empty in the beginning? or does it have index 0
-                matchIndex++;
-
-                currentMatch[_player1] = matchIndex;
+                currentMatch[_player1] = newMatchId;
                 isPlayer1[_player1] = true;
                 currentOpponent[_player1] = matchmaker[1];
                 player1.push("");
@@ -511,13 +515,19 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 inGame[_player1] = true;
                 matchmaker[0] = address(0x0);
 
-                currentMatch[_player2] = matchIndex;
+                lastCommit[_player1] = block.number;
+                lastCommit[_player2] = block.number + 15;
+                whoseTurn.push(_player1);
+
+                currentMatch[_player2] = newMatchId;
                 isPlayer1[_player2] = false;
                 currentOpponent[_player2] = matchmaker[0];
                 player2.push("");
                 inQueue[_player2] = false;
                 inGame[_player2] = true;
                 matchmaker[1] = address(0x0); 
+
+                matchIndex++;
                 }
             }
 
@@ -591,9 +601,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     event VRFFulfilled(uint indexed _id);
     event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
-    event AwaitingAutomation(address indexed _player);
+    event AwaitingAutomation(address indexed _player, string indexed _cards);
     event UpkeepFulfilled(bytes indexed _performData);
-    event AwaitingEvaluation(address indexed _player, string indexed _cards, string indexed _actions);
 
   
 }
