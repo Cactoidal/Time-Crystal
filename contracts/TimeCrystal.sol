@@ -12,22 +12,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ILogAutomation.sol";
 import "./IERC677.sol";
 
-
-
 contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     using FunctionsRequest for FunctionsRequest.Request;
 
     bytes32 public donId;
     address private forwarder;
 
-    bytes32 public s_lastRequestId;
-    bytes public s_lastResponse;
     bytes public s_lastError;
 
     string public source;
     FunctionsRequest.Location public secretsLocation;
     bytes encryptedSecretsReference;
-    //uint64 subscriptionId = 1600;
+   
     uint64 constant subscriptionId = 1686;
     uint32 constant callbackGasLimit = 300000;
 
@@ -41,16 +37,12 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
   
-    //cardTraits[] memory _cards as final argument
     constructor(address _vrfCoordinator, address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference) FunctionsClient(router) VRFConsumerBaseV2(_vrfCoordinator) ConfirmedOwner(msg.sender) {
         donId = _donId;
         source = _source;
         secretsLocation = _location;
         encryptedSecretsReference = _reference;
         COORDINATOR = VRFCoordinatorV2Interface(0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625);
-     //   for (uint z = 0; z < _cards.length; z++) {
-     //       cards[Strings.toString(z + 10)] = _cards[z];
-     //   }
     }
 
 
@@ -89,9 +81,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
      //Test
     string public testWin = "Not yet";
 
-
-
-   
 
 
     //                 PLAYER GAME INTERACTIONS                 //
@@ -160,8 +149,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         req.setArgs(args);
         //req.setBytesArgs(args);
 
-        s_lastRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
-        functionsRequestIdbyRequester[s_lastRequestId] = msg.sender;
+        bytes32 requestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
+        functionsRequestIdbyRequester[requestId] = msg.sender;
     }
 
 
@@ -232,70 +221,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
 
 
-    //              GODOT VIEW FUNCTIONS            //
-
-
-    // Public Getters:
-
-    //      keys(msg.sender)
-
-    //      Retrieves the SHA256 hash of the player's secret password, random cards, and inventory.
-    //      hands(msg.sender)
-
-    //      inQueue(msg.sender)
-
-    //      inGame(msg.sender)
-
-    //      eth.blockNumber 
-
-    //      testWin()
-
-    function getHashMonster(address _player) public view returns (uint number) {
-        uint hashNumber = uint(bytes32(hands[_player]));
-        for (uint z; z < 10; z++) {
-            number = hashNumber;
-            while ( number >= 10) {
-                number /= 10;
-                }
-                if (number == z) {
-                    return number;
-                    }
-                }
-
-    }
-
-    function getOpponent() public view returns (address) {
-        return currentOpponent[msg.sender];
-    }
-
-    function seeBoard() public view returns (string memory) {
-        if (isPlayer1[msg.sender] == true) {
-            return player1[currentMatch[msg.sender]];
-        }
-        else {
-            return player2[currentMatch[msg.sender]];
-        }
-    }
-
-    function seeOpponentBoard() public view returns (string memory) {
-        if (isPlayer1[msg.sender] == true) {
-            return player2[currentMatch[msg.sender]];
-        }
-        else {
-            return player1[currentMatch[msg.sender]];
-        }
-    }
-
-    function hasSeedsRemaining() public view returns (bool) {
-        if (vrfSeeds[msg.sender].length > 0) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-
 
     //              VRF REQUEST FULFILLMENT              //
 
@@ -351,7 +276,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     cType cardType;
     uint8 attack;
     uint8 defense;
-    uint8 energyCost;
   }
 
     mapping (string => cardTraits) cards;
@@ -515,6 +439,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 inGame[_player1] = true;
                 matchmaker[0] = address(0x0);
 
+                // To prevent force-ending immediately before a player can act
                 lastCommit[_player1] = block.number;
                 lastCommit[_player2] = block.number + 15;
                 whoseTurn.push(_player1);
@@ -571,12 +496,76 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         }
         return result;
     }
+
+
+
+     //              GODOT VIEW FUNCTIONS            //
+
+
+    // Public Getters:
+
+    //      keys(msg.sender)
+
+    //      Retrieves the SHA256 hash of the player's secret password, random cards, and inventory.
+    //      hands(msg.sender)
+
+    //      inQueue(msg.sender)
+
+    //      inGame(msg.sender)
+
+    //      eth.blockNumber 
+
+    //      testWin()
+
+    function getHashMonster(address _player) public view returns (uint number) {
+        uint hashNumber = uint(bytes32(hands[_player]));
+        for (uint z; z < 10; z++) {
+            number = hashNumber;
+            while ( number >= 10) {
+                number /= 10;
+                }
+                if (number == z) {
+                    return number;
+                    }
+                }
+
+    }
+
+    function getOpponent() public view returns (address) {
+        return currentOpponent[msg.sender];
+    }
+
+    function seeBoard() public view returns (string memory) {
+        if (isPlayer1[msg.sender] == true) {
+            return player1[currentMatch[msg.sender]];
+        }
+        else {
+            return player2[currentMatch[msg.sender]];
+        }
+    }
+
+    function seeOpponentBoard() public view returns (string memory) {
+        if (isPlayer1[msg.sender] == true) {
+            return player2[currentMatch[msg.sender]];
+        }
+        else {
+            return player1[currentMatch[msg.sender]];
+        }
+    }
+
+    function hasSeedsRemaining() public view returns (bool) {
+        if (vrfSeeds[msg.sender].length > 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
  
 
 
 
     //          MAINTENANCE FUNCTIONS AND EVENTS            //
-
 
 
     function setDonId(bytes32 newDonId) external onlyOwner {
@@ -586,6 +575,12 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     function updateSecret(bytes calldata _secrets) external onlyOwner {
         encryptedSecretsReference = _secrets;
   }
+
+    function setCards(cardTraits[] memory _cards) external onlyOwner {
+        for (uint z = 0; z < _cards.length; z++) {
+            cards[Strings.toString(z + 10)] = _cards[z];
+        }
+    }
 
    
     function setForwarderAddress(
@@ -597,7 +592,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     function withdrawLink() external {
         IERC20(LINKToken).transfer(owner(), IERC20(LINKToken).balanceOf(address(this)));
     }
-
 
     event VRFFulfilled(uint indexed _id);
     event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
