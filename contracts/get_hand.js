@@ -1,5 +1,5 @@
 //args[0] = RSA-encrypted PLAYER AES key;
-//args[1] = AES-encrypted PLAYER secret passphrase and inventory;
+//args[1] = AES-encrypted PLAYER secret passphrase;
 //args[2] = iv used to encrypt the secrets;
 //args[3] = seed;
 //args[4] = CSPRNG iv;
