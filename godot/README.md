@@ -509,4 +509,18 @@ With the improved performance, I can increase the deck size to twenty cards and 
 
 ## Day 17
 
+The oracle-produced hash will be pulling triple duty: first, the player will extract their cards from it using the brute-force technique.  Second, the first digit of the hash will be used to select which "hash monster" the player will use in battle.  And third, when declaring victory, the player will use the hash to prove that the cards in their hand were put there by the oracle.
 
+"Hash monsters" are a new addition.  Since the hash is already encoding private information, and is itself randomly generated because it is produced from randomly-generated text, I can use it again to encode some public information.  In this case, whether a player will be using a CONSTRUCT or a CRYSTAL.
+
+Ideally, one would construct their deck to be used by either monster type, since it is relatively unpredictable which one you will end up using during a battle.  
+
+Since the password in theory could be reused, and you can limit which cards you put in your deck, there will be ways that you could construct your deck to increase your chances of getting one type or another.  But that's up to the player to gauge whether it is worth the limitations (and risks).
+
+Right now the game just has a generic CONSTRUCT and CRYSTAL, but eventually there will be different types, and the player will have some control over which _kind_ of CONSTRUCT or CRYSTAL they will control.
+
+The deck-building aspect comes down to the types of moves.  Right now it is very simple, with three kinds of cards: NORMAL, which just damages the enemy; POWER, which ignores defense; and COUNTER, which does extra damage when used after getting hit by a POWER attack.
+
+Cards have their own ATTACK stat, which is multipled by the monster's POW score.  Not yet implemented is the card's DEFENSE score, which will reduce the damage of the next attack received.  It would be interesting to have simultaneous moves, with both players committing and revealing their secret actions, but I'm not going to implement that at the moment.
+
+I need to rewrite my Godot UI to accomodate the changes in gameplay.
