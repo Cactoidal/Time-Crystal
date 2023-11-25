@@ -174,14 +174,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         //require(whoseTurn[matchId] == msg.sender);
         
         require(cards[action].cardNumber != 0);
+        
         lastCommit[msg.sender] = block.number;
         if (isPlayer1[msg.sender]) {
-            string memory actionString = player1[matchId];
-            actionString = string.concat(actionString, action);
+            player1[matchId] = string.concat(player1[matchId], action);
         }
         else {
-            string memory actionString = player2[matchId];
-            actionString = string.concat(actionString, action);
+            player2[matchId] = string.concat(player2[matchId], action);
         }
         whoseTurn[matchId] = currentOpponent[msg.sender];
 
@@ -194,7 +193,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
         //hand may need to be abi.encoded?
-        require(keccak256(hands[msg.sender]) == keccak256(abi.encode(sha256(abi.encode(secret)))));
+        require(keccak256(hands[msg.sender]) == keccak256(abi.encodePacked(sha256(abi.encodePacked(secret)))));
 
         // The game immediately ends and goes to Automation to determine the winner
         address opponent = currentOpponent[msg.sender];
@@ -445,7 +444,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 player2.push("");
                 inQueue[_player2] = false;
                 inGame[_player2] = true;
-                
+
                 matchmaker[0] = address(0x0);
                 matchmaker[1] = address(0x0); 
 
