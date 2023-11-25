@@ -524,3 +524,10 @@ The deck-building aspect comes down to the types of moves.  Right now it is very
 Cards have their own ATTACK stat, which is multipled by the monster's POW score.  Not yet implemented is the card's DEFENSE score, which will reduce the damage of the next attack received.  It would be interesting to have simultaneous moves, with both players committing and revealing their secret actions, but I'm not going to implement that at the moment.
 
 I need to rewrite my Godot UI to accomodate the changes in gameplay.
+
+## Day 18
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/3cfbe895-99c1-4930-8079-199caf97d5ac
+
+Happy to say that I'm once again able to register Automation upkeeps (thanks Mike), and the matchmaking performUpkeep seems to be working.  Above is a hand getting extracted from a hash.  Next step will be making this all a bit prettier.
+
