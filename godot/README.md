@@ -529,5 +529,9 @@ I need to rewrite my Godot UI to accomodate the changes in gameplay.
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/3cfbe895-99c1-4930-8079-199caf97d5ac
 
-Happy to say that I'm once again able to register Automation upkeeps (thanks Mike), and the matchmaking performUpkeep seems to be working.  Above is the extraction of some raw hand values from an oracle-committed hash.  Next step will be making this all a bit prettier.
+Happy to say that I'm once again able to register Automation upkeeps (thanks Mike), and both upkeeps (matchmaking and ending the game) seem to be working.  
+
+Indeed, also very happy to report that for the first time I was able to run through the whole sequence of registering the player key, requesting a secret hand from Functions, getting the hash on-chain, extracting the cards from it, getting pushed into matchmaking by Automation, playing cards against a mock opponent, declaring victory, and having my game session validated by Automation.  
+
+Above is the extraction of some raw hand values from an oracle-committed hash.  Next step will be making this all a bit prettier.
 
