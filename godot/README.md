@@ -513,7 +513,7 @@ The oracle-produced hash will be pulling triple duty: first, the player will ext
 
 "Hash monsters" are a new addition.  Since the hash is already encoding private information, and is itself randomly generated because it is produced from randomly-generated text, I can use it again to encode some public information.  In this case, whether a player will be using a CONSTRUCT or a CRYSTAL.
 
-Ideally, one would construct their deck to be used by either monster type, since it is relatively unpredictable which one you will end up using during a battle.  
+Ideally, one would build their deck to be used by either monster type, since it is relatively unpredictable which one you will end up using during a battle.  
 
 Since the password in theory could be reused, and you can limit which cards you put in your deck, there will be ways that you could construct your deck to increase your chances of getting one type or another.  But that's up to the player to gauge whether it is worth the limitations (and risks).
 
