@@ -553,5 +553,5 @@ Players might try to play cautiously, but their opponents might punish that with
 
 During the actual gameplay, all of this would be tracked by Godot in a kind of off-chain "phantom state", because on-chain the players are just committing hashes and concatenating their "action string" whenever they reveal.  The contract only validates that 1) the hash of the revealed move matches the hash of the commit, and 2) the revealed move is a string with a valid mapping in the cards array.
 
-Only at the end of the game do the two "action strings" go to Chainlink Automation, which evaluates them with some on-chain logic, checking that the winner's card were actually in their hand, and that they did enough damage to reduce their opponent's HP to zero.  This efficiency is entirely dependent on the Log Trigger and secure forwarder.
+Only at the end of the game do the two "action strings" go to Chainlink Automation, which evaluates them with some on-chain logic, checking that the winner's cards were actually in their hand, and that they did enough damage to reduce their opponent's HP to zero.  This efficiency is entirely dependent on the Log Trigger and secure forwarder.
 
