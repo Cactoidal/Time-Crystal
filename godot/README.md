@@ -589,3 +589,14 @@ But then again, if a "balanced" deck usually loses to a deck that focuses on the
 
 Right now the "board position" is developed through the accumulation of energy, and the management of your own HP against the opponent's.  Perhaps there is something more that can be done, that leverages the randomness of the hand.
 
+___
+
+Good news!  I figured out the bug.  When declaring victory, the player passes a string that is hashed on-chain and compared to the oracle-committed hash.  After this check, it passes the string into a Log event to trigger Automation.  I needed to first convert the string to bytes32.
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/39a12f13-9fc4-4725-91dd-6c9e903ead08
+
+The sequence is complete.  I can now spend some time thinking about these new problems: the strategic contribution of the random hand, the new game UI, and the economics of the game.
+
+
+
+
