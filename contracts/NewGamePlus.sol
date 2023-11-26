@@ -74,15 +74,10 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     address[2] matchmaker;
     uint matchIndex;
     mapping (address => uint) public currentMatch;
-    //Do I still need to distinguish between "player 1" and "player 2"?
-    //If not, I don't need to use these arrays anymore, I can use a mapping (address => string) playerActions.
-    string[] player1;
-    string[] player2;
-
+    mapping (address => string) public playerActions;
     mapping (address => bool) public inGame;
     mapping (address => bool) public inQueue;
     mapping (address => address) public currentOpponent;
-    mapping (address => bool) public isPlayer1;
     mapping (address => bytes) public hashCommit;
     mapping (address => uint) public lastCommit;
     mapping (uint => gamePhase) public currentPhase;
@@ -210,13 +205,7 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         //might need to fool with the abi.encode
         require(keccak256(hashCommit[msg.sender]) == keccak256(abi.encodePacked(sha256(abi.encodePacked(revealed)))));
 
-
-        if (isPlayer1[msg.sender]) {
-            player1[matchId] = string.concat(player1[matchId], action);
-        }
-        else {
-            player2[matchId] = string.concat(player2[matchId], action);
-        }
+        playerActions[msg.sender] = string.concat(playerActions[msg.sender], action);
 
         hashCommit[msg.sender] = bytes("");
         lastCommit[msg.sender] = block.number;
@@ -363,16 +352,9 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             // Opponent set as default winner
             performData = abi.encode(currentOpponent[player]);
             bytes memory _cards = bytes32ToBytes(log.topics[2]);
-            bytes memory _actions;
-            bytes memory _opponentActions;
-            if (isPlayer1[player]) {
-                _actions = bytes(player1[currentMatch[player]]);
-                _opponentActions = bytes(player2[currentMatch[player]]);
-            }
-            else {
-                _actions = bytes(player2[currentMatch[player]]);
-                _opponentActions = bytes(player1[currentMatch[player]]);
-            }
+            bytes memory _actions = bytes(playerActions[player]);
+            bytes memory _opponentActions = bytes(playerActions[currentOpponent[player]]);
+
             uint actionsLength = _actions.length;
             if (actionsLength / 2 > _cards.length) {
                 valid = false;
@@ -546,26 +528,21 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 uint newMatchId = matchIndex;
 
                 currentMatch[_player1] = newMatchId;
-                isPlayer1[_player1] = true;
                 currentOpponent[_player1] = matchmaker[1];
-                player1.push("");
+                playerActions[_player1] = "";
                 inQueue[_player1] = false;
                 inGame[_player1] = true;
-                
 
+                currentMatch[_player2] = newMatchId;
+                currentOpponent[_player2] = matchmaker[0];
+                playerActions[_player2] = "";
+                inQueue[_player2] = false;
+                inGame[_player2] = true;
+                
                 // To prevent force-ending immediately before a player can act
                 lastCommit[_player1] = block.number;
                 lastCommit[_player2] = block.number;
                 currentPhase[newMatchId] = gamePhase.COMMIT;
-
-                currentMatch[_player2] = newMatchId;
-                isPlayer1[_player2] = false;
-                currentOpponent[_player2] = matchmaker[0];
-                player2.push("");
-                inQueue[_player2] = false;
-                inGame[_player2] = true;
-
-                
 
                 matchmaker[0] = address(0x0);
                 matchmaker[1] = address(0x0); 
@@ -671,21 +648,11 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
     function seeBoard() public view returns (string memory) {
-        if (isPlayer1[msg.sender] == true) {
-            return player1[currentMatch[msg.sender]];
-        }
-        else {
-            return player2[currentMatch[msg.sender]];
-        }
+        return playerActions[msg.sender];
     }
 
     function seeOpponentBoard() public view returns (string memory) {
-        if (isPlayer1[msg.sender] == true) {
-            return player2[currentMatch[msg.sender]];
-        }
-        else {
-            return player1[currentMatch[msg.sender]];
-        }
+        return playerActions[currentOpponent[msg.sender]];
     }
 
     function hasSeedsRemaining() public view returns (bool) {
