@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.22;
+pragma solidity 0.8.19;
 
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
@@ -251,7 +251,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         pendingUpkeep[msg.sender] = upkeepType.CHECK_VICTORY;
         pendingUpkeep[opponent] = upkeepType.CHECK_VICTORY;
 
-        emit AwaitingAutomation(msg.sender, secret);
+        emit AwaitingAutomation(msg.sender, bytes32(bytes(secret)));
     }
 
    
@@ -368,143 +368,138 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             bytes memory _opponentActions = bytes(playerActions[currentOpponent[player]]);
 
             uint actionsLength = _actions.length;
-            if (actionsLength / 2 > _cards.length) {
-                valid = false;
-            }
-            else {
-                // Check if actions are valid
+            
+            // Check if actions are valid
 
-                // The strings will always contain valid cards because of the require statement
-                // in revealAction().  The question is whether those cards were actually
-                // in the player's hand.
-                bytes[5] memory cardList;
-                bytes[] memory actionList = new bytes[](actionsLength);
-                // Must skip over the 20-digit password
-                uint8 index = 20;
-                for (uint8 i = 0; i < 5; i++) {
-                    bytes memory newCard = new bytes(2);
-                    newCard[0] = _cards[index];
-                    index += 1;
-                    newCard[1] = _cards[index];
-                    index += 1;
-                    cardList[i] = (newCard);
+            // The strings will always contain valid cards because of the require statement
+            // in revealAction().  The question is whether those cards were actually
+            // in the player's hand.
+            bytes[5] memory cardList;
+            bytes[] memory actionList = new bytes[](actionsLength);
+            // Must skip over the 20-digit password <- did this cause the break?
+            uint8 index = 20;
+            for (uint8 i = 0; i < 5; i++) {
+                bytes memory newCard = new bytes(2);
+                newCard[0] = _cards[index];
+                index += 1;
+                newCard[1] = _cards[index];
+                index += 1;
+                cardList[i] = (newCard);
                 }
-                index = 0;
-                for (uint8 i = 0; i < actionsLength / 2; i++) {
-                    bytes memory action = new bytes(2);
-                    action[0] = _actions[index];
-                    index += 1;
-                    action[1] = _actions[index];
-                    index += 1;
-                    actionList[i] = (action);
-                    bool inHand = false;
-                    for (uint8 d; d < 5; d++) {
-                        if (keccak256(action) == keccak256(cardList[d])) {
-                            inHand = true;
+            index = 0;
+            for (uint8 i = 0; i < actionsLength / 2; i++) {
+                bytes memory action = new bytes(2);
+                action[0] = _actions[index];
+                index += 1;
+                action[1] = _actions[index];
+                index += 1;
+                actionList[i] = (action);
+                bool inHand = false;
+                for (uint8 d; d < 5; d++) {
+                    if (keccak256(action) == keccak256(cardList[d])) {
+                        inHand = true;
                         }
                     }
-                    if (inHand == false) {
-                        valid = false;
+                if (inHand == false) {
+                    valid = false;
                     }
 
-                    }
+                }
                 
-                // Get opponent actions
+            // Get opponent actions
 
-                // The opponent action string will be the same size as the player's action string,
-                // otherwise the player will not have been able to declare victory (i.e. stuck in
-                // the commit phase) and would instead win using forceEnd().
-                bytes[] memory opponentActionList = new bytes[](actionsLength);
-                index = 0;
-                for (uint8 i = 0; i < actionsLength / 2; i++) {
-                    bytes memory action = new bytes(2);
-                    action[0] = _opponentActions[index];
-                    index += 1;
-                    action[1] = _opponentActions[index];
-                    index += 1;
-                    opponentActionList[i] = (action);
+            // The opponent action string will be the same size as the player's action string,
+            // otherwise the player will not have been able to declare victory (i.e. stuck in
+            // the commit phase) and would instead win using forceEnd().
+            bytes[] memory opponentActionList = new bytes[](actionsLength);
+            index = 0;
+            for (uint8 i = 0; i < actionsLength / 2; i++) {
+                bytes memory action = new bytes(2);
+                action[0] = _opponentActions[index];
+                index += 1;
+                action[1] = _opponentActions[index];
+                index += 1;
+                opponentActionList[i] = (action);
                 }
 
 
-                // Get hashMonsters
+            // Get hashMonsters
 
-                // The hash randomly determines if you will be playing CONSTRUCT or CRYSTAL
-                // You should design your deck to play both
-                // Eventually there will be different types of CONSTRUCTs and CRYSTALs
-                hashMonster memory playerMonster;
-                hashMonster memory opponentMonster;
+            // The hash randomly determines if you will be playing CONSTRUCT or CRYSTAL
+            // You should design your deck to play both
+            // Eventually there will be different types of CONSTRUCTs and CRYSTALs
+            hashMonster memory playerMonster;
+            hashMonster memory opponentMonster;
 
-                playerMonster = getHashMonsterStats(getHashMonster(player));
-                opponentMonster = getHashMonsterStats(getHashMonster(currentOpponent[player]));
+            playerMonster = getHashMonsterStats(getHashMonster(player));
+            opponentMonster = getHashMonsterStats(getHashMonster(currentOpponent[player]));
 
-                // Check Actions against hashMonster
-                // POWER attacks ignore DEF
-                // COUNTER attacks will do extra damage after being hit by a POWER attack
+            // Check Actions against hashMonster
+            // POWER attacks ignore DEF
+            // COUNTER attacks will do extra damage after being hit by a POWER attack
 
-                // Winner's HP is NOT checked, because a cheating opponent could have reduced your HP to 0
-                // and attempted to wait you out instead of proving.  However, the opponent's defensive effects 
-                // will be fully accounted for when checking their HP.  A cheater will lose 100% of the time
-                // if you just keep attacking them until their HP is 0.
-                if (valid == true) {
+            // Winner's HP is NOT checked, because a cheating opponent could have reduced your HP to 0
+            // and attempted to wait you out instead of proving.  However, the opponent's defensive effects 
+            // will be fully accounted for when checking their HP.  A cheater will lose 100% of the time
+            // if you just keep attacking them until their HP is 0.
+            if (valid == true) {
 
-                    uint totalDamage;
-                    uint bankedEnergy;
+                uint totalDamage;
+                uint bankedEnergy;
 
-                    for (uint8 r; r < actionsLength / 2; r++) {
+                for (uint8 r; r < actionsLength / 2; r++) {
 
-                        cardTraits memory playerCard = cards[string(actionList[r])];
-                        cardTraits memory opponentCard = cards[string(opponentActionList[r])];
+                    cardTraits memory playerCard = cards[string(actionList[r])];
+                    cardTraits memory opponentCard = cards[string(opponentActionList[r])];
 
-                        // Check energy cost
-                        if (playerCard.energyCost > bankedEnergy) {
-                            valid = false;
-                        }
-                        else {
-                            bankedEnergy -= playerCard.energyCost;
-                        }
-
-                        // Calculate damage.  POWER attacks ignore defense, but take more damage from counter cards.
-                        uint opponentDEF = opponentMonster.DEF * opponentCard.defense;
-                        uint playerATK = playerMonster.POW * playerCard.attack;
-                        uint damageDealt;
-
-                        // Opponents can be countered if they used a POWER attack.
-                        if (opponentCard.cardType == cType.POWER) {
-                            playerATK = playerMonster.POW * (playerCard.attack + playerCard.counterBonus);
-                        }
-
-                        // NORMAL attacks are reduced by defense.  Damage floor is 10.
-                        if (playerCard.cardType == cType.NORMAL) {
-                            if (opponentDEF > playerATK) {
-                                damageDealt = 10;
-                            }
-                            else {
-                                damageDealt = (playerATK - opponentDEF);
-                            }
-                        }
-                        // POWER attacks ignore defense.
-                        else if (playerCard.cardType == cType.POWER) {
-                            damageDealt = playerATK;
-                        }
-
-                        totalDamage += damageDealt;
-
-                        bankedEnergy += playerCard.energyGain;
-
-                        // Pure ENERGY cards do not have a damage calculation.
-
-                        }
-
-                    if (totalDamage < opponentMonster.HP) {
+                    // Check energy cost
+                    if (playerCard.energyCost > bankedEnergy) {
                         valid = false;
                         }
-
-                    if (valid == true) {
-                        // Player wins
-                        performData = abi.encode(player);
+                    else {
+                        bankedEnergy -= playerCard.energyCost;
                         }
+
+                    // Calculate damage.  POWER attacks ignore defense, but take more damage from counter cards.
+                    uint opponentDEF = opponentMonster.DEF * opponentCard.defense;
+                    uint playerATK = playerMonster.POW * playerCard.attack;
+                    uint damageDealt;
+
+                    // Opponents can be countered if they used a POWER attack.
+                    if (opponentCard.cardType == cType.POWER) {
+                        playerATK = playerMonster.POW * (playerCard.attack + playerCard.counterBonus);
+                        }
+
+                    // NORMAL attacks are reduced by defense.  Damage floor is 10.
+                    if (playerCard.cardType == cType.NORMAL) {
+                        if (opponentDEF > playerATK) {
+                            damageDealt = 10;
+                            }
+                        else {
+                            damageDealt = (playerATK - opponentDEF);
+                            }
+                        }
+                    // POWER attacks ignore defense.
+                    else if (playerCard.cardType == cType.POWER) {
+                        damageDealt = playerATK;
+                        }
+
+                    totalDamage += damageDealt;
+
+                    bankedEnergy += playerCard.energyGain;
+
+                    // Pure ENERGY cards do not have a damage calculation.
+
                     }
 
+                if (totalDamage < opponentMonster.HP) {
+                    valid = false;
+                    }
+
+                if (valid == true) {
+                    // Player wins
+                    performData = abi.encode(player);
+                    }
                 }
 
             }
@@ -707,7 +702,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     event VRFFulfilled(uint indexed _id);
     event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
-    event AwaitingAutomation(address indexed _player, string indexed _cards);
+    event AwaitingAutomation(address indexed _player, bytes32 indexed _cards);
     event UpkeepFulfilled(bytes indexed _performData);
 
   
