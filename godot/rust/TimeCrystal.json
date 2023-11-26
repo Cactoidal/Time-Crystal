@@ -765,9 +765,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "bytes",
+				"internalType": "string",
 				"name": "password",
-				"type": "bytes"
+				"type": "string"
 			},
 			{
 				"internalType": "string",
