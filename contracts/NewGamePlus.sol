@@ -74,18 +74,23 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     address[2] matchmaker;
     uint matchIndex;
     mapping (address => uint) public currentMatch;
-    //I don't need to use these arrays anymore, I can use a mapping with strings.
+    //Do I still need to distinguish between "player 1" and "player 2"?
+    //If not, I don't need to use these arrays anymore, I can use a mapping (address => string) playerActions.
     string[] player1;
     string[] player2;
-    address[] whoseTurn;
-
-    mapping (address => bytes) public hashCommit;
 
     mapping (address => bool) public inGame;
     mapping (address => bool) public inQueue;
     mapping (address => address) public currentOpponent;
     mapping (address => bool) public isPlayer1;
+    mapping (address => bytes) public hashCommit;
     mapping (address => uint) public lastCommit;
+    mapping (uint => gamePhase) public currentPhase;
+
+    enum gamePhase {
+        COMMIT,
+        REVEAL
+    }
 
      //Test
     string public testWin = "Not yet";
@@ -167,12 +172,19 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
     function commitAction(bytes memory _actionHash) external {
+        address opponent = currentOpponent[msg.sender];
+        uint matchId = currentMatch[msg.sender];
+
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
+        require(currentPhase[matchId] == gamePhase.COMMIT);
         require(hashCommit[msg.sender].length == 0);
-        require(hashCommit[currentOpponent[msg.sender]].length == 0);
+
         hashCommit[msg.sender] = _actionHash;
         lastCommit[msg.sender] = block.number;
+        if (hashCommit[opponent].length != 0) {
+            currentPhase[matchId] = gamePhase.REVEAL;
+        }
     }
 
     function checkOpponentCommit() external view returns (bool) {
@@ -183,16 +195,18 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     // Card is appended to action string for later evaluation
     // Card must have a valid mapping in the cards list
     function revealAction(bytes memory password, string memory action) external {
+        uint matchId = currentMatch[msg.sender];
+
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
+        require(currentPhase[matchId] == gamePhase.REVEAL);
         require(password.length == 20);
-        require(hashCommit[msg.sender].length != 0);
         require(cards[action].cardNumber != 0);
+
         string memory revealed = string.concat(string(password), action);
         //might need to fool with the abi.encode
         require(keccak256(hashCommit[msg.sender]) == keccak256(abi.encodePacked(sha256(abi.encodePacked(revealed)))));
 
-        uint matchId = currentMatch[msg.sender];
 
         if (isPlayer1[msg.sender]) {
             player1[matchId] = string.concat(player1[matchId], action);
@@ -200,7 +214,13 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         else {
             player2[matchId] = string.concat(player2[matchId], action);
         }
+
         hashCommit[msg.sender] = bytes("");
+        lastCommit[msg.sender] = block.number;
+
+        if (hashCommit[currentOpponent[msg.sender]].length != 0) {
+            currentPhase[matchId] = gamePhase.COMMIT;
+        }
     }
 
 
@@ -225,6 +245,11 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
         emit AwaitingAutomation(msg.sender, secret);
     }
+
+    // someone could potentially break the game by revealing before their opponent and then declaring victory,
+    // because the length of the two action strings will be different.  this needs to be addressed
+
+
 
     // You must have committed an action, your opponent must not have committed for 7 blocks after you,
     // and the game's end can't already be pending.
@@ -527,8 +552,8 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
                 // To prevent force-ending immediately before a player can act
                 lastCommit[_player1] = block.number;
-                lastCommit[_player2] = block.number + 15;
-                whoseTurn.push(_player1);
+                lastCommit[_player2] = block.number;
+                currentPhase[newMatchId] = gamePhase.COMMIT;
 
                 currentMatch[_player2] = newMatchId;
                 isPlayer1[_player2] = false;
@@ -536,6 +561,8 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 player2.push("");
                 inQueue[_player2] = false;
                 inGame[_player2] = true;
+
+                
 
                 matchmaker[0] = address(0x0);
                 matchmaker[1] = address(0x0); 
