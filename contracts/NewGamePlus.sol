@@ -171,8 +171,8 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         functionsRequestIdbyRequester[requestId] = msg.sender;
     }
 
+
     function commitAction(bytes memory _actionHash) external {
-        address opponent = currentOpponent[msg.sender];
         uint matchId = currentMatch[msg.sender];
 
         require(inGame[msg.sender] == true);
@@ -182,10 +182,13 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
         hashCommit[msg.sender] = _actionHash;
         lastCommit[msg.sender] = block.number;
-        if (hashCommit[opponent].length != 0) {
+
+        // If opponent has committed, change phase to REVEAL
+        if (hashCommit[currentOpponent[msg.sender]].length != 0) {
             currentPhase[matchId] = gamePhase.REVEAL;
         }
     }
+
 
     function checkOpponentCommit() external view returns (bool) {
         return (hashCommit[currentOpponent[msg.sender]].length != 0);
@@ -218,6 +221,7 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         hashCommit[msg.sender] = bytes("");
         lastCommit[msg.sender] = block.number;
 
+        // If opponent has revealed, change phase to COMMIT
         if (hashCommit[currentOpponent[msg.sender]].length != 0) {
             currentPhase[matchId] = gamePhase.COMMIT;
         }
@@ -229,6 +233,10 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     function declareVictory(string calldata secret) external {
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
+        // Victory must be declared during the COMMIT phase, to prevent passing action strings 
+        // of different lengths to the Automation DON
+        require(currentPhase[currentMatch[msg.sender]] == gamePhase.COMMIT);
+
         require(keccak256(hands[msg.sender]) == keccak256(abi.encodePacked(sha256(abi.encodePacked(secret)))));
 
         // The game immediately ends and goes to Automation to determine the winner
@@ -246,26 +254,21 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         emit AwaitingAutomation(msg.sender, secret);
     }
 
-    // someone could potentially break the game by revealing before their opponent and then declaring victory,
-    // because the length of the two action strings will be different.  this needs to be addressed
+   
 
-
-
-    // You must have committed an action, your opponent must not have committed for 7 blocks after you,
+    // Your opponent must not have committed (or revealed) for 7 blocks after your most recent commit (or reveal),
     // and the game's end can't already be pending.
 
-    // this works if the opponent is refusing to commit, but not if they are refusing to reveal
     function forceEnd() public {
+        address opponent = currentOpponent[msg.sender];
+
         require (inGame[msg.sender] == true);
         require (inQueue[msg.sender] == false);
-        require (hashCommit[msg.sender].length != 0);
-        require (hashCommit[currentOpponent[msg.sender]].length == 0);
+        require (lastCommit[msg.sender] > lastCommit[opponent]);
         require (block.number >= lastCommit[msg.sender] + 7);
     
         inGame[msg.sender] = false;
         hands[msg.sender] = bytes("");
-
-        address opponent = currentOpponent[msg.sender];
 
         inGame[opponent] = false;
         hands[opponent] = bytes("");
