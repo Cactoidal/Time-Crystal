@@ -122,7 +122,7 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
 
     // Prepare for a match by asking the Functions oracle for a SHA256 hash containing secret information.
-    // AES-encrypted secret password + inventory, and iv are provided as base64 strings.
+    // AES-encrypted secret password, and iv are provided as base64 strings.
     // In addition, another (unique) iv must be passed for use by the CSPRNG key.
     // The Functions callback will trigger the Automation DON, pushing the player into the matchmaking queue.
     function getHand(string calldata secrets, string calldata secretsIv, string calldata csprngIv) external {
