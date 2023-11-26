@@ -595,7 +595,7 @@ Good news!  I figured out the bug.  When declaring victory, the player passes a 
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/39a12f13-9fc4-4725-91dd-6c9e903ead08
 
-The sequence is complete.  I can now spend some time thinking about these new problems: the strategic contribution of the random hand, the new game UI, and the economics of the game.
+The new sequence is complete.  I can now spend some time thinking about these new problems: the strategic contribution of the random hand, the new game UI, and the economics of the game.
 
 
 
