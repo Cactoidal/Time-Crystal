@@ -190,16 +190,16 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     // Provide the secret password and action used to create the commit hash
     // Action is appended to action string for later evaluation 
     // Action must have a valid mapping in the cards list
-    function revealAction(bytes memory password, string memory action) external {
+    function revealAction(string memory password, string memory action) external {
         uint matchId = currentMatch[msg.sender];
 
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
         require(currentPhase[matchId] == gamePhase.REVEAL);
-        require(password.length == 20);
+        require(bytes(password).length == 20);
         require(cards[action].cardNumber != 0);
 
-        string memory revealed = string.concat(string(password), action);
+        string memory revealed = string.concat(password, action);
         //might need to fool with the abi.encode
         require(keccak256(hashCommit[msg.sender]) == keccak256(abi.encodePacked(sha256(abi.encodePacked(revealed)))));
 
@@ -218,6 +218,7 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     // End the game by providing the constituent values of your oracle-generated hash.
     // Automation will check whether you actually won, and if your played cards were truly in your hand.
     function declareVictory(string calldata secret) external {
+        //do I need to check the length of secret to prevent a length extension attack?
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
         // Victory must be declared during the COMMIT phase, to prevent passing action strings 
