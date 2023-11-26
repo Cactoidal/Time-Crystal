@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ILogAutomation.sol";
 import "./IERC677.sol";
 
-contract game2 is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
+contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     using FunctionsRequest for FunctionsRequest.Request;
 
     // SEPOLIA
