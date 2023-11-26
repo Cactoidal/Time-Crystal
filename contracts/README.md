@@ -4,4 +4,4 @@
   
 * godot - Game interface
   
-* lib.rs - Godot-Rust and ethers-rs used to format and decode calldata, openssl used for encryption
+* lib.rs - Godot-Rust and ethers-rs used to format and decode calldata, openssl used for encryption and hashing
