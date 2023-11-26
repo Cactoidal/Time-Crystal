@@ -1,5 +1,83 @@
 [
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "router",
+				"type": "address"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "_donId",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "string",
+				"name": "_source",
+				"type": "string"
+			},
+			{
+				"internalType": "enum FunctionsRequest.Location",
+				"name": "_location",
+				"type": "uint8"
+			},
+			{
+				"internalType": "bytes",
+				"name": "_reference",
+				"type": "bytes"
+			},
+			{
+				"components": [
+					{
+						"internalType": "uint8",
+						"name": "cardNumber",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "cardName",
+						"type": "string"
+					},
+					{
+						"internalType": "enum game2.cType",
+						"name": "cardType",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "attack",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "defense",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "energyCost",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "energyGain",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "counterBonus",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct game2.cardTraits[]",
+				"name": "_cards",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
 		"inputs": [],
 		"name": "EmptyArgs",
 		"type": "error"
@@ -173,266 +251,6 @@
 	{
 		"inputs": [
 			{
-				"internalType": "string",
-				"name": "secret",
-				"type": "string"
-			}
-		],
-		"name": "declareVictory",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "forceEnd",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "secrets",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "secretsIv",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "csprngIv",
-				"type": "string"
-			}
-		],
-		"name": "getHand",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "requestId",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes",
-				"name": "response",
-				"type": "bytes"
-			},
-			{
-				"internalType": "bytes",
-				"name": "err",
-				"type": "bytes"
-			}
-		],
-		"name": "handleOracleFulfillment",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "action",
-				"type": "string"
-			}
-		],
-		"name": "makeMove",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_sender",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_value",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes",
-				"name": "_data",
-				"type": "bytes"
-			}
-		],
-		"name": "onTokenTransfer",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes",
-				"name": "performData",
-				"type": "bytes"
-			}
-		],
-		"name": "performUpkeep",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "requestId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256[]",
-				"name": "randomWords",
-				"type": "uint256[]"
-			}
-		],
-		"name": "rawFulfillRandomWords",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "newDonId",
-				"type": "bytes32"
-			}
-		],
-		"name": "setDonId",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_forwarder",
-				"type": "address"
-			}
-		],
-		"name": "setForwarderAddress",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			}
-		],
-		"name": "transferOwnership",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes",
-				"name": "_secrets",
-				"type": "bytes"
-			}
-		],
-		"name": "updateSecret",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "withdrawLink",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "router",
-				"type": "address"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "_donId",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "_source",
-				"type": "string"
-			},
-			{
-				"internalType": "enum FunctionsRequest.Location",
-				"name": "_location",
-				"type": "uint8"
-			},
-			{
-				"internalType": "bytes",
-				"name": "_reference",
-				"type": "bytes"
-			},
-			{
-				"components": [
-					{
-						"internalType": "uint8",
-						"name": "cardNumber",
-						"type": "uint8"
-					},
-					{
-						"internalType": "string",
-						"name": "cardName",
-						"type": "string"
-					},
-					{
-						"internalType": "enum TimeCrystal.cType",
-						"name": "cardType",
-						"type": "uint8"
-					},
-					{
-						"internalType": "uint8",
-						"name": "attack",
-						"type": "uint8"
-					},
-					{
-						"internalType": "uint8",
-						"name": "defense",
-						"type": "uint8"
-					},
-					{
-						"internalType": "uint8",
-						"name": "energy",
-						"type": "uint8"
-					}
-				],
-				"internalType": "struct TimeCrystal.cardTraits[]",
-				"name": "_cards",
-				"type": "tuple[]"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"inputs": [
-			{
 				"components": [
 					{
 						"internalType": "uint256",
@@ -502,6 +320,32 @@
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "checkOpponentCommit",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "_actionHash",
+				"type": "bytes"
+			}
+		],
+		"name": "commitAction",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -540,6 +384,38 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "currentPhase",
+		"outputs": [
+			{
+				"internalType": "enum game2.gamePhase",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "secret",
+				"type": "string"
+			}
+		],
+		"name": "declareVictory",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "donId",
 		"outputs": [
@@ -550,6 +426,13 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "forceEnd",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -569,6 +452,29 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "secrets",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "secretsIv",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "csprngIv",
+				"type": "string"
+			}
+		],
+		"name": "getHand",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -618,7 +524,7 @@
 						"type": "uint256"
 					}
 				],
-				"internalType": "struct TimeCrystal.hashMonster",
+				"internalType": "struct game2.hashMonster",
 				"name": "monster",
 				"type": "tuple"
 			}
@@ -637,6 +543,29 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "requestId",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes",
+				"name": "response",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes",
+				"name": "err",
+				"type": "bytes"
+			}
+		],
+		"name": "handleOracleFulfillment",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -666,6 +595,25 @@
 				"internalType": "bool",
 				"name": "",
 				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "hashCommit",
+		"outputs": [
+			{
+				"internalType": "bytes",
+				"name": "",
+				"type": "bytes"
 			}
 		],
 		"stateMutability": "view",
@@ -717,25 +665,6 @@
 				"type": "address"
 			}
 		],
-		"name": "isPlayer1",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
 		"name": "lastCommit",
 		"outputs": [
 			{
@@ -745,6 +674,29 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_sender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_value",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "_data",
+				"type": "bytes"
+			}
+		],
+		"name": "onTokenTransfer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -758,6 +710,74 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "performData",
+				"type": "bytes"
+			}
+		],
+		"name": "performUpkeep",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "playerActions",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "requestId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "randomWords",
+				"type": "uint256[]"
+			}
+		],
+		"name": "rawFulfillRandomWords",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "password",
+				"type": "bytes"
+			},
+			{
+				"internalType": "string",
+				"name": "action",
+				"type": "string"
+			}
+		],
+		"name": "revealAction",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -813,6 +833,32 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "newDonId",
+				"type": "bytes32"
+			}
+		],
+		"name": "setDonId",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_forwarder",
+				"type": "address"
+			}
+		],
+		"name": "setForwarderAddress",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "source",
 		"outputs": [
@@ -836,6 +882,32 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "_secrets",
+				"type": "bytes"
+			}
+		],
+		"name": "updateSecret",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -874,6 +946,13 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "withdrawLink",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	}
 ]
