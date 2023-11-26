@@ -54,7 +54,6 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
       //            CHAINLINK AUTOMATION, FUNCTIONS, AND VRF VARIABLES        //
 
     mapping (address => string) keys;
-    mapping (address => bytes) public hands;
     mapping (address => uint[]) vrfSeeds;
     mapping (string => bool) public usedCSPRNGIvs;
     uint ivNonce;
@@ -71,12 +70,17 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     //          GAME STATE VARIABLES        //
 
+    mapping (address => bytes) public hands;
     address[2] matchmaker;
     uint matchIndex;
     mapping (address => uint) public currentMatch;
+    //I don't need to use these arrays anymore, I can use a mapping with strings.
     string[] player1;
     string[] player2;
     address[] whoseTurn;
+
+    mapping (address => bytes) public hashCommit;
+
     mapping (address => bool) public inGame;
     mapping (address => bool) public inQueue;
     mapping (address => address) public currentOpponent;
@@ -162,29 +166,41 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         functionsRequestIdbyRequester[requestId] = msg.sender;
     }
 
+    function commitAction(bytes memory _actionHash) external {
+        require(inGame[msg.sender] == true);
+        require(inQueue[msg.sender] == false);
+        require(hashCommit[msg.sender].length == 0);
+        require(hashCommit[currentOpponent[msg.sender]].length == 0);
+        hashCommit[msg.sender] = _actionHash;
+    }
+
+    function checkOpponentCommit() external view returns (bool) {
+        return (hashCommit[currentOpponent[msg.sender]].length != 0);
+    }
 
     // Card is appended to action string for later evaluation
     // Card must have a valid mapping in the cards list
-    function makeMove(string memory action) external {
-        uint matchId = currentMatch[msg.sender];
+    function revealAction(bytes memory password, string memory action) external {
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
-        
-        // Disabled for testing
-        //require(whoseTurn[matchId] == msg.sender);
-        
+        require(password.length == 20);
+        require(hashCommit[msg.sender].length != 0);
         require(cards[action].cardNumber != 0);
-        
-        lastCommit[msg.sender] = block.number;
+        string memory revealed = string.concat(string(password), action);
+        //might need to fool with the abi.encode
+        require(keccak256(hashCommit[msg.sender]) == keccak256(abi.encodePacked(sha256(abi.encodePacked(revealed)))));
+
+        uint matchId = currentMatch[msg.sender];
+
         if (isPlayer1[msg.sender]) {
             player1[matchId] = string.concat(player1[matchId], action);
         }
         else {
             player2[matchId] = string.concat(player2[matchId], action);
         }
-        whoseTurn[matchId] = currentOpponent[msg.sender];
-
+        hashCommit[msg.sender] = bytes("");
     }
+
 
 
     // End the game by providing the constituent values of your oracle-generated hash.
@@ -192,7 +208,6 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     function declareVictory(string calldata secret) external {
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
-        //hand may need to be abi.encoded?
         require(keccak256(hands[msg.sender]) == keccak256(abi.encodePacked(sha256(abi.encodePacked(secret)))));
 
         // The game immediately ends and goes to Automation to determine the winner
