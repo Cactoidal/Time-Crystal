@@ -226,7 +226,7 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         // of different lengths to the Automation DON
         require(currentPhase[currentMatch[msg.sender]] == gamePhase.COMMIT);
 
-        // Must provided secret password + extracted cards to match the oracle-committed hand hash
+        // Must provide secret password + extracted cards to match the oracle-committed hand hash
         require(keccak256(hands[msg.sender]) == keccak256(abi.encodePacked(sha256(abi.encodePacked(secret)))));
 
         // The game immediately ends and goes to Automation to determine the winner
