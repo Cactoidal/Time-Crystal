@@ -555,3 +555,21 @@ During the actual gameplay, all of this would be tracked by Godot in a kind of o
 
 Only at the end of the game do the two "action strings" go to Chainlink Automation, which evaluates them with some on-chain logic, checking that the winner's cards were actually in their hand, and that they did enough damage to reduce their opponent's HP to zero.  This efficiency is entirely dependent on the Log Trigger and secure forwarder.
 
+## Day 19
+
+The smart contract has been amended with the new commit-reveal turn scheme, and the new strategic triangle gameplay.  Next up: starting over with the game UI.  I don't think I'll have to throw _everything_ out, but since the smart contract side seems to be mostly complete, my first step is building a basic UI that can run through the whole, new sequence.
+
+Originally I had planned for some first-person adventuring phases, hopping from vault to vault in space, but that doesn't seem as necessary now that I've shifted to a 1v1 matchup against a live opponent.  We'll see.
+
+Speaking of "live opponents", at the back of my mind is the economic component of this game.  While it's great to have an on-chain game, it would be even better if there was some kind of reward mechanism for actually winning a match.
+
+If rewards are programmatically awarded, there's one big problem: bots.  While there is a cost to play, it's not going to deter bots if there is profit to be made.
+
+This isn't an issue if the rewards are zero-sum.  For example, players putting up an ante to play, and the winner takes the loser's tokens.
+
+But if I want to disburse things like cards or lootboxes or what have you, inflation becomes a concern, since bots could simply farm each other to mint the reward tokens.
+
+Now perhaps it's not that bad, given that "rare cards" would just give players more options in their decks, and wouldn't _necessarily_ be pay-to-win.  The enjoyment of farming new cards might be stymied, however, if the entire inventory can be found for cheap on a completely saturated secondary market.
+
+This is more of a long-range concern, but I do want to keep it in mind.
+
