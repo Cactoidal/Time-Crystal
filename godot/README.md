@@ -573,3 +573,7 @@ Now perhaps it's not that bad, given that "rare cards" would just give players m
 
 This is more of a long-range concern, but I do want to keep it in mind.
 
+<img width="800" alt="21picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/c89e6637-5454-4237-9fbd-72457028a5dd">
+
+New sequence is working right up until the very end.  Something's off with the game validation logic; I have an idea of what it might be, but I'll need to figure it out later.
+
