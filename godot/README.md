@@ -575,5 +575,17 @@ This is more of a long-range concern, but I do want to keep it in mind.
 
 <img width="800" alt="21picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/c89e6637-5454-4237-9fbd-72457028a5dd">
 
-New sequence is working right up until the very end.  Something's off with the game validation logic; I have an idea of what it might be, but I'll need to figure it out later.
+New sequence is working right up until the very end.  The game validation logic works locally, but something must be slightly off in the deployment.
+
+I've also recognized a flaw in the game's new design: it's possible to draw a hand with no playable cards, because they all cost energy, but you drew no energy-gaining cards.  To ameliorate this I could give players a basic "cardless" attack ability, and give a passive +1 energy gain per turn.
+
+The "hand" doesn't contribute as strategically as much as I would like.  It's not so much a collection of cards as it is a bunch of random abilities.  Each match you are stuck with the 5 cards you get, and you can't draw more.
+
+If a player really wants to guarantee they get the ability set they want, I'm not sure why they wouldn't just build a deck that contains duplicates of the 5 cards they need.
+
+I suppose if CRYSTAL and CONSTRUCT have radically different playstyles, and the player must prepare for both contingencies, they could try to build a deck that would work well for both.
+
+But then again, if a "balanced" deck usually loses to a deck that focuses on the strengths of one monster type, players might just accept winning half of their games instead of losing almost all of them.  That doesn't sound very fun. 
+
+Right now the "board position" is developed through the accumulation of energy, and the management of your own HP against the opponent's.  Perhaps there is something more that can be done, that leverages the randomness of the hand.
 
