@@ -54,7 +54,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
       //            CHAINLINK AUTOMATION, FUNCTIONS, AND VRF VARIABLES        //
 
     mapping (address => string) keys;
-    mapping (address => bytes) public hands;
     mapping (address => uint[]) vrfSeeds;
     mapping (string => bool) public usedCSPRNGIvs;
     uint ivNonce;
@@ -71,20 +70,25 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     //          GAME STATE VARIABLES        //
 
+    mapping (address => bytes) public hands;
     address[2] matchmaker;
     uint matchIndex;
     mapping (address => uint) public currentMatch;
-    string[] player1;
-    string[] player2;
-    address[] whoseTurn;
+    mapping (address => string) public playerActions;
     mapping (address => bool) public inGame;
     mapping (address => bool) public inQueue;
     mapping (address => address) public currentOpponent;
-    mapping (address => bool) public isPlayer1;
+    mapping (address => bytes) public hashCommit;
     mapping (address => uint) public lastCommit;
+    mapping (uint => gamePhase) public currentPhase;
+
+    enum gamePhase {
+        COMMIT,
+        REVEAL
+    }
 
      //Test
-    string public testWin = "Not yet";
+    address public testWin = vrfCoordinator;
 
 
 
@@ -118,7 +122,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
 
     // Prepare for a match by asking the Functions oracle for a SHA256 hash containing secret information.
-    // AES-encrypted secret password + inventory, and iv are provided as base64 strings.
+    // AES-encrypted secret password, and iv are provided as base64 strings.
     // In addition, another (unique) iv must be passed for use by the CSPRNG key.
     // The Functions callback will trigger the Automation DON, pushing the player into the matchmaking queue.
     function getHand(string calldata secrets, string calldata secretsIv, string calldata csprngIv) external {
@@ -137,7 +141,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         inQueue[msg.sender] = true;
 
         //Test
-        testWin = "Not yet";
+        testWin = vrfCoordinator;
 
         FunctionsRequest.Request memory req;
         req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, source);
@@ -163,36 +167,76 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
-    // Card is appended to action string for later evaluation
-    // Card must have a valid mapping in the cards list
-    function makeMove(string memory action) external {
+    // For testing,
+    // Put in a mock opponent that mirrors my actions
+
+    // Provide a hash of your action, kept secret until both players have committed
+    function commitAction(bytes memory _actionHash) external {
         uint matchId = currentMatch[msg.sender];
+
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
-        
-        // Disabled for testing
-        //require(whoseTurn[matchId] == msg.sender);
-        
-        require(cards[action].cardNumber != 0);
-        
-        lastCommit[msg.sender] = block.number;
-        if (isPlayer1[msg.sender]) {
-            player1[matchId] = string.concat(player1[matchId], action);
-        }
-        else {
-            player2[matchId] = string.concat(player2[matchId], action);
-        }
-        whoseTurn[matchId] = currentOpponent[msg.sender];
+        require(currentPhase[matchId] == gamePhase.COMMIT);
+        require(hashCommit[msg.sender].length == 0);
 
+        hashCommit[msg.sender] = _actionHash;
+        lastCommit[msg.sender] = block.number;
+
+        // TEST
+        hashCommit[currentOpponent[msg.sender]] = _actionHash;
+
+        // If opponent has committed, change phase to REVEAL
+        if (hashCommit[currentOpponent[msg.sender]].length != 0) {
+            currentPhase[matchId] = gamePhase.REVEAL;
+        }
+    }
+
+
+
+    // Provide the secret password and action used to create the commit hash
+    // Action is appended to action string for later evaluation 
+    // Action must have a valid mapping in the cards list
+    function revealAction(string memory password, string memory action) external {
+        uint matchId = currentMatch[msg.sender];
+
+        require(inGame[msg.sender] == true);
+        require(inQueue[msg.sender] == false);
+        require(currentPhase[matchId] == gamePhase.REVEAL);
+        require(bytes(password).length == 20);
+        require(cards[action].cardNumber != 0);
+
+        string memory revealed = string.concat(password, action);
+        //might need to fool with the abi.encode
+        require(keccak256(hashCommit[msg.sender]) == keccak256(abi.encode(sha256(abi.encode(revealed)))));
+
+        playerActions[msg.sender] = string.concat(playerActions[msg.sender], action);
+
+        hashCommit[msg.sender] = bytes("");
+        lastCommit[msg.sender] = block.number;
+
+        // TEST
+        address opponent = currentOpponent[msg.sender];
+        playerActions[opponent] = string.concat(playerActions[opponent], action);
+        hashCommit[opponent] = bytes("");
+
+        // If opponent has revealed, change phase to COMMIT
+        if (hashCommit[currentOpponent[msg.sender]].length == 0) {
+            currentPhase[matchId] = gamePhase.COMMIT;
+        }
     }
 
 
     // End the game by providing the constituent values of your oracle-generated hash.
     // Automation will check whether you actually won, and if your played cards were truly in your hand.
     function declareVictory(string calldata secret) external {
+        //do I need to check the length of secret to prevent a length extension attack?
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
-        //hand may need to be abi.encoded?
+        // Victory must be declared during the COMMIT phase, to prevent passing action strings 
+        // of different lengths to the Automation DON
+        require(currentPhase[currentMatch[msg.sender]] == gamePhase.COMMIT);
+
+        // Must provide secret password + extracted cards to match the oracle-committed hand hash
         require(keccak256(hands[msg.sender]) == keccak256(abi.encodePacked(sha256(abi.encodePacked(secret)))));
 
         // The game immediately ends and goes to Automation to determine the winner
@@ -203,29 +247,34 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         inQueue[msg.sender] = true;
         inGame[msg.sender] = false;
 
+        // pendingUpkeep is set for both players, as either could potentially win
         pendingUpkeep[msg.sender] = upkeepType.CHECK_VICTORY;
+        pendingUpkeep[opponent] = upkeepType.CHECK_VICTORY;
 
         emit AwaitingAutomation(msg.sender, secret);
     }
 
-    // It must not be your turn, your opponent must not have acted for 7 blocks, and the
-    // game's end can't already be pending.
+   
+
+    // Your opponent must not have committed (or revealed) for 7 blocks after your most recent commit (or reveal),
+    // and the game's end can't already be pending.
+
     function forceEnd() public {
+        address opponent = currentOpponent[msg.sender];
+
         require (inGame[msg.sender] == true);
         require (inQueue[msg.sender] == false);
-        require (block.number >= lastCommit[currentOpponent[msg.sender]] + 7);
-        require (whoseTurn[currentMatch[msg.sender]] != msg.sender);
-
+        require (lastCommit[msg.sender] > lastCommit[opponent]);
+        require (block.number >= lastCommit[msg.sender] + 7);
+    
         inGame[msg.sender] = false;
         hands[msg.sender] = bytes("");
-
-        address opponent = currentOpponent[msg.sender];
 
         inGame[opponent] = false;
         hands[opponent] = bytes("");
 
         //Test
-        testWin = "You won!";
+        testWin = msg.sender;
     }
 
 
@@ -276,7 +325,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     enum cType {
     NORMAL,
     POWER,
-    COUNTER
+    ENERGY
   }
 
     struct cardTraits {
@@ -285,7 +334,9 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     cType cardType;
     uint8 attack;
     uint8 defense;
-    uint8 energy;
+    uint8 energyCost;
+    uint8 energyGain;
+    uint8 counterBonus;
   }
 
     mapping (string => cardTraits) cards;
@@ -309,25 +360,27 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
 
         if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
-            performData = abi.encode(player, 9999);
+            // Opponent set as default winner
+            performData = abi.encode(currentOpponent[player]);
             bytes memory _cards = bytes32ToBytes(log.topics[2]);
-            bytes memory _actions;
-            if (isPlayer1[player]) {
-                _actions = bytes(player1[currentMatch[player]]);
-            }
-            else {
-                _actions = bytes(player2[currentMatch[player]]);
-            }
+
+            bytes memory _actions = bytes(playerActions[player]);
+            bytes memory _opponentActions = bytes(playerActions[currentOpponent[player]]);
+
             uint actionsLength = _actions.length;
-            uint actionsCount = actionsLength / 2;
-            if (actionsCount > _cards.length) {
+            if (actionsLength / 2 > _cards.length) {
                 valid = false;
             }
             else {
                 // Check if actions are valid
+
+                // The strings will always contain valid cards because of the require statement
+                // in revealAction().  The question is whether those cards were actually
+                // in the player's hand.
                 bytes[5] memory cardList;
                 bytes[] memory actionList = new bytes[](actionsLength);
-                uint8 index = 0;
+                // Must skip over the 20-digit password
+                uint8 index = 20;
                 for (uint8 i = 0; i < 5; i++) {
                     bytes memory newCard = new bytes(2);
                     newCard[0] = _cards[index];
@@ -337,7 +390,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                     cardList[i] = (newCard);
                 }
                 index = 0;
-                for (uint8 i = 0; i < actionsCount; i++) {
+                for (uint8 i = 0; i < actionsLength / 2; i++) {
                     bytes memory action = new bytes(2);
                     action[0] = _actions[index];
                     index += 1;
@@ -355,8 +408,26 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                     }
 
                     }
+                
+                // Get opponent actions
+
+                // The opponent action string will be the same size as the player's action string,
+                // otherwise the player will not have been able to declare victory (i.e. stuck in
+                // the commit phase) and would instead win using forceEnd().
+                bytes[] memory opponentActionList = new bytes[](actionsLength);
+                index = 0;
+                for (uint8 i = 0; i < actionsLength / 2; i++) {
+                    bytes memory action = new bytes(2);
+                    action[0] = _opponentActions[index];
+                    index += 1;
+                    action[1] = _opponentActions[index];
+                    index += 1;
+                    opponentActionList[i] = (action);
+                }
+
 
                 // Get hashMonsters
+
                 // The hash randomly determines if you will be playing CONSTRUCT or CRYSTAL
                 // You should design your deck to play both
                 // Eventually there will be different types of CONSTRUCTs and CRYSTALs
@@ -370,22 +441,66 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 // POWER attacks ignore DEF
                 // COUNTER attacks will do extra damage after being hit by a POWER attack
 
-                // Winner's HP is NOT checked, because a cheating opponent could have reduced your HP to zero
-                // and attempted to wait you out.  However, the opponent's defensive effects will be fully 
-                // accounted for when checking their HP.
+                // Winner's HP is NOT checked, because a cheating opponent could have reduced your HP to 0
+                // and attempted to wait you out instead of proving.  However, the opponent's defensive effects 
+                // will be fully accounted for when checking their HP.  A cheater will lose 100% of the time
+                // if you just keep attacking them until their HP is 0.
                 if (valid == true) {
+
                     uint totalDamage;
-                    for (uint8 r; r < actionsCount; r++) {
-                        totalDamage += cards[string(actionList[r])].attack * playerMonster.POW;
-                        if (cards[string(actionList[r])].cardType != cType.POWER) {
-                            totalDamage -= opponentMonster.DEF;
-                            }
-                    
+                    uint bankedEnergy;
+
+                    for (uint8 r; r < actionsLength / 2; r++) {
+
+                        cardTraits memory playerCard = cards[string(actionList[r])];
+                        cardTraits memory opponentCard = cards[string(opponentActionList[r])];
+
+                        // Check energy cost
+                        if (playerCard.energyCost > bankedEnergy) {
+                            valid = false;
                         }
+                        else {
+                            bankedEnergy -= playerCard.energyCost;
+                        }
+
+                        // Calculate damage.  POWER attacks ignore defense, but take more damage from counter cards.
+                        uint opponentDEF = opponentMonster.DEF * opponentCard.defense;
+                        uint playerATK = playerMonster.POW * playerCard.attack;
+                        uint damageDealt;
+
+                        // Opponents can be countered if they used a POWER attack.
+                        if (opponentCard.cardType == cType.POWER) {
+                            playerATK = playerMonster.POW * (playerCard.attack + playerCard.counterBonus);
+                        }
+
+                        // NORMAL attacks are reduced by defense.  Damage floor is 10.
+                        if (playerCard.cardType == cType.NORMAL) {
+                            if (opponentDEF > playerATK) {
+                                damageDealt = 10;
+                            }
+                            else {
+                                damageDealt = (playerATK - opponentDEF);
+                            }
+                        }
+                        // POWER attacks ignore defense.
+                        else if (playerCard.cardType == cType.POWER) {
+                            damageDealt = playerATK;
+                        }
+
+                        totalDamage += damageDealt;
+
+                        bankedEnergy += playerCard.energyGain;
+
+                        // Pure ENERGY cards do not have a damage calculation.
+
+                        }
+
                     if (totalDamage < opponentMonster.HP) {
                         valid = false;
                         }
+
                     if (valid == true) {
+                        // Player wins
                         performData = abi.encode(player);
                         }
                     }
@@ -426,24 +541,21 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 uint newMatchId = matchIndex;
 
                 currentMatch[_player1] = newMatchId;
-                isPlayer1[_player1] = true;
                 currentOpponent[_player1] = matchmaker[1];
-                player1.push("");
+                playerActions[_player1] = "";
                 inQueue[_player1] = false;
                 inGame[_player1] = true;
-                
-
-                // To prevent force-ending immediately before a player can act
-                lastCommit[_player1] = block.number;
-                lastCommit[_player2] = block.number + 15;
-                whoseTurn.push(_player1);
 
                 currentMatch[_player2] = newMatchId;
-                isPlayer1[_player2] = false;
                 currentOpponent[_player2] = matchmaker[0];
-                player2.push("");
+                playerActions[_player2] = "";
                 inQueue[_player2] = false;
                 inGame[_player2] = true;
+                
+                // To prevent force-ending immediately before a player can act
+                lastCommit[_player1] = block.number;
+                lastCommit[_player2] = block.number;
+                currentPhase[newMatchId] = gamePhase.COMMIT;
 
                 matchmaker[0] = address(0x0);
                 matchmaker[1] = address(0x0); 
@@ -456,7 +568,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
             // Declare winner and disburse reward / deposit
 
-            // the encoded address "player" is the winner, while the opponent has lost
+            // the encoded address "player" is the winner, while their opponent has lost
 
             // Reinitialize both players
             inQueue[player] = false;
@@ -471,7 +583,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
 
             //Test 
-            testWin = "You won!";
+            testWin = player;
             }
 
         emit UpkeepFulfilled(performData);
@@ -530,14 +642,14 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     function getHashMonsterStats(uint id) public pure returns (hashMonster memory monster) {
         if (id <= 4) {
             // Construct
-            monster.HP = 100;
+            monster.HP = 200;
             monster.POW = 20;
             monster.DEF = 10;
                 }
         else {
             // Crystal
-            monster.HP = 50;
-            monster.POW = 75;
+            monster.HP = 100;
+            monster.POW = 40;
             monster.DEF = 40;
                 }
         return monster;
@@ -549,21 +661,15 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
     function seeBoard() public view returns (string memory) {
-        if (isPlayer1[msg.sender] == true) {
-            return player1[currentMatch[msg.sender]];
-        }
-        else {
-            return player2[currentMatch[msg.sender]];
-        }
+        return playerActions[msg.sender];
+    }
+
+    function checkOpponentCommit() external view returns (bool) {
+        return (hashCommit[currentOpponent[msg.sender]].length != 0);
     }
 
     function seeOpponentBoard() public view returns (string memory) {
-        if (isPlayer1[msg.sender] == true) {
-            return player2[currentMatch[msg.sender]];
-        }
-        else {
-            return player1[currentMatch[msg.sender]];
-        }
+        return playerActions[currentOpponent[msg.sender]];
     }
 
     function hasSeedsRemaining() public view returns (bool) {
