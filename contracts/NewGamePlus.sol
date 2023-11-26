@@ -167,6 +167,7 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
+    // Provide a hash of your action, kept secret until both players have committed
     function commitAction(bytes memory _actionHash) external {
         uint matchId = currentMatch[msg.sender];
 
@@ -185,13 +186,10 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
-    function checkOpponentCommit() external view returns (bool) {
-        return (hashCommit[currentOpponent[msg.sender]].length != 0);
-    }
 
-
-    // Card is appended to action string for later evaluation
-    // Card must have a valid mapping in the cards list
+    // Provide the secret password and action used to create the commit hash
+    // Action is appended to action string for later evaluation 
+    // Action must have a valid mapping in the cards list
     function revealAction(bytes memory password, string memory action) external {
         uint matchId = currentMatch[msg.sender];
 
@@ -632,14 +630,14 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     function getHashMonsterStats(uint id) public pure returns (hashMonster memory monster) {
         if (id <= 4) {
             // Construct
-            monster.HP = 100;
+            monster.HP = 200;
             monster.POW = 20;
             monster.DEF = 10;
                 }
         else {
             // Crystal
-            monster.HP = 50;
-            monster.POW = 75;
+            monster.HP = 100;
+            monster.POW = 40;
             monster.DEF = 40;
                 }
         return monster;
@@ -652,6 +650,10 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     function seeBoard() public view returns (string memory) {
         return playerActions[msg.sender];
+    }
+
+    function checkOpponentCommit() external view returns (bool) {
+        return (hashCommit[currentOpponent[msg.sender]].length != 0);
     }
 
     function seeOpponentBoard() public view returns (string memory) {
