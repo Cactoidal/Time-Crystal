@@ -172,11 +172,13 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         require(hashCommit[msg.sender].length == 0);
         require(hashCommit[currentOpponent[msg.sender]].length == 0);
         hashCommit[msg.sender] = _actionHash;
+        lastCommit[msg.sender] = block.number;
     }
 
     function checkOpponentCommit() external view returns (bool) {
         return (hashCommit[currentOpponent[msg.sender]].length != 0);
     }
+
 
     // Card is appended to action string for later evaluation
     // Card must have a valid mapping in the cards list
@@ -202,7 +204,6 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
-
     // End the game by providing the constituent values of your oracle-generated hash.
     // Automation will check whether you actually won, and if your played cards were truly in your hand.
     function declareVictory(string calldata secret) external {
@@ -225,14 +226,17 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         emit AwaitingAutomation(msg.sender, secret);
     }
 
-    // It must not be your turn, your opponent must not have acted for 7 blocks, and the
-    // game's end can't already be pending.
+    // You must have committed an action, your opponent must not have committed for 7 blocks after you,
+    // and the game's end can't already be pending.
+
+    // this works if the opponent is refusing to commit, but not if they are refusing to reveal
     function forceEnd() public {
         require (inGame[msg.sender] == true);
         require (inQueue[msg.sender] == false);
-        require (block.number >= lastCommit[currentOpponent[msg.sender]] + 7);
-        require (whoseTurn[currentMatch[msg.sender]] != msg.sender);
-
+        require (hashCommit[msg.sender].length != 0);
+        require (hashCommit[currentOpponent[msg.sender]].length == 0);
+        require (block.number >= lastCommit[msg.sender] + 7);
+    
         inGame[msg.sender] = false;
         hands[msg.sender] = bytes("");
 
@@ -349,8 +353,8 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 // Check if actions are valid
 
                 // The strings will always contain valid cards because of the require statement
-                // in makeMove().  The question is whether those cards were actually possessed
-                // by the player.
+                // in revealAction().  The question is whether those cards were actually
+                // in the player's hand.
                 bytes[5] memory cardList;
                 bytes[] memory actionList = new bytes[](actionsLength);
                 uint8 index = 0;
@@ -386,7 +390,7 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
                 // The opponent action string will be the same size as the player's action string,
                 // otherwise the player will not have been able to declare victory (i.e. stuck in
-                // the reveal phase) and would instead win using forceEnd().
+                // the commit phase) and would instead win using forceEnd().
                 bytes[] memory opponentActionList = new bytes[](actionsLength);
                 index = 0;
                 for (uint8 i = 0; i < actionsLength / 2; i++) {
