@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ILogAutomation.sol";
 import "./IERC677.sol";
 
-contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
+contract game2 is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     using FunctionsRequest for FunctionsRequest.Request;
 
     // SEPOLIA
@@ -203,7 +203,9 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         inQueue[msg.sender] = true;
         inGame[msg.sender] = false;
 
+        // pendingUpkeep is set for both players, as either could potentially win
         pendingUpkeep[msg.sender] = upkeepType.CHECK_VICTORY;
+        pendingUpkeep[opponent] = upkeepType.CHECK_VICTORY;
 
         emit AwaitingAutomation(msg.sender, secret);
     }
@@ -276,7 +278,6 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     enum cType {
     NORMAL,
     POWER,
-    COUNTER,
     ENERGY
   }
 
@@ -451,7 +452,7 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                         // Pure ENERGY cards do not have a damage calculation.
 
                         }
-                        
+
                     if (totalDamage < opponentMonster.HP) {
                         valid = false;
                         }
@@ -528,7 +529,7 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
             // Declare winner and disburse reward / deposit
 
-            // the encoded address "player" is the winner, while the opponent has lost
+            // the encoded address "player" is the winner, while their opponent has lost
 
             // Reinitialize both players
             inQueue[player] = false;
