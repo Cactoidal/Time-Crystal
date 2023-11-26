@@ -226,6 +226,7 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         // of different lengths to the Automation DON
         require(currentPhase[currentMatch[msg.sender]] == gamePhase.COMMIT);
 
+        // Must provided secret password + extracted cards to match the oracle-committed hand hash
         require(keccak256(hands[msg.sender]) == keccak256(abi.encodePacked(sha256(abi.encodePacked(secret)))));
 
         // The game immediately ends and goes to Automation to determine the winner
@@ -352,6 +353,7 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
             // Opponent set as default winner
             performData = abi.encode(currentOpponent[player]);
             bytes memory _cards = bytes32ToBytes(log.topics[2]);
+
             bytes memory _actions = bytes(playerActions[player]);
             bytes memory _opponentActions = bytes(playerActions[currentOpponent[player]]);
 
@@ -367,7 +369,8 @@ contract NewGamePlus is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
                 // in the player's hand.
                 bytes[5] memory cardList;
                 bytes[] memory actionList = new bytes[](actionsLength);
-                uint8 index = 0;
+                // Must skip over the 20-digit password
+                uint8 index = 20;
                 for (uint8 i = 0; i < 5; i++) {
                     bytes memory newCard = new bytes(2);
                     newCard[0] = _cards[index];
