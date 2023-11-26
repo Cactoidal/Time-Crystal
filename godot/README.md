@@ -569,7 +569,7 @@ This isn't an issue if the rewards are zero-sum.  For example, players putting u
 
 But if I want to disburse things like cards or lootboxes or what have you, inflation becomes a concern, since bots could simply farm each other to mint the reward tokens.
 
-Now perhaps it's not that bad, given that "rare cards" would just give players more options in their decks, and wouldn't _necessarily_ be pay-to-win.  The enjoyment of farming new cards might be stymied, however, if the entire inventory can be found for cheap on a completely saturated secondary market.
+Now perhaps it's not that bad, given that "rare cards" would just give players more options in their decks, and wouldn't _necessarily_ be pay-to-win.  The enjoyment of earning new cards might be stymied, however, if the entire inventory can be found for cheap on a completely saturated secondary market.
 
 This is more of a long-range concern, but I do want to keep it in mind.
 
