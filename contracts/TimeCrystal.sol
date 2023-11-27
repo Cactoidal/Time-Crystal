@@ -119,10 +119,12 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         uint crystal = crystalStaked[_sender];
 
         if (mintOver > block.number && crystal == 0) {
-            _mint(address(this), crystalId);
-            crystalStaked[_sender] = crystalId;
-            crystal = crystalId;
-            crystalTimeSeed[crystalId] = block.timestamp;
+            uint newId = crystalId;
+            _mint(address(this), newId);
+            crystalStaked[_sender] = newId;
+            crystal = newId;
+            crystalTimeSeed[newId] = block.timestamp;
+            crystalEnergy[newId] = 100;
             crystalId++;
         }
         else {
@@ -405,11 +407,11 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             // The strings will always contain valid cards because of the require statement
             // in revealAction().  The question is whether those cards were actually
             // in the player's hand.
-            bytes[5] memory cardList;
+            bytes[6] memory cardList;
             bytes[] memory actionList = new bytes[](actionsLength);
             // Must skip over the 20-digit password <- did this cause the break?
             uint8 index = 20;
-            for (uint8 i = 0; i < 5; i++) {
+            for (uint8 i = 0; i < 6; i++) {
                 bytes memory newCard = new bytes(2);
                 newCard[0] = _cards[index];
                 index += 1;
@@ -517,7 +519,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
                     totalDamage += damageDealt;
 
-                    bankedEnergy += playerCard.energyGain;
+                    // Gain 1 passive energy per turn, plus energy from cards.
+                    bankedEnergy += (playerCard.energyGain + 1);
 
                     // Pure ENERGY cards do not have a damage calculation.
 
@@ -594,14 +597,21 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
             // Declare winner and disburse reward / deposit
 
-            // the encoded address "player" is the winner, while their opponent has lost
+            // The encoded address "player" is the winner, while their opponent has lost
+            address opponent = currentOpponent[player];
+            uint playerCrystal = crystalStaked[player];
+            uint opponentCrystal = crystalStaked[opponent];
+            
+            // Both players gain EXP, the winning crystal absorbs half the energy of the opponent crystal
+            crystalEXP[playerCrystal] += 100 + getTimePhase(playerCrystal);
+            crystalEXP[opponentCrystal] += 20 + getTimePhase(opponentCrystal);
+            crystalEnergy[playerCrystal] += (crystalEnergy[opponentCrystal] / 2);
+            crystalEnergy[opponentCrystal] /= 2; 
 
             // Reinitialize both players
             inQueue[player] = false;
             inGame[player] = false;
             hands[player] = bytes("");
-
-            address opponent = currentOpponent[player];
 
             inQueue[opponent] = false;
             inGame[opponent] = false;
@@ -670,6 +680,16 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         uri = string.concat(uri, '"trait_type":"Phase","value":');
         uri = string.concat(uri, '"');
         uri = string.concat(uri, Strings.toString(getTimePhase(_crystal)));
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, "},{");
+        uri = string.concat(uri, '"trait_type":"EXP","value":');
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, Strings.toString(crystalEXP[_crystal]));
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, "},{");
+        uri = string.concat(uri, '"trait_type":"Energy","value":');
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, Strings.toString(crystalEnergy[_crystal]));
         uri = string.concat(uri, '"');
         uri = string.concat(uri, "} ] }");
         return uri;
