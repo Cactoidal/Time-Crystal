@@ -11,7 +11,7 @@ ID, NAME, TYPE(0-2), ATK, DEF, COST, GAIN, COUNTER
     [18,"Crunch",0,25,0,2,0,4],
     [19,"Rainbow Shroud",0,20,20,2,1,1],
     [20,"Aurora",0,15,25,2,0,0],
-    [21,"Power Beam",1,20,0,1,0],
+    [21,"Power Beam",1,20,0,1,0,0],
     [22,"Rust",1,15,15,0,1,0],
     [23,"Crystallize",1,20,20,2,1,0],
     [24,"Disrupt",1,20,0,2,0,5],
