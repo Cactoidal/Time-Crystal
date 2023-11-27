@@ -675,11 +675,12 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         uri = string.concat(uri,'","traits": [ {"trait_type":"Remaining');
         uri = string.concat(uri, '","value":"');
         uri = string.concat(uri, Strings.toString(vrfSeeds[_crystal].length));
-        uri = string.concat(uri, '"');
-        uri = string.concat(uri, "},{");
-        uri = string.concat(uri, '"trait_type":"Phase","value":');
-        uri = string.concat(uri, '"');
-        uri = string.concat(uri, Strings.toString(getTimePhase(_crystal)));
+      // commented out for now due to contract size limit
+      //  uri = string.concat(uri, '"');
+      //  uri = string.concat(uri, "},{");
+      //  uri = string.concat(uri, '"trait_type":"Phase","value":');
+      //  uri = string.concat(uri, '"');
+      //  uri = string.concat(uri, Strings.toString(getTimePhase(_crystal)));
         uri = string.concat(uri, '"');
         uri = string.concat(uri, "},{");
         uri = string.concat(uri, '"trait_type":"EXP","value":');
