@@ -1,0 +1,145 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://1v1.gd" type="Script" id=2]
+
+[node name="3DBoard" type="Spatial"]
+
+[node name="UI" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+script = ExtResource( 2 )
+
+[node name="OpponentCommit" type="Label" parent="UI"]
+margin_left = 305.0
+margin_top = 362.0
+margin_right = 430.0
+margin_bottom = 376.0
+text = "Opponent Commit?"
+
+[node name="JoinMatchmaking" type="Button" parent="UI"]
+margin_left = 157.0
+margin_top = 100.0
+margin_right = 333.0
+margin_bottom = 120.0
+mouse_default_cursor_shape = 2
+text = "Join Matchmaking"
+
+[node name="CheckHand" type="Button" parent="UI"]
+margin_left = 150.0
+margin_top = 225.0
+margin_right = 326.0
+margin_bottom = 245.0
+mouse_default_cursor_shape = 2
+text = "Check Hand"
+
+[node name="CommitAction" type="Button" parent="UI"]
+margin_left = 125.0
+margin_top = 342.0
+margin_right = 301.0
+margin_bottom = 362.0
+mouse_default_cursor_shape = 2
+text = "Commit Action"
+
+[node name="RevealAction" type="Button" parent="UI"]
+margin_left = 127.0
+margin_top = 383.0
+margin_right = 303.0
+margin_bottom = 403.0
+mouse_default_cursor_shape = 2
+text = "Reveal Action"
+
+[node name="DeclareVictory" type="Button" parent="UI"]
+margin_left = 147.0
+margin_top = 495.0
+margin_right = 323.0
+margin_bottom = 515.0
+mouse_default_cursor_shape = 2
+text = "Declare Victory"
+
+[node name="RegisterPlayer" type="Button" parent="UI"]
+margin_left = 155.0
+margin_top = 52.0
+margin_right = 331.0
+margin_bottom = 72.0
+mouse_default_cursor_shape = 2
+text = "Register PLAYER"
+
+[node name="CheckWon" type="Button" parent="UI"]
+margin_left = 132.0
+margin_top = 541.0
+margin_right = 308.0
+margin_bottom = 561.0
+mouse_default_cursor_shape = 2
+text = "Check Won"
+
+[node name="OpponentCard" type="Label" parent="UI"]
+margin_left = 597.0
+margin_top = 278.0
+margin_right = 711.0
+margin_bottom = 309.0
+text = "Opponent Played:
+"
+
+[node name="YourCard" type="Label" parent="UI"]
+margin_left = 618.0
+margin_top = 455.0
+margin_right = 732.0
+margin_bottom = 486.0
+text = "You Played:
+"
+
+[node name="TargetHash" type="Label" parent="UI"]
+margin_left = 114.0
+margin_top = 147.0
+margin_right = 228.0
+margin_bottom = 178.0
+text = "Target Hash:"
+
+[node name="YourHand" type="Label" parent="UI"]
+margin_left = 115.0
+margin_top = 203.0
+margin_right = 229.0
+margin_bottom = 234.0
+text = "Your Hand:
+"
+
+[node name="HandCards" type="Label" parent="UI"]
+margin_left = 810.0
+margin_top = 9.0
+margin_right = 886.0
+margin_bottom = 23.0
+text = "Hand Cards:"
+
+[node name="PlayerHashMonster" type="Label" parent="UI"]
+margin_left = 591.0
+margin_top = 424.0
+margin_right = 723.0
+margin_bottom = 438.0
+text = "Player Hash Monster"
+
+[node name="OpponenHashMonster" type="Label" parent="UI"]
+margin_left = 577.0
+margin_top = 254.0
+margin_right = 734.0
+margin_bottom = 268.0
+text = "Opponent Hash Monster"
+
+[node name="PickCard" type="Label" parent="UI"]
+margin_left = 74.0
+margin_top = 288.0
+margin_right = 188.0
+margin_bottom = 319.0
+text = "Pick Card:
+"
+
+[node name="CardEntry" type="LineEdit" parent="UI"]
+margin_left = 139.0
+margin_top = 283.0
+margin_right = 197.0
+margin_bottom = 307.0
+
+[node name="TestWon" type="Label" parent="UI"]
+margin_left = 360.0
+margin_top = 537.0
+margin_right = 492.0
+margin_bottom = 569.0
