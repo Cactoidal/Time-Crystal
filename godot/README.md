@@ -615,7 +615,7 @@ Once the game ends, the hash is erased, and the entity goes back to the immateri
 
 "Etchings" would be 1-time use items (in the form of an oracle-supplied hash), which the player can use in battle by proving the content of the hash.
 
-In addition, it would be interesting if Time Crystals accrued "energy", and this "energy" was at stake whenever players go head to head.
+In addition, it would be interesting if Time Crystals accrued "energy", and this "energy" was at stake whenever players went head-to-head.
 
 I could revive the "hacking" mechanic, and render each match as a best-of-series, with the winner of each game able to progress through a phantasmal door belonging to the other player, and decide some characteristic of the battlefield for the next game in the series.
 
