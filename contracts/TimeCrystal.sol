@@ -40,7 +40,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
     uint32 constant vrfCallbackGasLimit = 500000;
 
     address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
-    address timeCrystalNFT;
   
     constructor(address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(vrfCoordinator) ConfirmedOwner(msg.sender) ERC721("Test", "TEST") {
         donId = _donId;
@@ -636,6 +635,8 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
     //                  NFT FUNCTIONS                   //
 
     function unstake() external {
+        require(!inQueue[msg.sender]);
+        require(!inGame[msg.sender]);
         uint crystal = crystalStaked[msg.sender];
         require(crystal != 0);
         crystalStaked[msg.sender] = 0;
