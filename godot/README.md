@@ -625,4 +625,12 @@ I've now added a simple staking and withdrawal mechanism.  The Crystal must be s
 
 Once a game concludes, the Crystal's energy and EXP are both affected.
 
+___
+
+While I think there is room for improvement in both the strategic and economic aspects of the game, I'm happy to say that the ERC721 functionality has been implemented, the Crystal NFT's energy and EXP scores are incremented after the battle has ended, and both a new default attack card and passive energy gain per turn have been added.
+
+The contract is also just hitting the size limit, which tells me it's time to move on (for now).
+
+With that, I believe I can now focus on building out the game UI and graphics, and get ready to record the demo video.
+
 
