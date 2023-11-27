@@ -651,6 +651,11 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         transferFrom(msg.sender, address(this), _crystal);
     }
 
+    function getTimePhase(uint _crystal) public view returns (uint) {
+        uint seed = block.timestamp - crystalTimeSeed[_crystal];
+        return seed % 7;
+    }
+
     function tokenURI(uint _crystal) public view override returns (string memory uri) {
         uri = "{";
         uri = string.concat(uri, '"description": "test","name":');
@@ -658,10 +663,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         uri = string.concat(uri, 'Test #');
         uri = string.concat(uri,Strings.toString(_crystal));
         uri = string.concat(uri,'","traits": [ {"trait_type":"Remaining');
-        //uri = string.concat(uri,'","traits": [ {"trait_type":"');
-        //uri = string.concat(uri, skill[_crystal]);
         uri = string.concat(uri, '","value":"');
         uri = string.concat(uri, Strings.toString(vrfSeeds[_crystal].length));
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, "},{");
+        uri = string.concat(uri, '"trait_type":"Phase","value":');
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, Strings.toString(getTimePhase(_crystal)));
         uri = string.concat(uri, '"');
         uri = string.concat(uri, "} ] }");
         return uri;
