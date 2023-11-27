@@ -621,7 +621,7 @@ I could revive the "hacking" mechanic, and render each match as a best-of-series
 
 ___
 
-For experimentation's sake, I'll graft the ERC667 transferAndCall functionality onto the Time Crystal NFT.  Since the main contract is already using onTokenTransfer() to handle incoming LINK tokens, I'll just add another function to IERC667.sol called "onNftTransfer" that will deal with the Crystal NFT.
+For experimentation's sake, I'll graft the ERC677 transferAndCall functionality onto the Time Crystal NFT.  Since the main contract is already using onTokenTransfer() to handle incoming LINK tokens, I'll just add another function to IERC677.sol called "onNftTransfer" that will deal with the Crystal NFT.
 
 With this I can now implement a simple staking and withdrawal mechanism.  The Crystal must be staked to buy and use VRF seeds, the VRF seeds are stored on the Crystal NFT contract, and the Crystal can't be unstaked while the player is in the queue or a game.
 
