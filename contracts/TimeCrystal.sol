@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
@@ -7,12 +7,14 @@ import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
 
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./ILogAutomation.sol";
 import "./IERC677.sol";
 
-contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
+contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC721 {
     using FunctionsRequest for FunctionsRequest.Request;
 
     // SEPOLIA
@@ -38,12 +40,14 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     uint32 constant vrfCallbackGasLimit = 500000;
 
     address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
+    address timeCrystalNFT;
   
-    constructor(address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(vrfCoordinator) ConfirmedOwner(msg.sender) {
+    constructor(address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(vrfCoordinator) ConfirmedOwner(msg.sender) ERC721("Test", "TEST") {
         donId = _donId;
         source = _source;
         secretsLocation = _location;
         encryptedSecretsReference = _reference;
+        mintOver = block.number + 10000;
         COORDINATOR = VRFCoordinatorV2Interface(0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625);
         for (uint z = 0; z < _cards.length; z++) {
             cards[Strings.toString(z + 10)] = _cards[z];
@@ -54,7 +58,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
       //            CHAINLINK AUTOMATION, FUNCTIONS, AND VRF VARIABLES        //
 
     mapping (address => string) keys;
-    mapping (address => uint[]) vrfSeeds;
     mapping (string => bool) public usedCSPRNGIvs;
     uint ivNonce;
 
@@ -66,6 +69,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         MATCHMAKING,
         CHECK_VICTORY
     }
+
+    //          CRYSTAL NFT VARIABLES       //
+
+    uint mintOver;
+    mapping (address => uint) crystalStaked;
+    uint crystalId = 1;
+    mapping (uint => uint[]) vrfSeeds;
 
 
     //          GAME STATE VARIABLES        //
@@ -104,9 +114,19 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         // pay LINK to cover 10 matches here
         // turned off for testing
         //require(_value == 1e18);
-        string memory _key = abi.decode(_data, (string));
-        
+        uint crystal = crystalStaked[_sender];
 
+        if (mintOver < block.number && crystal == 0) {
+            _mint(address(this), crystalId);
+            crystalStaked[_sender] = crystalId;
+            crystal = crystalId;
+            crystalId++;
+        }
+        else {
+            require(crystal != 0);
+        }
+        
+        //inQueue[msg.sender] = true;
        // uint256 requestId = COORDINATOR.requestRandomWords(
         //    s_keyHash,
         //    vrf_subscriptionId,
@@ -115,8 +135,12 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         //    10
         //    );
 
-        vrfSeeds[_sender] = [77777777777, 777777777777, 777777777777, 777777777777, 777777777777];
-        keys[_sender] = _key;
+        vrfSeeds[crystal] = [77777777777, 777777777777, 777777777777, 777777777777, 777777777777];
+
+        if (_data.length != 0) {
+            string memory _key = abi.decode(_data, (string));
+            keys[_sender] = _key;
+            }
         //vrfRequestIdbyRequester[requestId] = _sender;
     }
 
@@ -131,7 +155,9 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         require (hands[msg.sender].length == 0);
         require (usedCSPRNGIvs[csprngIv] == false);
 
-        uint[] memory seeds = vrfSeeds[msg.sender];
+        uint crystal = crystalStaked[msg.sender];
+
+        uint[] memory seeds = vrfSeeds[crystal];
 
         if (seeds.length == 0) {
             revert("Call VRF");
@@ -157,7 +183,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
         args[5] = Strings.toString(ivNonce);
         //args[6] = on-chain deck
         ivNonce++;
-        vrfSeeds[msg.sender].pop();
+        vrfSeeds[crystal].pop();
         
         req.setArgs(args);
         //req.setBytesArgs(args);
@@ -284,7 +310,9 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
 
     // Banks 10 VRF values
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual override {
-        vrfSeeds[vrfRequestIdbyRequester[requestId]] = randomWords;
+        address requester = vrfRequestIdbyRequester[requestId];
+        vrfSeeds[crystalStaked[requester]] = randomWords;
+        inQueue[requester] = false;
         emit VRFFulfilled(requestId);
     }
 
@@ -601,6 +629,14 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
 
+    //                  NFT FUNCTIONS                   //
+
+    
+
+
+
+
+
 
      //              GODOT VIEW FUNCTIONS            //
 
@@ -668,7 +704,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2 {
     }
 
     function hasSeedsRemaining() public view returns (bool) {
-        if (vrfSeeds[msg.sender].length > 0) {
+        if (vrfSeeds[crystalStaked[msg.sender]].length > 0) {
             return true;
         }
         else {
