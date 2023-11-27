@@ -116,7 +116,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         //require(_value == 1e18);
         uint crystal = crystalStaked[_sender];
 
-        if (mintOver < block.number && crystal == 0) {
+        if (mintOver > block.number && crystal == 0) {
             _mint(address(this), crystalId);
             crystalStaked[_sender] = crystalId;
             crystal = crystalId;
