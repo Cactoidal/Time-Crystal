@@ -651,8 +651,20 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         transferFrom(msg.sender, address(this), _crystal);
     }
 
-    function getTokenURI(uint _crystal) external view returns (string memory) {
-
+    function tokenURI(uint _crystal) public view override returns (string memory uri) {
+        uri = "{";
+        uri = string.concat(uri, '"description": "test","name":');
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, 'Test #');
+        uri = string.concat(uri,Strings.toString(_crystal));
+        uri = string.concat(uri,'","traits": [ {"trait_type":"Remaining');
+        //uri = string.concat(uri,'","traits": [ {"trait_type":"');
+        //uri = string.concat(uri, skill[_crystal]);
+        uri = string.concat(uri, '","value":"');
+        uri = string.concat(uri, Strings.toString(vrfSeeds[_crystal].length));
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, "} ] }");
+        return uri;
     }
 
 
