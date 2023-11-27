@@ -631,6 +631,6 @@ While I think there is room for improvement in both the strategic and economic a
 
 The contract is also just hitting the size limit, which tells me it's time to move on (for now).
 
-With that, I believe I can now focus on building out the game UI and graphics, and get ready to record the demo video.
+With that, I believe I can now focus on building out the game UI and graphics, and start preparing for the demo video.
 
 
