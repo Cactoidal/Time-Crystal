@@ -76,6 +76,9 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
     mapping (address => uint) crystalStaked;
     uint crystalId = 1;
     mapping (uint => uint[]) vrfSeeds;
+    mapping (uint => uint) crystalEXP;
+    mapping (uint => uint) crystalEnergy;
+    mapping (uint => uint) crystalTimeSeed;
 
 
     //          GAME STATE VARIABLES        //
@@ -120,6 +123,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             _mint(address(this), crystalId);
             crystalStaked[_sender] = crystalId;
             crystal = crystalId;
+            crystalTimeSeed[crystalId] = block.timestamp;
             crystalId++;
         }
         else {
@@ -631,10 +635,24 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
     //                  NFT FUNCTIONS                   //
 
-    
+    function unstake() external {
+        uint crystal = crystalStaked[msg.sender];
+        require(crystal != 0);
+        crystalStaked[msg.sender] = 0;
+        transferFrom(address(this), msg.sender, crystal);
+    }
 
+    function stake(uint _crystal) external {
+        require (crystalStaked[msg.sender] == 0);
+        require (ownerOf(_crystal) == msg.sender);
+        crystalStaked[msg.sender] = _crystal;
+        approve(address(this), _crystal);
+        transferFrom(msg.sender, address(this), _crystal);
+    }
 
+    function getTokenURI(uint _crystal) external view returns (string memory) {
 
+    }
 
 
 
