@@ -609,7 +609,7 @@ Once the final mint day has passed, no more Crystals can be produced.  New playe
 
 The Time Crystal must be staked to join matches.  The Crystal's metadata contains all of the characteristics affecting a player's potential loadout: the types of CRYSTALs and CONSTRUCTs they can play as, which abilities are in their "deck", and any "etchings" they have earned.
 
-Instead of requesting a "hand" from the oracle, instead the player will be receiving an "entity", in the form of the hash containing the randomized abilities.  These are meant to represent the unique character of the "entity" temporarily inhabiting the Crystal, and the player must do their best to win using the abilities they are given.
+Rather than requesting a "hand" from the oracle, instead the player will be receiving an "entity", in the form of the hash containing the randomized abilities.  These are meant to represent the unique character of the "entity" temporarily inhabiting the Crystal, and the player must do their best to win using the abilities they are given.
 
 Once the game ends, the hash is erased, and the entity goes back to the immaterial stream of data from which it appeared.  The Time Crystal will gain XP and potentially be altered by the combat.  The goal therefore is to level up your NFT and unlock new capabilities.
 
