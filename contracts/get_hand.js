@@ -127,7 +127,7 @@ const length = 32;
 const encrypted = await crypto.subtle.encrypt(
     {name: "AES-CTR", iv, counter, length},
     csprngKey,
-    new TextEncoder().encode(plainText),
+    new TextEncoder().encode(seed),
   );
 
 // Convert pseudorandom bytes into integer
@@ -154,10 +154,10 @@ for (var k = 0; k < 5; k++) {
     deckLength -= 1
 }
 
-// Get arcana.
-let arcana = secret_value % 9
+// Get default attack.
+let attack = 99
 
-let result = returnString + arcana.toString()
+let result = returnString + attack.toString()
 
 //Get SHA256 Hash and return to contract.
 let hash = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(result)))
