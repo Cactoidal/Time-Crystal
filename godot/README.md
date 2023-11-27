@@ -597,6 +597,26 @@ https://github.com/Cactoidal/Time-Crystal/assets/115384394/39a12f13-9fc4-4725-91
 
 The new sequence is complete.  I can now spend some time thinking about these new problems: the strategic contribution of the random hand, the new game UI, and the economics of the game.
 
+## Day 20
 
+### Emanations of a Time Crystal
+
+I believe it's time to break out the ERC721 standard.
+
+Addressing the above problems, I can shape the reward scheme by first defining how players are meant to access the game.  The Time Crystal NFT would be available at launch, and players could expend LINK to buy however many they want.
+
+Once the final mint day has passed, no more Crystals can be produced.  New players would have to get them from the secondary market.
+
+The Time Crystal must be staked to join matches.  The Crystal's metadata contains all of the characteristics affecting a player's potential loadout: the types of CRYSTALs and CONSTRUCTs they can play as, which abilities are in their "deck", and any "etchings" they have earned.
+
+Instead of requesting a "hand" from the oracle, instead the player will be receiving an "entity", in the form of the hash containing the randomized abilities.  These are meant to represent the unique character of the "entity" temporarily inhabiting the Crystal, and the player must do their best to win using the abilities they are given.
+
+Once the game ends, the hash is erased, and the entity goes back to the immaterial stream of data from which it appeared.  The Time Crystal will gain XP and potentially be altered by the combat.  The goal therefore is to level up your NFT and unlock new capabilities.
+
+"Etchings" would be 1-time use items (in the form of an oracle-supplied hash), which the player can use in battle by proving the content of the hash.
+
+In addition, it would be interesting if Time Crystals accrued "energy", and this "energy" was at stake whenever players go head to head.
+
+I could revive the "hacking" mechanic, and render each match as a best-of-series, with the winner of each game able to progress through a phantasmal door belonging to the other player, and decide some characteristic of the battlefield for the next game in the series.
 
 
