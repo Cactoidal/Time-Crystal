@@ -49,7 +49,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         mintOver = block.number + 10000;
         COORDINATOR = VRFCoordinatorV2Interface(0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625);
         for (uint z = 0; z < _cards.length; z++) {
-            cards[Strings.toString(z + 10)] = _cards[z];
+            cards[Strings.toString(_cards[z].cardNumber)] = _cards[z];
         }
     }
 
