@@ -641,7 +641,7 @@ There are now functions to gather all of the necessary data for playing the game
 
 There's also a function to check the player's remaining VRFseeds, to prompt them to request more once they've run out.
 
-![friends](https://github.com/Cactoidal/Time-Crystal/assets/115384394/37b63215-4747-45ab-83e4-1568cd427666)
+![friends](https://github.com/Cactoidal/Time-Crystal/assets/115384394/b043046a-9a61-4220-8edc-a36a4526bc45)
 
 "Monster" isn't a very polite way to refer to the combatants of our game.  Let's change it to "battler".  I'd like to give credit to the artists out in the ether who designed AVAX-chan and LINK-chan, since I didn't come up with either one.
 
