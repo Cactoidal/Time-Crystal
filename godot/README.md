@@ -641,5 +641,19 @@ There are now functions to gather all of the necessary data for playing the game
 
 There's also a function to check the player's remaining VRFseeds, to prompt them to request more once they've run out.
 
+![friends](https://github.com/Cactoidal/Time-Crystal/assets/115384394/37b63215-4747-45ab-83e4-1568cd427666)
+
+"Monster" isn't a very polite way to refer to the combatants of our game.  Let's change it to "battler".  I'd like to give credit to the artists out in the ether who designed AVAX-chan and LINK-chan, since I didn't come up with either one.
+
+If I have time, I'd like to try modeling low poly versions in Blender.  For now, there's a rendering from Stable Diffusion.
+
+And yes, while I've been testing so far on Sepolia, I plan to switch to Avalanche Fuji for the final version.  For future work after the hackathon, HyperSDK and subnets seem like a reasonable avenues to explore.
+
+I'm particularly curious about embedding a light client in the game itself.  As the game pulls more and more data from the chain, the reliability of the RPC node has become increasingly important.  I would think that a local node would be by far the best option, if it's possible to get a client light enough to distribute with the game.
+
+Is it possible to design a subnet that can have its own custom light client?  This and other questions I don't plan to answer right now, but I do plan to run a Fuji node and test performance on my own machine.  
+
+
+
 
 
