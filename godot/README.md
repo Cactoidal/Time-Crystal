@@ -643,7 +643,7 @@ There's also a function to check the player's remaining VRFseeds, to prompt them
 
 ![friends](https://github.com/Cactoidal/Time-Crystal/assets/115384394/b043046a-9a61-4220-8edc-a36a4526bc45)
 
-"Monster" isn't a very polite way to refer to the combatants of our game.  Let's change it to "battler".  I'd like to give credit to the artists out in the ether who designed AVAX-chan and LINK-chan, since I didn't come up with either one.
+"Monster" isn't a very polite way to refer to the combatants of our game.  Let's change it to "battler".  I'd like to give credit to the unknown artists out in the ether who designed AVAX-chan and LINK-chan, since I didn't come up with either one.
 
 If I have time, I'd like to try modeling low poly versions in Blender.  For now, there's a rendering from Stable Diffusion.
 
