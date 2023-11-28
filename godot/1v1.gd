@@ -91,7 +91,49 @@ func check_won():
 	ethers.check_won()
 
 var started = false
+var check_timer = 2
+var find_player_hand = true
+var draw_sequence = false
+var draw_timer = 5
+var find_opponent = false
+var battle_start_sequence = false
+var battle_start_timer = 5
+var battle_ongoing = false
 func _process(delta):
+	if draw_sequence == true:
+		print("drawing")
+		draw_timer -= delta*3
+		if draw_timer < 0:
+			draw_sequence = false
+			find_opponent = true
+			print("draw sequence over")
+			check_timer = 2
+	
+	if battle_start_sequence == true:
+		print("starting")
+		battle_start_timer -= delta*3
+		if battle_start_timer < 0:
+			battle_start_sequence = false
+			battle_ongoing = true
+			print("battle started")
+		
+	if check_timer > 0:
+		check_timer -= delta
+		if check_timer < 0:
+			
+			if find_player_hand == true:
+				check_hand()
+				get_hash_monster()
+			
+			if find_opponent == true:
+				get_opponent()
+			
+			if battle_ongoing == true:
+				print("waiting for cards")
+			
+			
+			check_timer = 10
+	
 	if started == true:
 		if got == false:
 			if !thread.is_alive():
@@ -159,6 +201,6 @@ func get_card_info(card_id):
 		
 func get_battler_info(battler_id):
 	match battler_id:
-		1: return {"id":"1", "type":"Crystal", "name":"LINKchan", "HP": 100, "POW": 40, "DEF": 40}
-		2: return {"id":"2", "type":"Construct", "name":"AVAXchan", "HP": 200, "POW": 20, "DEF": 20}
+		1: return {"id":"1", "type":"Crystal", "name":"LINK-chan", "HP": 100, "POW": 40, "DEF": 40}
+		2: return {"id":"2", "type":"Construct", "name":"AVAX-chan", "HP": 200, "POW": 20, "DEF": 20}
 		
