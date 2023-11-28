@@ -647,7 +647,7 @@ There's also a function to check the player's remaining VRFseeds, to prompt them
 
 If I have time, I'd like to try modeling low poly versions in Blender.  For now, there's a rendering from Stable Diffusion.
 
-And yes, while I've been testing so far on Sepolia, I plan to switch to Avalanche Fuji for the final version.  For future work after the hackathon, HyperSDK and subnets seem like a reasonable avenues to explore.
+And yes, while I've been testing so far on Sepolia, I plan to switch to Avalanche Fuji for the final version.  For future work after the hackathon, HyperSDK and subnets seem like good avenues to explore.
 
 I'm particularly curious about embedding a light client in the game itself.  As the game pulls more and more data from the chain, the reliability of the RPC node has become increasingly important.  I would think that a local node would be by far the best option, if it's possible to get a client light enough to distribute with the game.
 
