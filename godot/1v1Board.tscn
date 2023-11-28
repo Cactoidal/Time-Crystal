@@ -40,6 +40,46 @@ margin_bottom = 362.0
 mouse_default_cursor_shape = 2
 text = "Commit Action"
 
+[node name="CheckOpponentCommit" type="Button" parent="UI"]
+margin_left = 357.0
+margin_top = 337.0
+margin_right = 430.0
+margin_bottom = 357.0
+mouse_default_cursor_shape = 2
+text = "Check"
+
+[node name="CheckOpponentHashMonster" type="Button" parent="UI"]
+margin_left = 586.0
+margin_top = 221.0
+margin_right = 659.0
+margin_bottom = 241.0
+mouse_default_cursor_shape = 2
+text = "Check"
+
+[node name="CheckOpponentBoard" type="Button" parent="UI"]
+margin_left = 517.0
+margin_top = 278.0
+margin_right = 590.0
+margin_bottom = 298.0
+mouse_default_cursor_shape = 2
+text = "Check"
+
+[node name="CheckPlayerBoard" type="Button" parent="UI"]
+margin_left = 525.0
+margin_top = 449.0
+margin_right = 598.0
+margin_bottom = 469.0
+mouse_default_cursor_shape = 2
+text = "Check"
+
+[node name="CheckHashMonster" type="Button" parent="UI"]
+margin_left = 584.0
+margin_top = 380.0
+margin_right = 657.0
+margin_bottom = 400.0
+mouse_default_cursor_shape = 2
+text = "Check"
+
 [node name="RevealAction" type="Button" parent="UI"]
 margin_left = 127.0
 margin_top = 383.0
@@ -63,6 +103,14 @@ margin_right = 331.0
 margin_bottom = 72.0
 mouse_default_cursor_shape = 2
 text = "Register PLAYER"
+
+[node name="GetOpponent" type="Button" parent="UI"]
+margin_left = 453.0
+margin_top = 40.0
+margin_right = 629.0
+margin_bottom = 60.0
+mouse_default_cursor_shape = 2
+text = "Get Opponent"
 
 [node name="CheckWon" type="Button" parent="UI"]
 margin_left = 132.0
@@ -117,7 +165,7 @@ margin_right = 723.0
 margin_bottom = 438.0
 text = "Player Hash Monster"
 
-[node name="OpponenHashMonster" type="Label" parent="UI"]
+[node name="OpponentHashMonster" type="Label" parent="UI"]
 margin_left = 577.0
 margin_top = 254.0
 margin_right = 734.0

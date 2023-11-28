@@ -2,9 +2,9 @@ extends Control
 
 
 var ethers
+var opponent
 
 # hand extraction
-
 var deck = [10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
 var password
 var target_hash
@@ -28,6 +28,13 @@ func _ready():
 	$RevealAction.connect("pressed", self, "reveal_action")
 	$DeclareVictory.connect("pressed", self, "declare_victory")
 	$CheckWon.connect("pressed", self, "check_won")
+	$GetOpponent.connect("pressed", self, "get_opponent")
+	$CheckOpponentCommit.connect("pressed", self, "did_opponent_commit")
+	
+	$CheckHashMonster.connect("pressed", self, "get_hash_monster")
+	$CheckOpponentHashMonster.connect("pressed", self, "get_opponent_hash_monster")
+	$CheckPlayerBoard.connect("pressed", self, "get_player_actions")
+	$CheckOpponentBoard.connect("pressed", self, "get_opponent_actions")
 	
 	#randomize()
 	#var randomizer = Crypto.new()
@@ -44,17 +51,35 @@ func register_player():
 
 func check_hand():
 	ethers.check_player_cards()
+
+# * #	
+func get_hash_monster():
+	ethers.get_player_hash_monster()
+
+# * #
+func get_opponent_hash_monster():
+	#must retrieve opponent address first
+	ethers.get_opponent_hash_monster(opponent)
 	
 func commit_action():
 	action_id = $CardEntry.text
 	var secret = action_password + action_id
 	ethers.start_transaction("commit_action", [secret])
 
+# * #
 func did_opponent_commit():
-	pass
+	ethers.check_commit(opponent)
 
 func reveal_action():
 	ethers.start_transaction("reveal_action", [action_password, action_id])
+
+# * #
+func get_player_actions():
+	ethers.get_player_board()
+
+# * #
+func get_opponent_actions():
+	ethers.get_opponent_actions(opponent)
 	
 func declare_victory():
 	ethers.start_transaction("declare_victory", [password_cards])
@@ -128,4 +153,9 @@ func get_card_info(card_id):
 		29: return {"id": "29", "type": "normal", "name": "Seeker Missile", "attack": 30, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
 		30: return {"id": "30", "type": "normal", "name": "Prismatic Cloud", "attack": 20, "defense": 20, "cost": 0, "gain": 0, "counter_bonus": 0}
 		99: return {"id": "99", "type": "normal", "name": "Attack", "attack": 20, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
+		
+func get_battler_info(battler_id):
+	match battler_id:
+		1: return {"id":"1", "type":"Crystal", "name":"LINKchan", "HP": 100, "POW": 40, "DEF": 40}
+		2: return {"id":"2", "type":"Construct", "name":"AVAXchan", "HP": 200, "POW": 20, "DEF": 20}
 		
