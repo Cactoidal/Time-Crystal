@@ -33,6 +33,7 @@ var card_game = load("res://1v1Board.tscn")
 #var card_game = load("res://3DBoard.tscn")
 #var card_game = load("res://CardGame.tscn")
 
+var main_hub
 var game_board
 
 var destination
@@ -224,6 +225,7 @@ func fade(action, params="None"):
 		fadeout = true
 
 
+
 func start_game():
 	for child in get_children():
 		if child != $Fadeout && child != $HTTP:
@@ -231,6 +233,7 @@ func start_game():
 	var new_main = main_screen.instance()
 	add_child(new_main)
 	move_child(new_main, 0)
+	main_hub = new_main
 	left_title = true
 	fadein = true
 
@@ -672,6 +675,39 @@ func check_won_attempted(result, response_code, headers, body):
 		var raw_response = get_result.duplicate()["result"]
 		game_board.get_node("TestWon").text = TimeCrystal.decode_address(raw_response)
 
+func has_seeds_remaining():
+	var http_request = HTTPRequest.new()
+	$HTTP.add_child(http_request)
+	http_request_delete_tx_read = http_request
+	http_request.connect("request_completed", self, "has_seeds_remaining_attempted")
+	
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	var calldata = TimeCrystal.has_seeds_remaining(content, sepolia_id, time_crystal_contract, sepolia_rpc, user_address)
+	
+	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
+	
+	var error = http_request.request(sepolia_rpc, 
+	[], 
+	true, 
+	HTTPClient.METHOD_POST, 
+	JSON.print(tx))
+
+func has_seeds_remaining_attempted(result, response_code, headers, body):
+	
+	var get_result = parse_json(body.get_string_from_ascii())
+
+	if response_code == 200:
+		var raw_response = get_result.duplicate()["result"]
+		var has_seeds = TimeCrystal.decode_bool(raw_response)
+		if has_seeds:
+			main_hub.finish_registering()
+		else:
+			#main_hub.get_node("EmbarkMenu/RegistrationConfirm").visible = true
+			pass
+			
 
 
 # Called from Rust

@@ -290,11 +290,59 @@ margin_bottom = 27.0
 mouse_filter = 2
 color = Color( 0, 0, 0, 0.176471 )
 
+[node name="RegistrationOverlay" type="ColorRect" parent="EmbarkMenu"]
+margin_right = 586.0
+margin_bottom = 426.0
+color = Color( 0, 0, 0, 0.4 )
+
 [node name="Overlay" type="ColorRect" parent="EmbarkMenu"]
 visible = false
 margin_right = 592.0
 margin_bottom = 573.0
 color = Color( 0, 0, 0, 0.4 )
+
+[node name="RegistrationConfirm" type="ColorRect" parent="EmbarkMenu"]
+visible = false
+margin_left = 140.0
+margin_top = 117.0
+margin_right = 444.0
+margin_bottom = 336.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="Prompt" type="Label" parent="EmbarkMenu/RegistrationConfirm"]
+margin_left = 57.0
+margin_top = 17.0
+margin_right = 242.0
+margin_bottom = 184.0
+text = "Please register your account.
+
+For 2 LINK, you wll receive:
+
+* 1 Time Crystal NFT
+
+* Standard Ability Deck
+
+* 10 matches
+"
+align = 1
+
+[node name="Register" type="Button" parent="EmbarkMenu/RegistrationConfirm"]
+margin_left = 103.0
+margin_top = 183.0
+margin_right = 200.0
+margin_bottom = 203.0
+text = "Register"
+
+[node name="Registering" type="Label" parent="EmbarkMenu/RegistrationConfirm"]
+visible = false
+margin_left = 58.0
+margin_top = 77.0
+margin_right = 252.0
+margin_bottom = 125.0
+text = "Registering . . .
+
+This will take a few minutes."
+align = 1
 
 [node name="ConfirmEmbark" type="ColorRect" parent="EmbarkMenu"]
 visible = false
