@@ -703,14 +703,18 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
     // Public Getters:
 
-    //      keys(msg.sender)
+    //      keys(address)
 
     //      Retrieves the SHA256 hash of the player's secret password, random cards, and inventory.
-    //      hands(msg.sender)
+    //      hands(address)
 
-    //      inQueue(msg.sender)
+    //      inQueue(address)
 
-    //      inGame(msg.sender)
+    //      inGame(address)
+
+    //      currentOpponent(address)
+
+    //      playerActions(address)
 
     //      eth.blockNumber 
 
@@ -735,7 +739,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             // Construct
             monster.HP = 200;
             monster.POW = 20;
-            monster.DEF = 10;
+            monster.DEF = 20;
                 }
         else {
             // Crystal
@@ -747,24 +751,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
     }
 
-    function getOpponent() public view returns (address) {
-        return currentOpponent[msg.sender];
+
+    function checkCommit(address _player) external view returns (bool) {
+        return (hashCommit[_player].length != 0);
     }
 
-    function seeBoard() public view returns (string memory) {
-        return playerActions[msg.sender];
-    }
-
-    function checkOpponentCommit() external view returns (bool) {
-        return (hashCommit[currentOpponent[msg.sender]].length != 0);
-    }
-
-    function seeOpponentBoard() public view returns (string memory) {
-        return playerActions[currentOpponent[msg.sender]];
-    }
-
-    function hasSeedsRemaining() public view returns (bool) {
-        if (vrfSeeds[crystalStaked[msg.sender]].length > 0) {
+    function hasSeedsRemaining(address _player) public view returns (bool) {
+        if (vrfSeeds[crystalStaked[_player]].length > 0) {
             return true;
         }
         else {
