@@ -428,7 +428,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
                 index += 1;
                 actionList[i] = (action);
                 bool inHand = false;
-                for (uint8 d; d < 5; d++) {
+                for (uint8 d; d < 6; d++) {
                     if (keccak256(action) == keccak256(cardList[d])) {
                         inHand = true;
                         }
@@ -675,12 +675,11 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         uri = string.concat(uri,'","traits": [ {"trait_type":"Remaining');
         uri = string.concat(uri, '","value":"');
         uri = string.concat(uri, Strings.toString(vrfSeeds[_crystal].length));
-      // commented out for now due to contract size limit
-      //  uri = string.concat(uri, '"');
-      //  uri = string.concat(uri, "},{");
-      //  uri = string.concat(uri, '"trait_type":"Phase","value":');
-      //  uri = string.concat(uri, '"');
-      //  uri = string.concat(uri, Strings.toString(getTimePhase(_crystal)));
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, "},{");
+        uri = string.concat(uri, '"trait_type":"Phase","value":');
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, Strings.toString(getTimePhase(_crystal)));
         uri = string.concat(uri, '"');
         uri = string.concat(uri, "},{");
         uri = string.concat(uri, '"trait_type":"EXP","value":');
