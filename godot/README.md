@@ -651,7 +651,11 @@ And yes, while I've been testing so far on Sepolia, I plan to switch to Avalanch
 
 I'm particularly curious about embedding a light client in the game itself.  As the game pulls more and more data from the chain, the reliability of the RPC node has become increasingly important.  I would think that a local node would be by far the best option, if it's possible to get a client light enough to distribute with the game.
 
-Is it possible to design a subnet that can have its own custom light client?  This and other questions I don't plan to answer right now, but I do plan to run a Fuji node and test performance on my own machine.  
+Is it possible to design a subnet that can have its own custom light client?  This and other questions I don't plan to answer right now, but I do plan to run a Fuji node and test performance on my own machine.
+
+___
+
+The Fuji node is synced after following the [AVAX node install guide](https://docs.avax.network/nodes/run/node-manually), and I pinged it with an eth_blockNumber call.  Once the game's new UI is complete, I should be able to use the node during the demo video.
 
 
 
