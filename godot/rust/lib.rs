@@ -533,7 +533,7 @@ return_string
 
 
 #[method]
-fn see_board(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
+fn see_actions(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString, player: GodotString) -> GodotString {
 
 let vec = &key.to_vec();
 
@@ -545,13 +545,15 @@ let wallet: LocalWallet = prewallet.with_chain_id(chain_id);
 
 let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
 
+let player_address: Address = player.to_string().parse().unwrap();
+
 let contract_address: Address = time_crystal_address.to_string().parse().unwrap();
 
 let client = SignerMiddleware::new(provider, wallet);
 
 let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
 
-let calldata = contract.see_board().calldata().unwrap();
+let calldata = contract.player_actions(player_address).calldata().unwrap();
 
 let return_string: GodotString = calldata.to_string().into();
 
@@ -560,8 +562,9 @@ return_string
 }
 
 
+
 #[method]
-fn see_opponent_board(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
+fn has_seeds_remaining(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString, player: GodotString) -> GodotString {
 
 let vec = &key.to_vec();
 
@@ -573,32 +576,7 @@ let wallet: LocalWallet = prewallet.with_chain_id(chain_id);
 
 let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
 
-let contract_address: Address = time_crystal_address.to_string().parse().unwrap();
-
-let client = SignerMiddleware::new(provider, wallet);
-
-let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
-
-let calldata = contract.see_opponent_board().calldata().unwrap();
-
-let return_string: GodotString = calldata.to_string().into();
-
-return_string
-
-}
-
-#[method]
-fn has_seeds_remaining(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
-
-let vec = &key.to_vec();
-
-let keyset = &vec[..]; 
-
-let prewallet : LocalWallet = LocalWallet::from_bytes(&keyset).unwrap();
-    
-let wallet: LocalWallet = prewallet.with_chain_id(chain_id);
-
-let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
+let player_address: Address = player.to_string().parse().unwrap();
 
 let contract_address: Address = time_crystal_address.to_string().parse().unwrap();
 
@@ -606,7 +584,7 @@ let client = SignerMiddleware::new(provider, wallet);
 
 let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
 
-let calldata = contract.has_seeds_remaining().calldata().unwrap();
+let calldata = contract.has_seeds_remaining(player_address).calldata().unwrap();
 
 let return_string: GodotString = calldata.to_string().into();
 
@@ -625,6 +603,8 @@ let prewallet : LocalWallet = LocalWallet::from_bytes(&keyset).unwrap();
     
 let wallet: LocalWallet = prewallet.with_chain_id(chain_id);
 
+let user_address: Address = wallet.address();
+
 let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
 
 let contract_address: Address = time_crystal_address.to_string().parse().unwrap();
@@ -633,7 +613,7 @@ let client = SignerMiddleware::new(provider, wallet);
 
 let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
 
-let calldata = contract.get_opponent().calldata().unwrap();
+let calldata = contract.current_opponent(user_address).calldata().unwrap();
 
 let return_string: GodotString = calldata.to_string().into();
 
@@ -671,7 +651,7 @@ return_string
 }
 
 #[method]
-fn check_opponent_commit(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString) -> GodotString {
+fn check_commit(key: PoolArray<u8>, chain_id: u64, time_crystal_address: GodotString, rpc: GodotString, player: GodotString) -> GodotString {
 
 let vec = &key.to_vec();
 
@@ -683,13 +663,15 @@ let wallet: LocalWallet = prewallet.with_chain_id(chain_id);
 
 let provider = Provider::<Http>::try_from(rpc.to_string()).expect("could not instantiate HTTP Provider");
 
+let player_address: Address = player.to_string().parse().unwrap();
+
 let contract_address: Address = time_crystal_address.to_string().parse().unwrap();
 
 let client = SignerMiddleware::new(provider, wallet);
 
 let contract = TimeCrystalABI::new(contract_address.clone(), Arc::new(client.clone()));
 
-let calldata = contract.check_opponent_commit().calldata().unwrap();
+let calldata = contract.check_commit(player_address).calldata().unwrap();
 
 let return_string: GodotString = calldata.to_string().into();
 
@@ -738,9 +720,17 @@ fn decode_hex_string (message: GodotString) -> GodotString {
 }
 
 #[method]
-fn decode_u256_array (message: GodotString) -> GodotString {
+fn decode_bool (message: GodotString) -> GodotString {
     let raw_hex: String = message.to_string();
-    let decoded: Vec<U256> = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let decoded: bool = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GodotString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[method]
+fn decode_address (message: GodotString) -> GodotString {
+    let raw_hex: String = message.to_string();
+    let decoded: Address = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
     let return_string: GodotString = format!("{:?}", decoded).into();
     return_string
 }
@@ -752,6 +742,25 @@ fn decode_bytes (message: GodotString) -> GodotString {
     let return_string: GodotString = format!("{:?}", decoded).into();
     return_string
 }
+
+#[method]
+fn decode_u256 (message: GodotString) -> GodotString {
+    let raw_hex: String = message.to_string();
+    let decoded: U256 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GodotString = format!("{:?}", decoded).into();
+    return_string
+}
+
+
+
+#[method]
+fn decode_u256_array (message: GodotString) -> GodotString {
+    let raw_hex: String = message.to_string();
+    let decoded: Vec<U256> = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GodotString = format!("{:?}", decoded).into();
+    return_string
+}
+
 
 #[method]
 fn decode_u256_array_from_bytes (message: GodotString) -> GodotString {
