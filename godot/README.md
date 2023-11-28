@@ -633,4 +633,13 @@ The contract is also just hitting the size limit, which tells me it's time to mo
 
 With that, I believe I can now focus on building out the game UI and graphics, and start preparing for the demo video.
 
+## Day 21
+
+<img width="800" alt="23picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/797df601-b312-43de-9d62-451d6969cb8e">
+
+There are now functions to gather all of the necessary data for playing the game: your hand, monster, and played cards; the opponent's monster and played cards, which state the game is in (commit or reveal), and who won.
+
+There's also a function to check the player's remaining VRFseeds, to prompt them to request more once they've run out.
+
+
 
