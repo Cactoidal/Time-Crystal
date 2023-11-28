@@ -466,6 +466,25 @@
 	{
 		"inputs": [
 			{
+				"internalType": "address",
+				"name": "_player",
+				"type": "address"
+			}
+		],
+		"name": "checkCommit",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"components": [
 					{
 						"internalType": "uint256",
@@ -529,19 +548,6 @@
 				"internalType": "bytes",
 				"name": "performData",
 				"type": "bytes"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "checkOpponentCommit",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -767,19 +773,6 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "getOpponent",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
 				"internalType": "uint256",
@@ -787,12 +780,12 @@
 				"type": "uint256"
 			}
 		],
-		"name": "getTokenURI",
+		"name": "getTimePhase",
 		"outputs": [
 			{
-				"internalType": "string",
+				"internalType": "uint256",
 				"name": "",
-				"type": "string"
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -841,7 +834,13 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_player",
+				"type": "address"
+			}
+		],
 		"name": "hasSeedsRemaining",
 		"outputs": [
 			{
@@ -1167,32 +1166,6 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "seeBoard",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "seeOpponentBoard",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -1311,7 +1284,7 @@
 		"inputs": [
 			{
 				"internalType": "uint256",
-				"name": "tokenId",
+				"name": "_crystal",
 				"type": "uint256"
 			}
 		],
@@ -1319,7 +1292,7 @@
 		"outputs": [
 			{
 				"internalType": "string",
-				"name": "",
+				"name": "uri",
 				"type": "string"
 			}
 		],
