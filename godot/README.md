@@ -655,7 +655,7 @@ Is it possible to design a subnet that can have its own custom light client?  Th
 
 ___
 
-The Fuji node is synced after following the [AVAX node install guide](https://docs.avax.network/nodes/run/node-manually), and I pinged it with an eth_blockNumber call.  Once the game's new UI is complete, I should be able to use the node during the demo video.
+The Fuji node is synced after following the [AVAX node install guide](https://docs.avax.network/nodes/run/node-manually), and I successfully pinged it with an eth_blockNumber call.  Once the game's new UI is complete, I should be able to use the node during the demo video.
 
 
 
