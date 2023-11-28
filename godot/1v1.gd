@@ -51,6 +51,9 @@ func register_player():
 
 func check_hand():
 	ethers.check_player_cards()
+	
+func get_opponent():
+	ethers.get_opponent()
 
 # * #	
 func get_hash_monster():
@@ -75,7 +78,7 @@ func reveal_action():
 
 # * #
 func get_player_actions():
-	ethers.get_player_board()
+	ethers.get_player_actions()
 
 # * #
 func get_opponent_actions():

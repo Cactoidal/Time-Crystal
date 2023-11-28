@@ -10,7 +10,7 @@ var sepolia_rpc = "https://ethereum-sepolia.publicnode.com"
 
 var rpc_list
 
-var time_crystal_contract = "0x83F608e90C1826C43D7f6dda3682F34e134Aa6b6"
+var time_crystal_contract = "0x8fAfc519889ce47dAb6ca8556aF864d47aCbC692"
 
 var chainlink_contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789"
 
@@ -458,11 +458,11 @@ func check_player_cards_attempted(result, response_code, headers, body):
 		#game_board.get_node("YourHand").text = "Your Hand:\n" + TimeCrystal.decode_u256_array_from_bytes(raw_response)
 		#print(parse_json(TimeCrystal.decode_hex_string(raw_response)["1"]))
 
-func did_opponent_commit(opponent_address):
+func check_commit(opponent_address):
 	var http_request = HTTPRequest.new()
 	$HTTP.add_child(http_request)
 	http_request_delete_tx_read = http_request
-	http_request.connect("request_completed", self, "did_opponent_commit_attempted")
+	http_request.connect("request_completed", self, "check_commit_attempted")
 	
 	var file = File.new()
 	file.open("user://keystore", File.READ)
@@ -478,7 +478,7 @@ func did_opponent_commit(opponent_address):
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
 
-func did_opponent_commit_attempted(result, response_code, headers, body):
+func check_commit_attempted(result, response_code, headers, body):
 	
 	var get_result = parse_json(body.get_string_from_ascii())
 
