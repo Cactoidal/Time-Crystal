@@ -3,13 +3,17 @@ extends Control
 
 var ethers
 var opponent
+var draw_camera
+var camera
+
+var card_flip = load("res://CardFlip.tscn")
 
 # hand extraction
 var deck = [10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
 var password
 var target_hash
 var thread
-var discovered_hand
+var hand = []
 var password_cards
 var combination
 var guessHash
@@ -36,6 +40,7 @@ func _ready():
 	$CheckPlayerBoard.connect("pressed", self, "get_player_actions")
 	$CheckOpponentBoard.connect("pressed", self, "get_opponent_actions")
 	
+	camera = get_parent().get_node("WorldRotate/BattleCamera")
 	#randomize()
 	#var randomizer = Crypto.new()
 	#var bytes = Crypto.new()
@@ -89,28 +94,61 @@ func declare_victory():
 
 func check_won():
 	ethers.check_won()
+	
+func fade_queue_scene(delta):
+	pass
+	
+
+var hand_wait_simulation_timer = 1
+#var hand_wait_simulation_timer = 11
+var simulate_opponent_wait = false
+#var opponent_wait_simulation_timer = 11
+var opponent_wait_simulation_timer = 1
 
 var started = false
 var check_timer = 2
 var find_player_hand = true
 var draw_sequence = false
-var draw_timer = 5
+var draw_timer = 1
 var find_opponent = false
 var battle_start_sequence = false
 var battle_start_timer = 5
 var battle_ongoing = false
 func _process(delta):
+	if hand_wait_simulation_timer > 0:
+		hand_wait_simulation_timer -= delta
+		print("waiting for hand")
+	
+	if opponent_wait_simulation_timer > 0 && simulate_opponent_wait == true:
+		opponent_wait_simulation_timer -= delta
+	
 	if draw_sequence == true:
-		print("drawing")
-		draw_timer -= delta*3
-		if draw_timer < 0:
-			draw_sequence = false
-			find_opponent = true
-			print("draw sequence over")
-			check_timer = 2
+		if draw_timer > 0:
+			draw_timer -= delta
+				
+			if draw_timer < 0:
+				print("flip")
+				card_flip()
+				draw_timer = 1
+				if card_selector > 5:
+					draw_sequence = false
+					find_opponent = true
+					check_timer = 2
+					print("draw sequence over")
+		
+		
+		
+#		print("drawing")
+#		draw_timer -= delta*3
+#		if draw_timer < 0:
+#			draw_sequence = false
+#			find_opponent = true
+#			print("draw sequence over")
+#			check_timer = 2
 	
 	if battle_start_sequence == true:
 		print("starting")
+		fade_queue_scene(delta)
 		battle_start_timer -= delta*3
 		if battle_start_timer < 0:
 			battle_start_sequence = false
@@ -121,11 +159,12 @@ func _process(delta):
 		check_timer -= delta
 		if check_timer < 0:
 			
-			if find_player_hand == true:
+			if find_player_hand == true && hand_wait_simulation_timer <= 0:
 				check_hand()
 				get_hash_monster()
+				simulate_opponent_wait = true
 			
-			if find_opponent == true:
+			if find_opponent == true && opponent_wait_simulation_timer <= 0:
 				get_opponent()
 			
 			if battle_ongoing == true:
@@ -145,6 +184,7 @@ func _process(delta):
 				var fourth_card = combination.substr(6,2)
 				var fifth_card = combination.substr(8,2)
 				var sixth_card = combination.substr(10,2)
+				hand = [int(first_card), int(second_card), int(third_card), int(fourth_card), int(fifth_card), int(sixth_card)]
 				$YourHand.text = "Your Hand: " + first_card + ", " + second_card + ", " + third_card + ", " + fourth_card + ", " + fifth_card + ", " + sixth_card
 				#$YourHand.text = "Your Hand:\n" + combination
 				
@@ -171,6 +211,15 @@ func extract():
 												guessHash = guess.sha256_text()
 												return
 
+var card_selector = 0
+var card_destination = Vector2(73,73)
+func card_flip():
+	var new_card = card_flip.instance()
+	new_card.card_selector = card_selector
+	new_card.card_destination = card_destination
+	card_selector += 1
+	card_destination.y += 90
+	$Blue.add_child(new_card)
 
 
 #add the correct cost/gain/counter values

@@ -1,0 +1,117 @@
+[gd_scene load_steps=13 format=2]
+
+[ext_resource path="res://CardFlip.gd" type="Script" id=1]
+[ext_resource path="res://00003-2597467123.png" type="Texture" id=2]
+[ext_resource path="res://power_card_base.png" type="Texture" id=3]
+
+[sub_resource type="ViewportTexture" id=9]
+viewport_path = NodePath("TextureRect/Viewport")
+
+[sub_resource type="SpatialMaterial" id=7]
+flags_unshaded = true
+albedo_color = Color( 0, 0.215686, 1, 1 )
+
+[sub_resource type="QuadMesh" id=8]
+material = SubResource( 7 )
+size = Vector2( 20, 20 )
+
+[sub_resource type="ViewportTexture" id=2]
+viewport_path = NodePath("TextureRect/Viewport/Card/Front/Viewport")
+
+[sub_resource type="SpatialMaterial" id=3]
+resource_local_to_scene = true
+flags_transparent = true
+flags_unshaded = true
+albedo_texture = SubResource( 2 )
+
+[sub_resource type="QuadMesh" id=1]
+resource_local_to_scene = true
+material = SubResource( 3 )
+
+[sub_resource type="ViewportTexture" id=5]
+viewport_path = NodePath("TextureRect/Viewport/Card/Back/Viewport")
+
+[sub_resource type="SpatialMaterial" id=6]
+resource_local_to_scene = true
+flags_transparent = true
+flags_unshaded = true
+albedo_texture = SubResource( 5 )
+
+[sub_resource type="QuadMesh" id=4]
+resource_local_to_scene = true
+material = SubResource( 6 )
+
+[node name="CardFlip" type="Control"]
+script = ExtResource( 1 )
+
+[node name="TextureRect" type="TextureRect" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -150.0
+margin_top = -150.0
+margin_right = 150.0
+margin_bottom = 150.0
+texture = SubResource( 9 )
+
+[node name="Viewport" type="Viewport" parent="TextureRect"]
+size = Vector2( 300, 300 )
+own_world = true
+transparent_bg = true
+render_target_v_flip = true
+render_target_clear_mode = 1
+
+[node name="Camera" type="Camera" parent="TextureRect/Viewport"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.50766 )
+
+[node name="MeshInstance" type="MeshInstance" parent="TextureRect/Viewport"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.1868 )
+visible = false
+mesh = SubResource( 8 )
+skeleton = NodePath("../../..")
+
+[node name="Card" type="Spatial" parent="TextureRect/Viewport"]
+
+[node name="Front" type="MeshInstance" parent="TextureRect/Viewport/Card"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01 )
+mesh = SubResource( 1 )
+skeleton = NodePath("../../../..")
+
+[node name="Viewport" type="Viewport" parent="TextureRect/Viewport/Card/Front"]
+size = Vector2( 200, 200 )
+
+[node name="ColorRect" type="ColorRect" parent="TextureRect/Viewport/Card/Front/Viewport"]
+visible = false
+margin_right = 1000.0
+margin_bottom = 1000.0
+color = Color( 0, 0.694118, 1, 1 )
+
+[node name="TextureRect" type="TextureRect" parent="TextureRect/Viewport/Card/Front/Viewport"]
+margin_right = 1024.0
+margin_bottom = 1024.0
+rect_scale = Vector2( 0.2, 0.2 )
+texture = ExtResource( 2 )
+
+[node name="Back" type="MeshInstance" parent="TextureRect/Viewport/Card"]
+transform = Transform( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0 )
+mesh = SubResource( 4 )
+skeleton = NodePath("../../../..")
+
+[node name="Viewport" type="Viewport" parent="TextureRect/Viewport/Card/Back"]
+size = Vector2( 200, 200 )
+render_target_v_flip = true
+
+[node name="ColorRect" type="ColorRect" parent="TextureRect/Viewport/Card/Back/Viewport"]
+visible = false
+margin_right = 1000.0
+margin_bottom = 1000.0
+color = Color( 0.176471, 1, 0.00392157, 1 )
+
+[node name="TextureRect" type="TextureRect" parent="TextureRect/Viewport/Card/Back/Viewport"]
+margin_right = 40.0
+margin_bottom = 40.0
+rect_scale = Vector2( 1, 1.8 )
+texture = ExtResource( 3 )
+
+[node name="Tween" type="Tween" parent="."]
