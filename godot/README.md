@@ -667,7 +667,7 @@ The cards will spawn with their backs facing the camera, and rotate as they move
 
 Once the cards have been drawn, a blue ColorRectangle (a UI element) that is the same color as the big blue quad will become visible, at which point the "card draw" camera will deactivate, and the "battle camera" will replace it.  The blue ColorRectangle will fade as the battle camera zooms out, showing the two combatants face-to-face.
 
-The video above shows the blue fade.  It turns orange because I didn't set a lower bound on the transparency value, so it descends into the negatives and inverses the color.
+The video above takes place right after the camera teleport, showing the blue fade.  It turns orange because I didn't set a lower bound on the transparency value, so it descends into the negatives and inverses the color.
 
 
 
