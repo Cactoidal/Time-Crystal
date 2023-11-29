@@ -675,7 +675,7 @@ Well, it's interesting, but getting it to line up correctly is a bit of a chore.
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/af3502ef-62b2-426f-b136-bb32aec7c539
 
-There is.  Instead of the "card draw" camera, I can just keep the whole thing in 2D UI space.  You will see that the card is still rotating; that's because it's a TextureRectangle with a Viewport texture containing the 3D card.
+There is.  Instead of using the "card draw" camera and moving them in 3D space, I can just keep the whole thing in 2D UI space.  You will see that the card is still rotating; that's because it's now a TextureRectangle with a Viewport texture containing the 3D card.
 
 The movement is also smoother.  Godot's [Tween class](https://docs.godotengine.org/en/3.5/classes/class_tween.html) can interpolate the beginning and end state of a property of an object, in this case, the start and end position of the TextureRectangle.  Overall, much better.
 
