@@ -657,6 +657,20 @@ ___
 
 The Fuji node is synced after following the [AVAX node install guide](https://docs.avax.network/nodes/run/node-manually), and I successfully pinged it with an eth_blockNumber call.  Once the game's new UI is complete, I should be able to use the node during the demo video.
 
+___
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/78666754-0658-4073-854d-c4eb7ac0fdd1
+
+I want the cards to "flip over" as they are drawn, which will require a bit of camera trickery.  The "card draw sequence" will take place in 3D-space, in front of a big blue quad, and the cards themselves will be two quads glued together (the "back" and "front" of the card).  
+
+The cards will spawn with their backs facing the camera, and rotate as they move, coming to rest at the side of the screen, where they will be seamlessly deleted and replaced with a UI element identical to the "front" of the card.
+
+Once the cards have been drawn, a blue ColorRectangle (a UI element) that is the same color as the big blue quad will become visible, at which point the "card draw" camera will deactivate, and the "battle camera" will replace it.  The blue ColorRectangle will fade as the battle camera zooms out, showing the two combatants face-to-face.
+
+The video above shows the blue fade.  It turns orange because I didn't set a lower bound on the transparency value, so it descends into the negatives and inverses the color.
+
+
+
 
 
 
