@@ -679,7 +679,11 @@ There is.  Instead of the "card draw" camera, I can just keep the whole thing in
 
 The movement is also smoother.  Godot's [Tween class](https://docs.godotengine.org/en/3.5/classes/class_tween.html) can interpolate the beginning and end state of a property of an object, in this case, the start and end position of the TextureRectangle.  Overall, much better.
 
+And here's the whole effect:
 
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/38e31ddd-08d7-44f4-8b7d-1e02b861bf5a
+
+The cards don't fit together quite right yet, but you get the idea.  I'll need to figure out how exactly I want them to look.
 
 
 
