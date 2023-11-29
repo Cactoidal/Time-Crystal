@@ -496,6 +496,14 @@ func check_commit_attempted(result, response_code, headers, body):
 
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
+		var commit_status = TimeCrystal.decode_bool(raw_response)
+		if bool(commit_status) == true && game_board.in_commit_phase == true:
+			game_board.in_commit_phase = false
+			game_board.reveal_action()
+		if bool(commit_status) == false && game_board.in_reveal_phase == true:
+			game_board.in_reveal_phase = false
+			game_board.get_opponent_actions()
+			
 		game_board.get_node("OpponentCommit").text = "Opponent Commit?\n" + TimeCrystal.decode_bool(raw_response)
 
 
@@ -525,7 +533,9 @@ func get_opponent_board_attempted(result, response_code, headers, body):
 
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
+		var opponent_actions = TimeCrystal.decode_hex_string(raw_response)
 		game_board.get_node("OpponentCard").text = "Opponent Played:\n" + TimeCrystal.decode_hex_string(raw_response)
+		game_board.resolve_actions(opponent_actions)
 
 
 func get_player_actions():

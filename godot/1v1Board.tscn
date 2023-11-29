@@ -418,6 +418,29 @@ margin_right = 129.0
 margin_bottom = 166.0
 text = "DEF"
 
+[node name="Opponent" type="Label" parent="UI/OpponentStats"]
+margin_left = 153.0
+margin_top = 6.0
+margin_right = 217.0
+margin_bottom = 20.0
+text = "Opponent"
+
+[node name="EnergySquare" type="ColorRect" parent="UI/OpponentStats"]
+margin_left = -252.0
+margin_top = 87.0
+margin_right = -200.0
+margin_bottom = 139.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="Energy" type="Label" parent="UI/OpponentStats/EnergySquare"]
+margin_left = 5.0
+margin_top = 10.0
+margin_right = 47.0
+margin_bottom = 41.0
+text = "Energy
+0"
+align = 1
+
 [node name="PlayerStats" type="ColorRect" parent="UI"]
 modulate = Color( 1, 1, 1, 0 )
 margin_left = 656.0
@@ -462,3 +485,26 @@ margin_top = 123.0
 margin_right = 129.0
 margin_bottom = 166.0
 text = "DEF"
+
+[node name="Player" type="Label" parent="UI/PlayerStats"]
+margin_left = 178.0
+margin_top = 6.0
+margin_right = 242.0
+margin_bottom = 20.0
+text = "Player"
+
+[node name="EnergySquare" type="ColorRect" parent="UI/PlayerStats"]
+margin_left = -292.0
+margin_top = 87.0
+margin_right = -240.0
+margin_bottom = 139.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="Energy" type="Label" parent="UI/PlayerStats/EnergySquare"]
+margin_left = 5.0
+margin_top = 10.0
+margin_right = 47.0
+margin_bottom = 41.0
+text = "Energy
+0"
+align = 1

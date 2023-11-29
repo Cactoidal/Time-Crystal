@@ -5,6 +5,10 @@ var card_info
 var card_destination
 var ui_card
 
+#refers to game board
+var ethers
+
+
 #func _ready():
 #	card_destination = get_parent().get_node("Spot1")
 #	ui_card = get_parent().get_parent().get_parent().get_node("UI/Card1")
@@ -31,3 +35,41 @@ func _process(delta):
 			#ui_card.visible = true
 			#queue_free()
 			return
+
+
+
+var activated = false
+func _on_TextureButton_pressed():
+	if activated == true:
+		$TextureRect/Confirm.visible = true
+		for card in get_parent().get_children():
+			if card != self:
+				card._on_Cancel_pressed()
+
+
+func _on_Confirm_pressed():
+	$TextureRect/Confirm.visible = false
+	for card in get_parent().get_children():
+		card.activated = false
+	ethers.commit_action(card_info["id"])
+
+
+func _on_Cancel_pressed():
+	$TextureRect/Confirm.visible = false
+
+func glow(energy):
+	if energy >= card_info["cost"]:
+		print("playable")
+
+
+func _on_Confirm_mouse_entered():
+	$TextureRect/Confirm/Green/Overlay.visible = false
+
+func _on_Confirm_mouse_exited():
+	$TextureRect/Confirm/Green/Overlay.visible = true
+
+func _on_Cancel_mouse_entered():
+	$TextureRect/Confirm/Red/Overlay.visible = false
+
+func _on_Cancel_mouse_exited():
+	$TextureRect/Confirm/Red/Overlay.visible = true

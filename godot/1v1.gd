@@ -23,6 +23,19 @@ var guessHash
 var action_password
 var action_id
 
+# stats
+
+var player_max_hp
+var player_hp
+var opponent_max_hp
+var opponent_hp
+var player_energy = 0
+var opponent_energy = 0
+var player_pow
+var player_def
+var opponent_pow
+var opponent_def
+
 func _ready():
 	
 	$RegisterPlayer.connect("pressed", self, "register_player")
@@ -69,10 +82,12 @@ func get_opponent_hash_monster():
 	#must retrieve opponent address first
 	ethers.get_opponent_hash_monster(opponent)
 	
-func commit_action():
-	action_id = $CardEntry.text
+func commit_action(action):
+	action_id = action
+	#action_id = $CardEntry.text
 	var secret = action_password + action_id
 	ethers.start_transaction("commit_action", [secret])
+	in_commit_phase = true
 
 # * #
 func did_opponent_commit():
@@ -124,10 +139,12 @@ var battle_start_sequence = false
 var battle_start_timer = 60
 var battle_ongoing = false
 var fade_in_battler_stats = false
+var in_commit_phase = false
+var in_reveal_phase = false
 func _process(delta):
 	if hand_wait_simulation_timer > 0:
 		hand_wait_simulation_timer -= delta
-		print("waiting for hand")
+		
 	
 	if opponent_wait_simulation_timer > 0 && simulate_opponent_wait == true:
 		opponent_wait_simulation_timer -= delta
@@ -178,7 +195,6 @@ func _process(delta):
 	
 	if battle_start_sequence == true:
 		$Scroll/AwaitingOpponent.text = "BATTLE STARTING...						BATTLE STARTING...						BATTLE STARTING...						BATTLE STARTING...						"
-		print("starting")
 		fade_queue_scene(delta)
 		battle_start_timer -= delta*3
 		if battle_start_timer < 0:
@@ -187,6 +203,9 @@ func _process(delta):
 			fade_in_battler_stats = true
 			$Scroll/AwaitingOpponent.text = "CHOOSE ACTION...						CHOOSE ACTION...						CHOOSE ACTION...						CHOOSE ACTION...						"
 			print("battle started")
+			for card in $Cards.get_children():
+				card.activated = true
+				card.glow(player_energy)
 		
 	if check_timer > 0:
 		check_timer -= delta
@@ -202,6 +221,13 @@ func _process(delta):
 			
 			if battle_ongoing == true:
 				print("waiting for cards")
+			
+			if in_commit_phase == true:
+				did_opponent_commit()
+			
+			if in_reveal_phase == true:
+				did_opponent_commit()
+				
 				
 				
 			
@@ -253,6 +279,7 @@ func card_flip():
 	var new_card = card_flip.instance()
 	new_card.card_info = get_card_info(hand[card_selector])
 	new_card.card_destination = card_destination
+	new_card.ethers = self
 	card_selector += 1
 	card_destination.y += 90
 	$Cards.add_child(new_card)
@@ -261,19 +288,63 @@ func set_player_stats(battler_id):
 	var stats = get_battler_info(battler_id)
 	$PlayerStats/Name.text = stats["name"]
 	$PlayerStats/Type.text = "TYPE " + stats["type"]
-	$PlayerStats/HP.text = "HP: " + String(stats["HP"])
+	$PlayerStats/HP.text = "HP: " + String(stats["HP"]) + " / " + String(stats["HP"])
 	$PlayerStats/POW.text = "POW: " + String(stats["POW"])
 	$PlayerStats/DEF.text = "DEF: " + String(stats["DEF"])
+	player_max_hp = stats["HP"]
+	player_hp = stats["HP"]
+	player_pow = stats["POW"]
+	player_def = stats["DEF"]
 	get_parent().get_node("WorldRotate/Player").texture = stats["3Dimage"]
 
 func set_opponent_stats(battler_id):
 	var stats = get_battler_info(battler_id)
 	$OpponentStats/Name.text = stats["name"]
 	$OpponentStats/Type.text = "TYPE " + stats["type"]
-	$OpponentStats/HP.text = "HP: " + String(stats["HP"])
+	$OpponentStats/HP.text = "HP: " + String(stats["HP"]) + " / " + String(stats["HP"])
 	$OpponentStats/POW.text = "POW: " + String(stats["POW"])
 	$OpponentStats/DEF.text = "DEF: " + String(stats["DEF"])
+	opponent_max_hp = stats["HP"]
+	opponent_hp = stats["HP"]
+	opponent_pow = stats["POW"]
+	opponent_def = stats["DEF"]
 	get_parent().get_node("WorldRotate/Opponent").texture = stats["3Dimage"]
+
+func resolve_actions(opponent_actions):
+	var player_action = get_card_info(action_id)
+	var opponent_action = get_card_info( opponent_actions.substr(opponent_actions.length()-2,2) )
+	
+	player_energy -= player_action["cost"]
+	opponent_energy -= opponent_action["cost"]
+	
+	var player_atk = player_pow * player_action["attack"]
+	var player_block = player_def * player_action["defense"]
+	
+	var opponent_atk = opponent_pow * opponent_action["attack"]
+	var opponent_block = opponent_def * opponent_action["defense"]
+	
+	if opponent_action["type"] == "power":
+		player_atk = player_pow * (player_action["attack"] + player_action["counter_bonus"])
+		player_block = 0
+	if player_action["type"] == "power":
+		opponent_atk = opponent_pow * (opponent_action["attack"] + opponent_action["counter_bonus"])
+		opponent_block = 0
+	
+	var player_damage_dealt = int(clamp(player_atk - opponent_block, 10, 10000))
+	var opponent_damage_dealt = int(clamp(opponent_atk - player_block, 10, 10000))
+	
+	opponent_hp = int(clamp(opponent_hp - player_damage_dealt, 0, 10000))
+	player_hp = int(clamp(player_hp - opponent_damage_dealt, 0, 10000))
+	player_energy += 1 + player_action["gain"]
+	opponent_energy += 1 + opponent_action["gain"]
+	
+	$PlayerStats/HP.text = "HP: " + String(player_hp) + " / " + String(player_max_hp)
+	$OpponentStats/HP.text = "HP: " + String(opponent_hp) + " / " + String(opponent_max_hp)
+	$PlayerStats/EnergySquare/Energy.text = "Energy\n" + String(player_energy)
+	$OpponentStats/EnergySquare/Energy.text = "Energy\n" + String(opponent_energy)
+	
+	if opponent_hp == 0:
+		declare_victory()
 
 #add the correct cost/gain/counter values
 func get_card_info(card_id):
