@@ -466,7 +466,7 @@ func check_player_cards_attempted(result, response_code, headers, body):
 			game_board.target_hash = target_hash
 			game_board.extract_hand()
 			game_board.find_player_hand = false
-			game_board.draw_sequence = true
+			game_board.get_node("Scroll/AwaitingOracle").visible = false
 		#game_board.get_node("YourHand").text = "Your Hand:\n" + TimeCrystal.decode_u256_array_from_bytes(raw_response)
 		#print(parse_json(TimeCrystal.decode_hex_string(raw_response)["1"]))
 
@@ -621,6 +621,7 @@ func get_opponent_hash_monster_attempted(result, response_code, headers, body):
 			selector = 2
 		else:
 			selector = 1
+		game_board.set_opponent_stats(selector)
 		game_board.get_node("OpponentHashMonster").text = game_board.get_battler_info(selector)["name"]
 		game_board.find_opponent = false
 		game_board.battle_start_sequence = true
@@ -658,7 +659,10 @@ func get_player_hash_monster_attempted(result, response_code, headers, body):
 			selector = 2
 		else:
 			selector = 1
+		game_board.set_player_stats(selector)
+		game_board.get_node("Blue/Battler").texture = game_board.get_battler_info(selector)["image"]
 		game_board.get_node("PlayerHashMonster").text = game_board.get_battler_info(selector)["name"]
+		game_board.battler_fade_in = true
 
 
 func check_won():

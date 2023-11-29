@@ -40,7 +40,7 @@ func _ready():
 	$CheckPlayerBoard.connect("pressed", self, "get_player_actions")
 	$CheckOpponentBoard.connect("pressed", self, "get_opponent_actions")
 	
-	camera = get_parent().get_node("WorldRotate/BattleCamera")
+	camera = get_parent().get_node("WorldRotate/Pivot/BattleCamera")
 	#randomize()
 	#var randomizer = Crypto.new()
 	#var bytes = Crypto.new()
@@ -96,24 +96,34 @@ func check_won():
 	ethers.check_won()
 	
 func fade_queue_scene(delta):
-	pass
+	if $Blue.modulate.a > 0:
+		$Blue.modulate.a -= delta
+		if $Blue.modulate.a < 0:
+			$Blue.modulate.a = 0
+	camera.global_transform.origin.y += delta/3
+	camera.global_transform.origin.z += delta/4.2
+	camera.get_parent().rotate_y(0.001)
+	
 	
 
 var hand_wait_simulation_timer = 1
 #var hand_wait_simulation_timer = 11
 var simulate_opponent_wait = false
-#var opponent_wait_simulation_timer = 11
-var opponent_wait_simulation_timer = 1
+var opponent_wait_simulation_timer = 18
+#var opponent_wait_simulation_timer = 1
 
 var started = false
 var check_timer = 2
 var find_player_hand = true
+var battler_fade_in = false
 var draw_sequence = false
 var draw_timer = 1
 var find_opponent = false
 var battle_start_sequence = false
-var battle_start_timer = 5
+#var battle_start_timer = 45
+var battle_start_timer = 60
 var battle_ongoing = false
+var fade_in_battler_stats = false
 func _process(delta):
 	if hand_wait_simulation_timer > 0:
 		hand_wait_simulation_timer -= delta
@@ -121,6 +131,24 @@ func _process(delta):
 	
 	if opponent_wait_simulation_timer > 0 && simulate_opponent_wait == true:
 		opponent_wait_simulation_timer -= delta
+	
+	if battler_fade_in == true:
+		$Blue/Battler.modulate.a += delta
+		if $Blue/Battler.modulate.a > 1:
+			$Blue/Battler.modulate.a = 1
+			battler_fade_in = false
+			
+	if fade_in_battler_stats == true:
+		if $OpponentStats.modulate.a < 1:
+			$OpponentStats.modulate.a += delta
+			if $OpponentStats.modulate.a > 1:
+				$OpponentStats.modulate.a = 1
+				
+		if $PlayerStats.modulate.a < 1:
+			$PlayerStats.modulate.a += delta
+			if $PlayerStats.modulate.a > 1:
+				$PlayerStats.modulate.a = 1
+				fade_in_battler_stats = false
 	
 	if draw_sequence == true:
 		if draw_timer > 0:
@@ -133,6 +161,8 @@ func _process(delta):
 				if card_selector > 5:
 					draw_sequence = false
 					find_opponent = true
+					$Scroll/AwaitingOpponent.start_scroll = true
+					$Scroll/AwaitingOpponent.visible = true
 					check_timer = 2
 					print("draw sequence over")
 		
@@ -147,12 +177,15 @@ func _process(delta):
 #			check_timer = 2
 	
 	if battle_start_sequence == true:
+		$Scroll/AwaitingOpponent.text = "BATTLE STARTING...						BATTLE STARTING...						BATTLE STARTING...						BATTLE STARTING...						"
 		print("starting")
 		fade_queue_scene(delta)
 		battle_start_timer -= delta*3
 		if battle_start_timer < 0:
 			battle_start_sequence = false
 			battle_ongoing = true
+			fade_in_battler_stats = true
+			$Scroll/AwaitingOpponent.text = "CHOOSE ACTION...						CHOOSE ACTION...						CHOOSE ACTION...						CHOOSE ACTION...						"
 			print("battle started")
 		
 	if check_timer > 0:
@@ -169,6 +202,8 @@ func _process(delta):
 			
 			if battle_ongoing == true:
 				print("waiting for cards")
+				
+				
 			
 			
 			check_timer = 10
@@ -185,6 +220,7 @@ func _process(delta):
 				var fifth_card = combination.substr(8,2)
 				var sixth_card = combination.substr(10,2)
 				hand = [int(first_card), int(second_card), int(third_card), int(fourth_card), int(fifth_card), int(sixth_card)]
+				draw_sequence = true
 				$YourHand.text = "Your Hand: " + first_card + ", " + second_card + ", " + third_card + ", " + fourth_card + ", " + fifth_card + ", " + sixth_card
 				#$YourHand.text = "Your Hand:\n" + combination
 				
@@ -215,12 +251,29 @@ var card_selector = 0
 var card_destination = Vector2(73,73)
 func card_flip():
 	var new_card = card_flip.instance()
-	new_card.card_selector = card_selector
+	new_card.card_info = get_card_info(hand[card_selector])
 	new_card.card_destination = card_destination
 	card_selector += 1
 	card_destination.y += 90
-	$Blue.add_child(new_card)
+	$Cards.add_child(new_card)
 
+func set_player_stats(battler_id):
+	var stats = get_battler_info(battler_id)
+	$PlayerStats/Name.text = stats["name"]
+	$PlayerStats/Type.text = "TYPE " + stats["type"]
+	$PlayerStats/HP.text = "HP: " + String(stats["HP"])
+	$PlayerStats/POW.text = "POW: " + String(stats["POW"])
+	$PlayerStats/DEF.text = "DEF: " + String(stats["DEF"])
+	get_parent().get_node("WorldRotate/Player").texture = stats["3Dimage"]
+
+func set_opponent_stats(battler_id):
+	var stats = get_battler_info(battler_id)
+	$OpponentStats/Name.text = stats["name"]
+	$OpponentStats/Type.text = "TYPE " + stats["type"]
+	$OpponentStats/HP.text = "HP: " + String(stats["HP"])
+	$OpponentStats/POW.text = "POW: " + String(stats["POW"])
+	$OpponentStats/DEF.text = "DEF: " + String(stats["DEF"])
+	get_parent().get_node("WorldRotate/Opponent").texture = stats["3Dimage"]
 
 #add the correct cost/gain/counter values
 func get_card_info(card_id):
@@ -250,6 +303,6 @@ func get_card_info(card_id):
 		
 func get_battler_info(battler_id):
 	match battler_id:
-		1: return {"id":"1", "type":"Crystal", "name":"LINK-chan", "HP": 100, "POW": 40, "DEF": 40}
-		2: return {"id":"2", "type":"Construct", "name":"AVAX-chan", "HP": 200, "POW": 20, "DEF": 20}
+		1: return {"id":"1", "type":"CRYSTAL", "name":"LINK-chan", "HP": 100, "POW": 40, "DEF": 40, "image": load("res://linkchan.png"), "3Dimage": load("res://linkchan3D.png")}
+		2: return {"id":"2", "type":"CONSTRUCT", "name":"AVAX-chan", "HP": 200, "POW": 20, "DEF": 20, "image": load("res://avaxchan.png"), "3Dimage": load('res://avaxchan3D.png')}
 		

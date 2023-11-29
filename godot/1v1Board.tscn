@@ -1,19 +1,11 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://world_rotate.gd" type="Script" id=1]
 [ext_resource path="res://1v1.gd" type="Script" id=2]
 [ext_resource path="res://TileBlock.tscn" type="PackedScene" id=3]
-[ext_resource path="res://power_card_base.png" type="Texture" id=4]
-[ext_resource path="res://CardDrawCamera.gd" type="Script" id=5]
-[ext_resource path="res://CardFlip.tscn" type="PackedScene" id=6]
-
-[sub_resource type="SpatialMaterial" id=15]
-flags_unshaded = true
-albedo_color = Color( 0, 0.215686, 1, 1 )
-
-[sub_resource type="QuadMesh" id=16]
-material = SubResource( 15 )
-size = Vector2( 20, 20 )
+[ext_resource path="res://avaxchan3D.png" type="Texture" id=4]
+[ext_resource path="res://TickerTextLabel.gd" type="Script" id=5]
+[ext_resource path="res://linkchan3D.png" type="Texture" id=6]
 
 [node name="3DBoard" type="Spatial"]
 
@@ -109,22 +101,11 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.26443, 0, 3.12548 )
 [node name="TileBlock30" parent="WorldRotate" instance=ExtResource( 3 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 6.31116, 0.0112314, 4.65271 )
 
-[node name="CardDrawCamera" type="Camera" parent="WorldRotate"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20.05, 0 )
-script = ExtResource( 5 )
+[node name="Pivot" type="Spatial" parent="WorldRotate"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3.96167, 1.40736, 0 )
 
-[node name="Blue" type="MeshInstance" parent="WorldRotate/CardDrawCamera"]
-transform = Transform( 1, 0, 0, 0, 0.999999, 0, 0, 0, 0.999999, 0, 0, -7.81471 )
-visible = false
-mesh = SubResource( 16 )
-skeleton = NodePath("../../BattleCamera")
-
-[node name="Spot1" type="Spatial" parent="WorldRotate/CardDrawCamera"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.62197, 1.72429, -4 )
-visible = false
-
-[node name="BattleCamera" type="Camera" parent="WorldRotate"]
-transform = Transform( -0.542238, 0.617135, -0.570195, -0.0206996, 0.668604, 0.74333, 0.83997, 0.414865, -0.349768, 1.23414, 1.40976, -3.71921 )
+[node name="BattleCamera" type="Camera" parent="WorldRotate/Pivot"]
+transform = Transform( -0.542238, 0.617135, -0.570195, -0.0206996, 0.668604, 0.74333, 0.83997, 0.414865, -0.349768, -2.72753, 0.00239944, -3.71921 )
 
 [node name="ReflectionProbe" type="ReflectionProbe" parent="WorldRotate"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 6.04484, 0, 0 )
@@ -132,6 +113,16 @@ extents = Vector3( 8, 3, 8 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="WorldRotate"]
 transform = Transform( 0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 0, 0, 0 )
+
+[node name="Opponent" type="Sprite3D" parent="WorldRotate"]
+transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 3.37068, 2.14875, -3.51449 )
+billboard = 1
+texture = ExtResource( 4 )
+
+[node name="Player" type="Sprite3D" parent="WorldRotate"]
+transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 5.18208, 2.14875, 3.07704 )
+billboard = 1
+texture = ExtResource( 6 )
 
 [node name="UI" type="Control" parent="."]
 margin_right = 40.0
@@ -350,36 +341,124 @@ margin_right = 1041.0
 margin_bottom = 618.0
 color = Color( 0, 0.215686, 1, 1 )
 
-[node name="CardFlip" parent="UI" instance=ExtResource( 6 )]
-visible = false
-margin_left = 500.0
-margin_top = 300.0
-margin_right = 500.0
-margin_bottom = 300.0
+[node name="Battler" type="Sprite" parent="UI/Blue"]
+modulate = Color( 1, 1, 1, 0 )
+position = Vector2( 562, 298 )
+scale = Vector2( 0.7, 0.7 )
 
-[node name="Card1" type="TextureRect" parent="UI"]
-visible = false
-margin_left = -1.0
-margin_top = 65.0
-margin_right = 198.0
-margin_bottom = 176.0
-rect_scale = Vector2( 0.55, 0.95 )
-texture = ExtResource( 4 )
+[node name="Scroll" type="ColorRect" parent="UI"]
+margin_left = 78.0
+margin_top = 531.0
+margin_right = 1100.0
+margin_bottom = 616.0
+color = Color( 0, 0, 0, 0.588235 )
 
-[node name="Card2" type="TextureRect" parent="UI"]
-visible = false
-margin_left = 1.0
-margin_top = 207.0
-margin_right = 200.0
-margin_bottom = 318.0
-rect_scale = Vector2( 1, 1.8 )
-texture = ExtResource( 4 )
+[node name="AwaitingOpponent" type="RichTextLabel" parent="UI/Scroll"]
+margin_left = 978.0
+margin_top = 33.0
+margin_right = 2016.0
+margin_bottom = 88.0
+text = "AWAITING OPPONENT...						AWAITING OPPONENT...						AWAITING OPPONENT...						AWAITING OPPONENT...						"
+script = ExtResource( 5 )
 
-[node name="Card3" type="TextureRect" parent="UI"]
-visible = false
-margin_left = 2.0
-margin_top = 415.0
-margin_right = 201.0
-margin_bottom = 526.0
-rect_scale = Vector2( 1, 1.8 )
-texture = ExtResource( 4 )
+[node name="AwaitingOracle" type="Label" parent="UI/Scroll"]
+margin_left = 791.0
+margin_top = 45.0
+margin_right = 934.0
+margin_bottom = 88.0
+text = "AWAITING ORACLE..."
+
+[node name="Cards" type="ColorRect" parent="UI"]
+margin_right = 150.0
+margin_bottom = 621.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="OpponentStats" type="ColorRect" parent="UI"]
+modulate = Color( 1, 1, 1, 0 )
+margin_left = 614.0
+margin_top = 23.0
+margin_right = 841.0
+margin_bottom = 184.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="Name" type="Label" parent="UI/OpponentStats"]
+margin_left = 14.0
+margin_top = 13.0
+margin_right = 129.0
+margin_bottom = 56.0
+text = "Name"
+
+[node name="Type" type="Label" parent="UI/OpponentStats"]
+margin_left = 14.0
+margin_top = 40.0
+margin_right = 129.0
+margin_bottom = 83.0
+text = "Type
+"
+
+[node name="HP" type="Label" parent="UI/OpponentStats"]
+margin_left = 14.0
+margin_top = 70.0
+margin_right = 129.0
+margin_bottom = 113.0
+text = "HP"
+
+[node name="POW" type="Label" parent="UI/OpponentStats"]
+margin_left = 14.0
+margin_top = 96.0
+margin_right = 129.0
+margin_bottom = 139.0
+text = "POW
+"
+
+[node name="DEF" type="Label" parent="UI/OpponentStats"]
+margin_left = 14.0
+margin_top = 123.0
+margin_right = 129.0
+margin_bottom = 166.0
+text = "DEF"
+
+[node name="PlayerStats" type="ColorRect" parent="UI"]
+modulate = Color( 1, 1, 1, 0 )
+margin_left = 656.0
+margin_top = 305.0
+margin_right = 883.0
+margin_bottom = 466.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="Name" type="Label" parent="UI/PlayerStats"]
+margin_left = 14.0
+margin_top = 13.0
+margin_right = 129.0
+margin_bottom = 56.0
+text = "Name"
+
+[node name="Type" type="Label" parent="UI/PlayerStats"]
+margin_left = 14.0
+margin_top = 40.0
+margin_right = 129.0
+margin_bottom = 83.0
+text = "Type
+"
+
+[node name="HP" type="Label" parent="UI/PlayerStats"]
+margin_left = 14.0
+margin_top = 70.0
+margin_right = 129.0
+margin_bottom = 113.0
+text = "HP"
+
+[node name="POW" type="Label" parent="UI/PlayerStats"]
+margin_left = 14.0
+margin_top = 96.0
+margin_right = 129.0
+margin_bottom = 139.0
+text = "POW
+"
+
+[node name="DEF" type="Label" parent="UI/PlayerStats"]
+margin_left = 14.0
+margin_top = 123.0
+margin_right = 129.0
+margin_bottom = 166.0
+text = "DEF"
