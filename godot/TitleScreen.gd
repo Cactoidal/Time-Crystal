@@ -264,7 +264,8 @@ func enter_matchmaking_queue():
 	
 	
 	# Disabled for now, turn back on later
-	#game_board.join_matchmaking()
+	game_board.join_matchmaking()
+	#game_board.register_player()
 	
 	
 	$World/Player/Head/Camera.queue_free()
@@ -277,7 +278,7 @@ func start_transaction(function_name, param=["None"]):
 	if tx_ongoing == false:
 		tx_function_name = function_name
 		tx_parameter = param
-		tx_ongoing = true
+		#tx_ongoing = true
 		get_tx_count()
 	else:
 		print("Transaction Ongoing")
@@ -497,10 +498,13 @@ func check_commit_attempted(result, response_code, headers, body):
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
 		var commit_status = TimeCrystal.decode_bool(raw_response)
-		if bool(commit_status) == true && game_board.in_commit_phase == true:
+		if commit_status == "true" && game_board.in_commit_phase == true:
+			print("entering reveal phase")
 			game_board.in_commit_phase = false
+			game_board.in_reveal_phase = true
 			game_board.reveal_action()
-		if bool(commit_status) == false && game_board.in_reveal_phase == true:
+		if commit_status == "false" && game_board.in_reveal_phase == true:
+			print("resolving reveal phase")
 			game_board.in_reveal_phase = false
 			game_board.get_opponent_actions()
 			
@@ -511,7 +515,7 @@ func get_opponent_actions(opponent_address):
 	var http_request = HTTPRequest.new()
 	$HTTP.add_child(http_request)
 	http_request_delete_tx_read = http_request
-	http_request.connect("request_completed", self, "get_opponent_board_attempted")
+	http_request.connect("request_completed", self, "get_opponent_actions_attempted")
 	
 	var file = File.new()
 	file.open("user://keystore", File.READ)
@@ -527,13 +531,15 @@ func get_opponent_actions(opponent_address):
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
 
-func get_opponent_board_attempted(result, response_code, headers, body):
+func get_opponent_actions_attempted(result, response_code, headers, body):
 	
 	var get_result = parse_json(body.get_string_from_ascii())
 
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
 		var opponent_actions = TimeCrystal.decode_hex_string(raw_response)
+		print("opponent actions")
+		print(opponent_actions)
 		game_board.get_node("OpponentCard").text = "Opponent Played:\n" + TimeCrystal.decode_hex_string(raw_response)
 		game_board.resolve_actions(opponent_actions)
 
@@ -763,8 +769,9 @@ func send_transaction_attempted(result, response_code, headers, body):
 	print(get_result)
 
 	if response_code == 200:
-		tx_ongoing = true
-		confirmation_timer = 7
+		pass
+		#tx_ongoing = true
+		#confirmation_timer = 7
 	else:
 		pass
 		#$Send.text = "TX ERROR"

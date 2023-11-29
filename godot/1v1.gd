@@ -59,6 +59,9 @@ func _ready():
 	#var bytes = Crypto.new()
 	password = "hello".sha256_text().left(20)
 	action_password = password
+	action_id = "10"
+	
+	
 	#password = (String(bytes.generate_random_bytes(16))).sha256_text().left(20)
 
 func join_matchmaking():
@@ -141,7 +144,13 @@ var battle_ongoing = false
 var fade_in_battler_stats = false
 var in_commit_phase = false
 var in_reveal_phase = false
+
+#var revealed = true
 func _process(delta):
+#	if revealed == true:
+#		reveal_action()
+#		revealed = false
+#
 	if hand_wait_simulation_timer > 0:
 		hand_wait_simulation_timer -= delta
 		
@@ -184,14 +193,7 @@ func _process(delta):
 					print("draw sequence over")
 		
 		
-		
-#		print("drawing")
-#		draw_timer -= delta*3
-#		if draw_timer < 0:
-#			draw_sequence = false
-#			find_opponent = true
-#			print("draw sequence over")
-#			check_timer = 2
+	
 	
 	if battle_start_sequence == true:
 		$Scroll/AwaitingOpponent.text = "BATTLE STARTING...						BATTLE STARTING...						BATTLE STARTING...						BATTLE STARTING...						"
@@ -247,6 +249,7 @@ func _process(delta):
 				var sixth_card = combination.substr(10,2)
 				hand = [int(first_card), int(second_card), int(third_card), int(fourth_card), int(fifth_card), int(sixth_card)]
 				draw_sequence = true
+			
 				$YourHand.text = "Your Hand: " + first_card + ", " + second_card + ", " + third_card + ", " + fourth_card + ", " + fifth_card + ", " + sixth_card
 				#$YourHand.text = "Your Hand:\n" + combination
 				
@@ -311,9 +314,9 @@ func set_opponent_stats(battler_id):
 	get_parent().get_node("WorldRotate/Opponent").texture = stats["3Dimage"]
 
 func resolve_actions(opponent_actions):
-	var player_action = get_card_info(action_id)
-	var opponent_action = get_card_info( opponent_actions.substr(opponent_actions.length()-2,2) )
-	
+	var player_action = get_card_info(int(action_id))
+	var opponent_action = get_card_info( int(opponent_actions.substr(opponent_actions.length()-2,2)) )
+
 	player_energy -= player_action["cost"]
 	opponent_energy -= opponent_action["cost"]
 	
