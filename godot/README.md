@@ -669,7 +669,9 @@ Once the cards have been drawn, a blue ColorRectangle (a UI element) that is the
 
 The video above takes place right after the camera teleport, showing the blue fade.  It turns orange because I didn't set a lower bound on the transparency value, so it descends into the negatives and inverses the color.
 
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/b15236cd-c884-404f-988f-ef8382131c78
 
+Well, it's interesting, but getting it to line up correctly is a bit of a chore, and I don't know if the overall effect is worth the time.  Perhaps there's a more straightforward way of dealing the cards?
 
 
 
