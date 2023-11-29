@@ -695,3 +695,6 @@ https://github.com/Cactoidal/Time-Crystal/assets/115384394/d8164363-efd4-4bd3-9b
 
 Now to cycle through the exchange of moves, and detect when the opponent has been defeated.
 
+___
+
+It could stand some major visual improvements, but! The full game cycle now works from beginning to end.
