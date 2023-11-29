@@ -671,7 +671,14 @@ The video above takes place right after the camera teleport, showing the blue fa
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/b15236cd-c884-404f-988f-ef8382131c78
 
-Well, it's interesting, but getting it to line up correctly is a bit of a chore, and I don't know if the overall effect is worth the time.  Perhaps there's a more straightforward way of dealing the cards?
+Well, it's interesting, but getting it to line up correctly is a bit of a chore.  Maybe there's a better way to do this?
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/af3502ef-62b2-426f-b136-bb32aec7c539
+
+There is.  Instead of the "card draw" camera, I can just keep the whole thing in 2D UI space.  You will see that the card is still rotating; that's because it's a TextureRectangle with a Viewport texture containing the 3D card.
+
+The movement is also smoother.  Godot's [Tween class](https://docs.godotengine.org/en/3.5/classes/class_tween.html) can interpolate the beginning and end state of a property of an object, in this case, the start and end position of the TextureRectangle.  Overall, much better.
+
 
 
 
