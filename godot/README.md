@@ -691,8 +691,7 @@ https://github.com/Cactoidal/Time-Crystal/assets/115384394/255ccfad-ddad-4139-aa
 
 Everything could use a bit more fanfare and texture, but this is good for now.  The next phase will be building the battlefield, showing the opponent, hooking up the player inputs, and progressing through the phases of the game from start to finish.
 
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/d8164363-efd4-4bd3-9b21-077ed5a1754c
 
-
-
-
+Now to cycle through the exchange of moves, and detect when the opponent has been defeated.
 
