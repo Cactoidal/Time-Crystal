@@ -685,6 +685,14 @@ https://github.com/Cactoidal/Time-Crystal/assets/115384394/38e31ddd-08d7-44f4-8b
 
 The cards don't fit together quite right yet, but you get the idea.  I'll need to figure out how exactly I want them to look.
 
+## Day 22
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/255ccfad-ddad-4139-aa26-d5e8bf44a6c0
+
+Everything could use a bit more fanfare and texture, but this is good for now.  The next phase will be building the battlefield, showing the opponent, hooking up the player inputs, and progressing through the phases of the game from start to finish.
+
+
+
 
 
 
