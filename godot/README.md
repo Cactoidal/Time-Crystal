@@ -715,5 +715,8 @@ Which brings me to the other thing I want to do next: get this game running on F
 
 I've done a simple test in Godot, again pinging my Fuji node to get the current block number, this time using Godot's [HTTPRequest](https://docs.godotengine.org/en/3.5/classes/class_httprequest.html), and everything seems good to go.  Once I've incorporated some of the changes I mentioned above, I'll deploy on Fuji and try running the game.
 
+___
+
+Now when the CSPRNG key generates a number, it uses that number as the seed to generate the _next_ number, and the five successively generated numbers are modulo'd by the deck length to get the cards.  Probably could be improved, but it's better than it was before.
 
 
