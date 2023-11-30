@@ -110,7 +110,7 @@ const csprngKey = await crypto.subtle.importKey(
   );
 
 
-// Generate secret randomness and draw 5 deck cards + arcana card.
+// Generate secret randomness and draw 5 deck cards + default Attack card.
 
 const seed = args[3]
 // from user-supplied Counter
