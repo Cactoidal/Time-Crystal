@@ -71,10 +71,10 @@ func _process(delta):
 		$Fadeout.color.a += delta
 		if $Fadeout.color.a >= 1:
 			fadeout = false
-			fadepause = 1
+			fadepause = 0.1
 	if fadepause > 0:
 		fadepause -= delta
-		if fadepause >= 0:
+		if fadepause <= 0:
 			fadepause = 0
 			call(pending_action)
 	if fadein == true:
@@ -250,6 +250,17 @@ func teleport():
 	$World/Player.global_transform.origin = Vector3(0,0,0)
 	fadein = true
 
+func return_to_world():
+	$World/Player/Head/Camera.visible = true
+	$World/Player/Head/Camera/RayCast/Reticle.visible = true
+	$World/Player/Head/Camera.make_current()
+	$World/DirectionalLight.visible = true
+	$World/Player.menu_open = false
+	$World/Player.not_options = false
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	game_board.queue_free()
+	fadein = true
+
 var console
 func enter_matchmaking_queue():
 	var new_game = card_game.instance()
@@ -264,14 +275,17 @@ func enter_matchmaking_queue():
 	
 	
 	# Disabled for now, turn back on later
-	game_board.join_matchmaking()
 	#game_board.register_player()
+	game_board.join_matchmaking()
 	
 	
-	$World/Player/Head/Camera.queue_free()
-	$World/DirectionalLight.queue_free()
+	game_board.get_parent().get_node("WorldRotate/Pivot/BattleCamera").make_current()
+	$World/Player/Head/Camera.visible = false
+	$World/Player/Head/Camera/RayCast/Reticle.visible = false
+	$World/DirectionalLight.visible = false
 	fadein = true
 	console.close()
+	
 	
 	
 func start_transaction(function_name, param=["None"]):
@@ -416,6 +430,7 @@ func commit_action():
 	var content = file.get_buffer(32)
 	file.close()
 	TimeCrystal.commit_action(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, secret, self)
+	game_board.get_node("Scroll/AwaitingOpponent").text = "RESOLVING...						RESOLVING...						RESOLVING...						RESOLVING...						"
 
 func reveal_action():
 	var password = tx_parameter[0]
@@ -538,8 +553,6 @@ func get_opponent_actions_attempted(result, response_code, headers, body):
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
 		var opponent_actions = TimeCrystal.decode_hex_string(raw_response)
-		print("opponent actions")
-		print(opponent_actions)
 		game_board.get_node("OpponentCard").text = "Opponent Played:\n" + TimeCrystal.decode_hex_string(raw_response)
 		game_board.resolve_actions(opponent_actions)
 

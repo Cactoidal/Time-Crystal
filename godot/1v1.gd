@@ -6,6 +6,8 @@ var opponent
 var draw_camera
 var camera
 
+
+
 var card_flip = load("res://CardFlip.tscn")
 
 # hand extraction
@@ -52,6 +54,7 @@ func _ready():
 	$CheckOpponentHashMonster.connect("pressed", self, "get_opponent_hash_monster")
 	$CheckPlayerBoard.connect("pressed", self, "get_player_actions")
 	$CheckOpponentBoard.connect("pressed", self, "get_opponent_actions")
+	$Overlay/EndGame/Return.connect("pressed", self, "end_game")
 	
 	camera = get_parent().get_node("WorldRotate/Pivot/BattleCamera")
 	#randomize()
@@ -145,6 +148,8 @@ var fade_in_battler_stats = false
 var in_commit_phase = false
 var in_reveal_phase = false
 
+var fade_in_ending = false
+
 #var revealed = true
 func _process(delta):
 #	if revealed == true:
@@ -175,6 +180,12 @@ func _process(delta):
 			if $PlayerStats.modulate.a > 1:
 				$PlayerStats.modulate.a = 1
 				fade_in_battler_stats = false
+	
+	if fade_in_ending == true:
+		if $Overlay.modulate.a < 1:
+			$Overlay.modulate.a += delta
+			if $Overlay.modulate.a > 1:
+				$Overlay.modulate.a = 1
 	
 	if draw_sequence == true:
 		if draw_timer > 0:
@@ -348,6 +359,16 @@ func resolve_actions(opponent_actions):
 	
 	if opponent_hp == 0:
 		declare_victory()
+		$Scroll/AwaitingOpponent.text = "VICTORY!						VICTORY!						VICTORY!						VICTORY!						"
+		$Overlay.visible = true
+		fade_in_ending = true
+	else:
+		$Scroll/AwaitingOpponent.text = "CHOOSE ACTION...						CHOOSE ACTION...						CHOOSE ACTION...						CHOOSE ACTION...						"
+		for card in $Cards.get_children():
+			card.activated = true
+	
+func end_game():
+	ethers.fade("return_to_world")
 
 #add the correct cost/gain/counter values
 func get_card_info(card_id):
