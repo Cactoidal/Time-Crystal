@@ -695,6 +695,9 @@ https://github.com/Cactoidal/Time-Crystal/assets/115384394/d8164363-efd4-4bd3-9b
 
 Now to cycle through the exchange of moves, and detect when the opponent has been defeated.
 
-___
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/88ef63b7-0cee-41d7-8d50-17612e32e50b
 
-It could stand some major visual improvements, but! The full game cycle now works from beginning to end.
+Goal is to eventually have animations to show the attacks.  But, after a quick resolution, the opponent's HP is reduced to zero, the game detects the win, and declares victory.  With that, the whole sequence can now be played through the game UI.
+
+
+
