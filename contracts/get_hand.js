@@ -122,6 +122,13 @@ const binaryCounter = atob(base64Counter);
 const counter = str2ab(binaryCounter);
 const length = 32;
 
+// In the future, will be replaced with a custom deck imported from the contract
+var deckArray = ["10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","29","30"]
+var deckLength = 20;
+
+var returnString = secretPhrase
+
+for (var k = 0; k < 5; k++) {
 
 // Generate raw pseudorandom bytes
 const encrypted = await crypto.subtle.encrypt(
@@ -131,30 +138,22 @@ const encrypted = await crypto.subtle.encrypt(
   );
 
 // Convert pseudorandom bytes into integer
-// https://stackoverflow.com/questions/62441655/how-do-i-convert-bytes-to-integers-in-javascript
 let number_array = new Uint8Array(encrypted)
 let secret_value = 0;
 for (var i = number_array.length - 1; i >= 0; i--) {
-    secret_value = (secret_value * 256) + number_array[i];
+    secret_value = (secret_value) + number_array[i];
+}
+// Use integer as next seed
+seed = secret_value
+
+// Draw card
+let picked = secret_value % deckLength
+returnString += deckArray[picked]
+deckArray.splice(picked, 1)
+deckLength -= 1
 }
 
-
-// Will be replaced with a custom deck later, imported from the contract.
-var deckArray = ["10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","29","30"]
-var deckLength = 20;
-
-// Draw 5 cards.
-// Create a better randomness regeneration later
-var returnString = secretPhrase
-
-for (var k = 0; k < 5; k++) {
-    let picked = secret_value % deckLength
-    returnString += deckArray[picked]
-    deckArray.splice(picked, 1)
-    deckLength -= 1
-}
-
-// Get default attack.
+// Get default Attack card.
 let attack = 99
 
 let result = returnString + attack.toString()
