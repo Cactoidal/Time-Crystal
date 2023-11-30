@@ -719,4 +719,41 @@ ___
 
 Now when the CSPRNG key generates a number, it uses that number as the seed to generate the _next_ number, and the five successively generated numbers are modulo'd by the deck length to get the cards.  Probably could be improved, but it's better than it was before.
 
+### Regarding Balance
+
+I'm approaching balance assuming that this version of the game exists for the purpose of demonstration.   Matches should last on average around 3 rounds.  There should still be some interesting decisions and matchups.  
+
+Our battlers, for instance.  The CRYSTAL type has lower HP but higher defense and power, while the CONSTRUCT type has high HP.  CRYSTALs are flexible, able to deal a lot of damage one turn, and block a lot the next, but there's little room for error, as one well-placed attack will knock them out.
+
+CONSTRUCTs may have lower DEF and POW, but they could have the staying power to eke out a win while their CRYSTAL opponent gets wiped out.
+
+Which reminds me, with the simultaneous nature of the combat, it's likely that matches will frequently end with both players at 0 HP.
+
+Right now, the winner will be determined by whoever's computer manages to declare victory faster.  But that's not very fun, or fair.  While I'm not going to do it right now, probably I will need to introduce a speed score that determines the order in which moves are executed.  Defensive moves would be the fastest by default.
+
+You might ask why the game can't end in a draw.  The reason is that you cannot "lose" when your HP is reduced to zero, you can only "win" when your opponent's HP is zero, and you can prove the validity of your hand.
+
+This is because the contract does not "know" what cards the player actually has.  It only has the hash that was committed by the oracle.  To declare victory, the presumptive winner must provide the values that generated that hash.  While these values can't be faked when proving against the hash, a cheating player may have attempted to play cards they didn't actually have in their hand.
+
+Chainlink Automation's job is to take the winner's "action string" and compare it to the values that were just supplied.  If there are cards in the action string that don't match the values, that means the player edited their copy of the game and tried to cheat.  Automation will detect this, and the cheater's opponent will win instead.
+
+You don't "lose" at 0 HP because there is a remote possibility that you might be facing a cheater.  In that situation, the cheater can never win through conventional means, because they will be caught by Automation.  But they might expect you to quit.  Instead, all you need to do is keep hitting them until their HP is also zero, and then you can simply declare victory.
+
+If the cheater attempts to grief you by refusing to commit or reveal, there is a forceEnd() function that the most recent committing/revealing player can call if their opponent has taken no action for a certain amount of blocks.
+
+Therefore, it is impossible to lose to a cheater or griefer; you would simply need to be patient and keep commiting moves, or call forceEnd() once their time is up.  At which point the cheater would lose money, in the form of the energy in their Crystal NFT, which must be staked to play the game.
+
+Anyway, back to the subject at hand.  Balance.  The basic interplay is between Normal Attacks, Defensive Moves, and Power Attacks.  Normal attacks are cheap, costing little or no energy, but they are easily absorbed by Defensive Moves, which typically generate energy and do a small amount of damage to the attacker.
+
+Power attacks have a high energy cost, but they completely ignore Defense.  But there's a catch: most Normal Attacks have a "counter bonus", which greatly increases the damage they deal against an opponent using a Power Attack.
+
+A player attempting to go for a KO with a Power Attack may themselves end up getting knocked out when their target successfully counters their attack.
+
+In practice, I don't know what the optimal strategies will be and what players will favor most.  I would imagine that with the current design quite a bit comes down to the luck of the draw.
+
+But that should be part of the fun - can you win with a bad hand?  Can your "good" hand beat your opponent's "good" hand?  
+
+
+
+
 
