@@ -741,7 +741,7 @@ You don't "lose" at 0 HP because there is a remote possibility that you might be
 
 If the cheater attempts to grief you by refusing to commit or reveal, there is a forceEnd() function that the most recent committing/revealing player can call if their opponent has taken no action for a certain amount of blocks.
 
-Therefore, it is impossible to lose to a cheater or griefer; you would simply need to be patient and keep commiting moves, or call forceEnd() once their time is up.  At which point the cheater would lose money, in the form of the energy in their Crystal NFT, which must be staked to play the game.
+Therefore, it is impossible to lose to a cheater or griefer; you would simply need to be patient and keep commiting moves, or call forceEnd() once their time is up.  At which point the cheater would lose money, in the form of the energy in their Crystal NFT, which must be staked to play the game, and you would gain that money as a reward.
 
 Anyway, back to the subject at hand.  Balance.  The basic interplay is between Normal Attacks, Defensive Moves, and Power Attacks.  Normal attacks are cheap, costing little or no energy, but they are easily absorbed by Defensive Moves, which typically generate energy and do a small amount of damage to the attacker.
 
