@@ -731,7 +731,7 @@ Which reminds me, with the simultaneous nature of the combat, it's likely that m
 
 Right now, the winner will be determined by whoever's computer manages to declare victory faster.  But that's not very fun, or fair.  While I'm not going to do it right now, probably I will need to introduce a speed score that determines the order in which moves are executed.  Defensive moves would be the fastest by default.
 
-You might ask why the game can't end in a draw.  The reason is that you cannot "lose" when your HP is reduced to zero, you can only "win" when your opponent's HP is zero, and you can prove the validity of your hand.
+You might ask why the game can't end in a draw.  The reason is that you cannot _lose_ when your HP is reduced to zero, you can only _win_ when your opponent's HP is zero, and you can prove the validity of your hand.
 
 This is because the contract does not "know" what cards the player actually has.  It only has the hash that was committed by the oracle.  To declare victory, the presumptive winner must provide the values that generated that hash.  While these values can't be faked when proving against the hash, a cheating player may have attempted to play cards they didn't actually have in their hand.
 
