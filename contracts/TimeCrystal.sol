@@ -300,9 +300,11 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
     
         inGame[msg.sender] = false;
         hands[msg.sender] = bytes("");
+        currentOpponent[msg.sender] = address(0x0);
 
         inGame[opponent] = false;
         hands[opponent] = bytes("");
+        currentOpponent[opponent] = address(0x0);
 
         //Test
         testWin = msg.sender;
@@ -409,7 +411,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             // in the player's hand.
             bytes[6] memory cardList;
             bytes[] memory actionList = new bytes[](actionsLength);
-            // Must skip over the 20-digit password <- did this cause the break?
+           
             uint8 index = 20;
             for (uint8 i = 0; i < 6; i++) {
                 bytes memory newCard = new bytes(2);
@@ -612,10 +614,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             inQueue[player] = false;
             inGame[player] = false;
             hands[player] = bytes("");
+            currentOpponent[msg.sender] = address(0x0);
 
             inQueue[opponent] = false;
             inGame[opponent] = false;
             hands[opponent] = bytes("");
+            currentOpponent[opponent] = address(0x0);
+            
 
 
             //Test 
