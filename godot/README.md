@@ -699,5 +699,21 @@ https://github.com/Cactoidal/Time-Crystal/assets/115384394/88ef63b7-0cee-41d7-8d
 
 Goal is to eventually have animations to show the attacks.  But, after a quick resolution, the opponent's HP is reduced to zero, the game detects the win, and declares victory.  With that, the whole sequence can now be played through the game UI.
 
+## Day 23
+
+Some fixes are in order.
+
+First is to fix the pseudorandom generator.  At the moment the 5 numbers are generated in a pretty simplistic way that does not provide a good distribution (for example, the Laser card, i.e. index 0, will always appear).
+
+I also need to make a better effort at balancing the game; right now, everything is a 1-hit KO, which does not make for especially interesting matches.
+
+The commit-reveal phase also needs attention, as the game needs to check if the player's commit hash and cards have been updated _before_ it checks whether the opponent has committed/revealed.  Otherwise it will try to send transactions too quickly and break the sequence.
+
+In general the whole system needs to be more resilient, with transaction retries and better session management (in case the user loses power during a match).
+
+Which brings me to the other thing I want to do next: get this game running on Fuji, using my own local node as the RPC.  Being able to poll the node without rate limits would allow me to update the game at process speed, or even monitor smart contract events directly using ethers-rs' EventStream.
+
+I've done a simple test in Godot, again pinging my Fuji node to get the current block number, this time using Godot's [HTTPRequest](https://docs.godotengine.org/en/3.5/classes/class_httprequest.html), and everything seems good to go.  Once I've incorporated some of the changes I mentioned above, I'll deploy on Fuji and try running the game.
+
 
 
