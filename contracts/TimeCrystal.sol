@@ -17,7 +17,7 @@ import "./IERC677.sol";
 contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC721 {
     using FunctionsRequest for FunctionsRequest.Request;
 
-    // SEPOLIA
+ 
 
     bytes32 public donId;
     address private forwarder;
@@ -27,19 +27,36 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
     string public source;
     FunctionsRequest.Location public secretsLocation;
     bytes encryptedSecretsReference;
-   
-    uint64 constant subscriptionId = 1686;
+
+    // FUJI
+
+    uint64 constant subscriptionId = 1573;
     uint32 constant callbackGasLimit = 300000;
 
-    uint64 constant vrf_subscriptionId = 7168;
+    uint64 constant vrf_subscriptionId = 806;
     address s_owner;
     VRFCoordinatorV2Interface COORDINATOR;
-    address vrfCoordinator = 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625;
-    bytes32 s_keyHash = 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c;
+    address vrfCoordinator = 0x2eD832Ba664535e5886b75D64C46EB9a228C2610;
+    bytes32 s_keyHash = 0x354d2f95da55398f44b7cff77da56283d9c6c829a4bdf1bbcaf2ad6a4d081f61;
     uint16 constant requestConfirmations = 3;
     uint32 constant vrfCallbackGasLimit = 500000;
 
-    address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
+    address LINKToken = 0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846;
+
+    // SEPOLIA
+   
+    //uint64 constant subscriptionId = 1686;
+    //uint32 constant callbackGasLimit = 300000;
+
+    //uint64 constant vrf_subscriptionId = 7168;
+    //address s_owner;
+    //VRFCoordinatorV2Interface COORDINATOR;
+    //address vrfCoordinator = 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625;
+    //bytes32 s_keyHash = 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c;
+    //uint16 constant requestConfirmations = 3;
+    //uint32 constant vrfCallbackGasLimit = 500000;
+
+    //address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
   
     constructor(address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(vrfCoordinator) ConfirmedOwner(msg.sender) ERC721("Test", "TEST") {
         donId = _donId;
@@ -47,7 +64,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         secretsLocation = _location;
         encryptedSecretsReference = _reference;
         mintOver = block.number + 10000;
-        COORDINATOR = VRFCoordinatorV2Interface(0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625);
+        COORDINATOR = VRFCoordinatorV2Interface(0x2eD832Ba664535e5886b75D64C46EB9a228C2610);
         for (uint z = 0; z < _cards.length; z++) {
             cards[Strings.toString(_cards[z].cardNumber)] = _cards[z];
         }
