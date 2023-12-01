@@ -757,5 +757,17 @@ https://github.com/Cactoidal/Time-Crystal/assets/115384394/3093ef4d-42b6-4c57-81
 
 Game is communicating with the local Fuji node.  Everything seems to be in order.  I have now about a week to tinker with things and improve the look of the game (and perhaps better organize the code).
 
+## Day 24
+
+I've found an (exceptionally beautiful shader)[https://godotshaders.com/shader/star-nest-2/] made by one Lyagva on GodotShaders, who ported it from a [work on shadertoy](https://www.shadertoy.com/view/XlfGRj) created by a user named Kali.
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/85e4ae94-85f8-4eef-9078-5d68ca57beb7
+
+Makes a great background for the matchmaking "waiting room."  Which, I should add, the player spends much less time in than before now that I'm using Fuji - which is already very fast - and a local RPC to boot.
+
+The cards are very compact, but they contain all of the information needed to make decisions.  I'll probably revisit them again later.
+
+I do want to at least attempt to create 3D models of Avax-chan and Link-chan.  If that falls through, I'll fix up the Stable Diffusion sprites and remove their backgrounds.
+
 
 
