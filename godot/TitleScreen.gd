@@ -13,7 +13,7 @@ var my_header = "Content-Type: application/json"
 
 var rpc_list
 
-var time_crystal_contract = "0x1d6E0D2692f025377AADC0bAEDa282De879a07f4"
+var time_crystal_contract = "0x6305A40371d5371fE181A9138b05873C002d98d5"
 
 var chainlink_contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789"
 
@@ -525,7 +525,6 @@ func check_commit_attempted(result, response_code, headers, body):
 				check_commit(game_board.opponent)
 			else:
 				# Then, detect opponent commit
-				print("entering reveal phase")
 				game_board.in_commit_phase = false
 				game_board.player_commit_found = false
 				game_board.in_reveal_phase = true
@@ -781,11 +780,11 @@ func has_seeds_remaining_attempted(result, response_code, headers, body):
 	if response_code == 200:
 		var raw_response = get_result.duplicate()["result"]
 		var has_seeds = TimeCrystal.decode_bool(raw_response)
-		if has_seeds:
+		if has_seeds == "true":
 			main_hub.finish_registering()
 		else:
-			#main_hub.get_node("EmbarkMenu/RegistrationConfirm").visible = true
-			pass
+			main_hub.get_node("EmbarkMenu/RegistrationConfirm").visible = true
+			
 			
 
 
