@@ -301,10 +301,12 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         inGame[msg.sender] = false;
         hands[msg.sender] = bytes("");
         currentOpponent[msg.sender] = address(0x0);
+        hashCommit[msg.sender] = bytes("");
 
         inGame[opponent] = false;
         hands[opponent] = bytes("");
         currentOpponent[opponent] = address(0x0);
+        hashCommit[opponent] = bytes("");
 
         //Test
         testWin = msg.sender;
@@ -347,6 +349,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             }
         else {
             s_lastError = err;
+            inQueue[player] = false;
         }
         emit RequestFulfilled(requestId, response);
   }
@@ -615,11 +618,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             inGame[player] = false;
             hands[player] = bytes("");
             currentOpponent[msg.sender] = address(0x0);
+            hashCommit[msg.sender] = bytes("");
 
             inQueue[opponent] = false;
             inGame[opponent] = false;
             hands[opponent] = bytes("");
             currentOpponent[opponent] = address(0x0);
+            hashCommit[opponent] = bytes("");
             
 
 
@@ -682,11 +687,12 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         uri = string.concat(uri, Strings.toString(vrfSeeds[_crystal].length));
         uri = string.concat(uri, '"');
         uri = string.concat(uri, "},{");
-        uri = string.concat(uri, '"trait_type":"Phase","value":');
-        uri = string.concat(uri, '"');
-        uri = string.concat(uri, Strings.toString(getTimePhase(_crystal)));
-        uri = string.concat(uri, '"');
-        uri = string.concat(uri, "},{");
+        // temp commented out for size limit
+        //uri = string.concat(uri, '"trait_type":"Phase","value":');
+        //uri = string.concat(uri, '"');
+        //uri = string.concat(uri, Strings.toString(getTimePhase(_crystal)));
+        //uri = string.concat(uri, '"');
+        //uri = string.concat(uri, "},{");
         uri = string.concat(uri, '"trait_type":"EXP","value":');
         uri = string.concat(uri, '"');
         uri = string.concat(uri, Strings.toString(crystalEXP[_crystal]));
