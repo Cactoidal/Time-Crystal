@@ -735,7 +735,7 @@ You might ask why the game can't end in a draw.  The reason is that you cannot _
 
 This is because the contract does not "know" what cards the player actually has.  It only has the hash that was committed by the oracle.  To declare victory, the presumptive winner must provide the values that generated that hash.  While these values can't be faked when proving against the hash, a cheating player may have attempted to play cards they didn't actually have in their hand.
 
-Chainlink Automation's job is to take the winner's "action string" and compare it to the values that were just supplied.  If there are cards in the action string that don't match the values, that means the player edited their copy of the game and tried to cheat.  Automation will detect this, and the cheater's opponent will win instead.
+Chainlink Automation's job is to take the winner's "action string" and compare it to the values that were just proven againt the hash.  If there are cards in the action string that don't match the values, that means the player edited their copy of the game and tried to cheat.  Automation will detect this, and the cheater's opponent will win instead.
 
 You don't "lose" at 0 HP because there is a remote possibility that you might be facing a cheater.  In that situation, the cheater can never win through conventional means, because they will be caught by Automation.  But they might expect you to quit.  Instead, all you need to do is keep hitting them until their HP is also zero, and then you can simply declare victory.
 
