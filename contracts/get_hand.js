@@ -16,13 +16,13 @@
 
 //https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey
 function str2ab(str) {
-    const buf = new ArrayBuffer(str.length);
-    const bufView = new Uint8Array(buf);
-    for (let i = 0, strLen = str.length; i < strLen; i++) {
-     bufView[i] = str.charCodeAt(i);
-    }
-   return buf;
+  const buf = new ArrayBuffer(str.length);
+  const bufView = new Uint8Array(buf);
+  for (let i = 0, strLen = str.length; i < strLen; i++) {
+   bufView[i] = str.charCodeAt(i);
   }
+ return buf;
+}
 
 
 // Get the DON Private RSA key.
@@ -32,16 +32,16 @@ const binaryDONRSAString = atob(secrets.privateRSA);
 const binaryDONRSAKey = str2ab(binaryDONRSAString);
 
 const decryption_key = await crypto.subtle.importKey(
-    "pkcs8",
-   binaryDONRSAKey,
-    {
-        name: "RSA-OAEP",
-        //not secure!
-        hash: "SHA-1",
-      },
-    true,
-    ["decrypt"],
-  );
+  "pkcs8",
+ binaryDONRSAKey,
+  {
+      name: "RSA-OAEP",
+      //not secure!
+      hash: "SHA-1",
+    },
+  true,
+  ["decrypt"],
+);
 
 
 
@@ -51,23 +51,23 @@ const binaryPlayerKey = atob(args[0]);
 const binaryPlayerKeyBytes = str2ab(binaryPlayerKey);
 
 const playerBuffer = await crypto.subtle.decrypt(
-  { name: "RSA-OAEP" },
-  decryption_key,
-  binaryPlayerKeyBytes,
+{ name: "RSA-OAEP" },
+decryption_key,
+binaryPlayerKeyBytes,
 );
 
 const playerKey = await crypto.subtle.importKey(
-    "raw",
-    playerBuffer,
-    "AES-CBC",
-    true,
-    ["encrypt", "decrypt"],
-  );
+  "raw",
+  playerBuffer,
+  "AES-CBC",
+  true,
+  ["encrypt", "decrypt"],
+);
 
 
 
 // Get the encrypted PLAYER secret and decrypt it with the key and iv.
-  
+
 const binaryPlayerSecrets = atob(args[1]);
 const binaryPlayerSecretsBytes= str2ab(binaryPlayerSecrets);
 
@@ -75,9 +75,9 @@ const binaryIv = atob(args[2]);
 const binaryIvBytes = str2ab(binaryIv);
 
 const decryptedSecrets = await crypto.subtle.decrypt(
-  { name: "AES-CBC", iv: binaryIvBytes },
-  playerKey,
-  binaryPlayerSecretsBytes,
+{ name: "AES-CBC", iv: binaryIvBytes },
+playerKey,
+binaryPlayerSecretsBytes,
 );
 
 let decoder = new TextDecoder
@@ -86,8 +86,8 @@ let secretPhrase = decoder.decode(decryptedSecrets)
 
 // Check the length
 if (secretPhrase.length != 20) {
-  // Return deliberate error
-  return Functions.encodeUint256("error")
+// Return deliberate error
+return Functions.encodeUint256("error")
 }
 
 
@@ -96,23 +96,23 @@ if (secretPhrase.length != 20) {
 var csprngArray = secrets.csprngKey.split(",")
 
 for (let i = 0; i < 16; i++) {
-    csprngArray[i] = parseInt(csprngArray[i])
+  csprngArray[i] = parseInt(csprngArray[i])
 }
 
 const rawcsprngKey = Uint8Array.from(csprngArray)
 
 const csprngKey = await crypto.subtle.importKey(
-    "raw",
-    rawcsprngKey.buffer,
-    "AES-CTR",
-    true,
-    ["encrypt", "decrypt"],
-  );
+  "raw",
+  rawcsprngKey.buffer,
+  "AES-CTR",
+  true,
+  ["encrypt", "decrypt"],
+);
 
 
 // Generate secret randomness and draw 5 deck cards + default Attack card.
 
-const seed = args[3]
+var seed = args[3]
 // from user-supplied Counter
 let base64Counter = args[4]
 // from nonceCounter
@@ -132,16 +132,16 @@ for (var k = 0; k < 5; k++) {
 
 // Generate raw pseudorandom bytes
 const encrypted = await crypto.subtle.encrypt(
-    {name: "AES-CTR", iv, counter, length},
-    csprngKey,
-    new TextEncoder().encode(seed),
-  );
+  {name: "AES-CTR", iv, counter, length},
+  csprngKey,
+  new TextEncoder().encode(seed),
+);
 
 // Convert pseudorandom bytes into integer
 let number_array = new Uint8Array(encrypted)
 let secret_value = 0;
 for (var i = number_array.length - 1; i >= 0; i--) {
-    secret_value = (secret_value) + number_array[i];
+  secret_value = (secret_value) + number_array[i];
 }
 // Use integer as next seed
 seed = secret_value
