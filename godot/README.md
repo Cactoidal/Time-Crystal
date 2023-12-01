@@ -763,13 +763,13 @@ I've found an [exceptionally beautiful shader](https://godotshaders.com/shader/s
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/85e4ae94-85f8-4eef-9078-5d68ca57beb7
 
-Makes a great background for the matchmaking "waiting room."  Which, I should add, the player spends much less time in than before now that I'm using Fuji - which is already very fast - and a local RPC to boot.
+Makes a great background for the matchmaking "waiting room."  Which, I should add, the player spends much less time in now that I'm using Fuji - which is already very fast - and a local RPC to boot.
 
 The cards are very compact, but they contain all of the information needed to make decisions.  I'll probably revisit them again later.
 
 I do want to at least attempt to create 3D models of Avax-chan and Link-chan.  If that falls through, I'll fix up the Stable Diffusion sprites and remove their backgrounds.
 
-With the vastly improved new speed of transactions, I also want to create an animation sequence for player actions.
+With the vastly improved speed of transactions, I also want to create an animation sequence for player actions.
 
 
 
