@@ -751,9 +751,11 @@ A player attempting to go for a KO with a Power Attack may themselves end up get
 
 In practice, I don't know what the optimal strategies will be and what players will favor most.  I would imagine that with the current design quite a bit comes down to the luck of the draw.
 
-But that should be part of the fun - can you win with a bad hand?  Can your "good" hand beat your opponent's "good" hand?  
+But that should be part of the fun - can you win with a bad hand?  Can your "good" hand beat your opponent's "good" hand?
 
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/3093ef4d-42b6-4c57-8138-935dac704639
 
+Game is communicating with the local Fuji node.  Everything seems to be in order.  I have now about a week to tinker with things and improve the look of the game (and perhaps better organize the code).
 
 
 
