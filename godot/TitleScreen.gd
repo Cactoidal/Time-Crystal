@@ -6,16 +6,24 @@ var user_LINK_balance = "0"
 
 var sepolia_id = 11155111
 
+var fuji_id = 43113
+
 var sepolia_rpc = "https://ethereum-sepolia.publicnode.com"
 
-var my_rpc = "127.0.0.1:9650/ext/bc/C/rpc"
+var my_rpc = "http://127.0.0.1:9650/ext/bc/C/rpc"
 var my_header = "Content-Type: application/json"
 
 var rpc_list
 
-var time_crystal_contract = "0x6305A40371d5371fE181A9138b05873C002d98d5"
 
-var chainlink_contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789"
+
+#FUJI
+var time_crystal_contract = "0x24a878dD7b154547A291F756048f29693aE2F073"
+var chainlink_contract = "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846"
+
+#SEPOLIA
+#var time_crystal_contract = "0x6305A40371d5371fE181A9138b05873C002d98d5"
+#var chainlink_contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789"
 
 var signed_data = ""
 
@@ -319,8 +327,8 @@ func get_balance():
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_getBalance", "params": [user_address, "latest"], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -349,8 +357,8 @@ func get_tx_count():
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_getTransactionCount", "params": [user_address, "latest"], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -379,8 +387,8 @@ func estimate_gas():
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_gasPrice", "params": [], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -411,7 +419,7 @@ func register_player():
 	file2.open("user://keystore", File.READ)
 	var content = file2.get_buffer(32)
 	file2.close()
-	TimeCrystal.register_player_key(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, aes_key, chainlink_contract, self)
+	TimeCrystal.register_player_key(content, fuji_id, time_crystal_contract, my_rpc, gas_price, tx_count, aes_key, chainlink_contract, self)
 	
 	
 func join_matchmaking():
@@ -424,7 +432,7 @@ func join_matchmaking():
 	file2.open("user://keystore", File.READ)
 	var content = file2.get_buffer(32)
 	file2.close()
-	TimeCrystal.get_hand(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, aes_key, password, self)
+	TimeCrystal.get_hand(content, fuji_id, time_crystal_contract, my_rpc, gas_price, tx_count, aes_key, password, self)
 
 func commit_action():
 	var secret = tx_parameter[0]
@@ -432,7 +440,7 @@ func commit_action():
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	TimeCrystal.commit_action(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, secret, self)
+	TimeCrystal.commit_action(content, fuji_id, time_crystal_contract, my_rpc, gas_price, tx_count, secret, self)
 	game_board.get_node("Scroll/AwaitingOpponent").text = "RESOLVING...						RESOLVING...						RESOLVING...						RESOLVING...						"
 
 func reveal_action():
@@ -442,7 +450,7 @@ func reveal_action():
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	TimeCrystal.reveal_action(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, password, action, self)
+	TimeCrystal.reveal_action(content, fuji_id, time_crystal_contract, my_rpc, gas_price, tx_count, password, action, self)
 
 func declare_victory():
 	var password_cards = tx_parameter[0]
@@ -450,7 +458,7 @@ func declare_victory():
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	TimeCrystal.declare_victory(content, sepolia_id, time_crystal_contract, sepolia_rpc, gas_price, tx_count, password_cards, self)
+	TimeCrystal.declare_victory(content, fuji_id, time_crystal_contract, my_rpc, gas_price, tx_count, password_cards, self)
 
 func check_player_cards():
 	var http_request = HTTPRequest.new()
@@ -462,12 +470,12 @@ func check_player_cards():
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.get_player_cards(content, sepolia_id, time_crystal_contract, sepolia_rpc)
+	var calldata = TimeCrystal.get_player_cards(content, fuji_id, time_crystal_contract, my_rpc)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -499,12 +507,12 @@ func check_commit(_address):
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.check_commit(content, sepolia_id, time_crystal_contract, sepolia_rpc, _address)
+	var calldata = TimeCrystal.check_commit(content, fuji_id, time_crystal_contract, my_rpc, _address)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -567,12 +575,12 @@ func get_opponent_actions(opponent_address):
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.see_actions(content, sepolia_id, time_crystal_contract, sepolia_rpc, opponent_address)
+	var calldata = TimeCrystal.see_actions(content, fuji_id, time_crystal_contract, my_rpc, opponent_address)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -598,12 +606,12 @@ func get_player_actions():
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.see_actions(content, sepolia_id, time_crystal_contract, sepolia_rpc, user_address)
+	var calldata = TimeCrystal.see_actions(content, fuji_id, time_crystal_contract, my_rpc, user_address)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -626,12 +634,12 @@ func get_opponent():
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.get_opponent(content, sepolia_id, time_crystal_contract, sepolia_rpc)
+	var calldata = TimeCrystal.get_opponent(content, fuji_id, time_crystal_contract, my_rpc)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -659,12 +667,12 @@ func get_opponent_hash_monster(opponent_address):
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.get_hash_monster(content, sepolia_id, time_crystal_contract, sepolia_rpc, opponent_address)
+	var calldata = TimeCrystal.get_hash_monster(content, fuji_id, time_crystal_contract, my_rpc, opponent_address)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -697,12 +705,12 @@ func get_player_hash_monster():
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.get_hash_monster(content, sepolia_id, time_crystal_contract, sepolia_rpc, user_address)
+	var calldata = TimeCrystal.get_hash_monster(content, fuji_id, time_crystal_contract, my_rpc, user_address)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -735,12 +743,12 @@ func check_won():
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.test_win(content, sepolia_id, time_crystal_contract, sepolia_rpc)
+	var calldata = TimeCrystal.test_win(content, fuji_id, time_crystal_contract, my_rpc)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -763,12 +771,12 @@ func has_seeds_remaining():
 	file.open("user://keystore", File.READ)
 	var content = file.get_buffer(32)
 	file.close()
-	var calldata = TimeCrystal.has_seeds_remaining(content, sepolia_id, time_crystal_contract, sepolia_rpc, user_address)
+	var calldata = TimeCrystal.has_seeds_remaining(content, fuji_id, time_crystal_contract, my_rpc, user_address)
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
 	
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))
@@ -799,8 +807,8 @@ func set_signed_data(var signature):
 	
 	var tx = {"jsonrpc": "2.0", "method": "eth_sendRawTransaction", "params": [signed_data], "id": 7}
 	print(signed_data)
-	var error = http_request.request(sepolia_rpc, 
-	[], 
+	var error = http_request.request(my_rpc, 
+	[my_header], 
 	true, 
 	HTTPClient.METHOD_POST, 
 	JSON.print(tx))

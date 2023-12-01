@@ -64,7 +64,7 @@ func _ready():
 	#var bytes = Crypto.new()
 	password = "hello".sha256_text().left(20)
 	action_password = password
-	action_id = "10"
+	#action_id = "99"
 	
 	
 	#password = (String(bytes.generate_random_bytes(16))).sha256_text().left(20)
