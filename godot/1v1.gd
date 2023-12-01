@@ -25,6 +25,8 @@ var guessHash
 var action_password
 var action_id
 
+
+
 # stats
 
 var player_max_hp
@@ -96,6 +98,9 @@ func commit_action(action):
 	in_commit_phase = true
 
 # * #
+func did_player_commit():
+	ethers.check_commit(ethers.user_address)
+	
 func did_opponent_commit():
 	ethers.check_commit(opponent)
 
@@ -145,6 +150,7 @@ var battle_start_sequence = false
 var battle_start_timer = 60
 var battle_ongoing = false
 var fade_in_battler_stats = false
+var player_commit_found = false
 var in_commit_phase = false
 var in_reveal_phase = false
 
@@ -235,16 +241,13 @@ func _process(delta):
 			if battle_ongoing == true:
 				print("waiting for cards")
 			
-			if in_commit_phase == true:
-				did_opponent_commit()
-			
-			if in_reveal_phase == true:
-				did_opponent_commit()
+			if in_commit_phase == true || in_reveal_phase == true:
+				if player_commit_found == true:
+					did_opponent_commit()
+				else:
+					did_player_commit()
 				
 				
-				
-			
-			
 			check_timer = 10
 	
 	if started == true:
@@ -373,28 +376,28 @@ func end_game():
 #add the correct cost/gain/counter values
 func get_card_info(card_id):
 	match card_id:
-		10: return {"id": "10", "type": "normal", "name": "Laser", "attack": 20, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		11: return {"id": "11", "type": "normal", "name": "Energy Wave", "attack": 20, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		12: return {"id": "12", "type": "normal", "name": "Pulsar", "attack": 30, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		13: return {"id": "13", "type": "normal", "name": "Bonk", "attack": 20, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		14: return {"id": "14", "type": "normal", "name": "Irradiate", "attack": 25, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		15: return {"id": "15", "type": "normal", "name": "Cold Glow", "attack": 15, "defense": 15, "cost": 0, "gain": 0, "counter_bonus": 0}
-		16: return {"id": "16", "type": "normal", "name": "Ice Barrier", "attack": 20, "defense": 20, "cost": 0, "gain": 0, "counter_bonus": 0}
-		17: return {"id": "17", "type": "normal", "name": "Sun Guard", "attack": 20, "defense": 20, "cost": 0, "gain": 0, "counter_bonus": 0}
-		18: return {"id": "18", "type": "normal", "name": "Crunch", "attack": 25, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		19: return {"id": "19", "type": "normal", "name": "Rainbow Shroud", "attack": 20, "defense": 20, "cost": 0, "gain": 0, "counter_bonus": 0}
-		20: return {"id": "20", "type": "normal", "name": "Aurora", "attack": 20, "defense": 20, "cost": 0, "gain": 0, "counter_bonus": 0}
-		21: return {"id": "21", "type": "power", "name": "Power Beam", "attack": 20, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		22: return {"id": "22", "type": "power", "name": "Rust", "attack": 20, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		23: return {"id": "23", "type": "normal", "name": "Crystallize", "attack": 20, "defense": 20, "cost": 0, "gain": 0, "counter_bonus": 0}
-		24: return {"id": "24", "type": "normal", "name": "Disrupt", "attack": 20, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		25: return {"id": "25", "type": "power", "name": "Explosion", "attack": 30, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		26: return {"id": "26", "type": "normal", "name": "Crystal Laser", "attack": 30, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		27: return {"id": "27", "type": "power", "name": "Distintegrate", "attack": 30, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		28: return {"id": "28", "type": "normal", "name": "Void Shield", "attack": 20, "defense": 30, "cost": 0, "gain": 0, "counter_bonus": 0}
-		29: return {"id": "29", "type": "normal", "name": "Seeker Missile", "attack": 30, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
-		30: return {"id": "30", "type": "normal", "name": "Prismatic Cloud", "attack": 20, "defense": 20, "cost": 0, "gain": 0, "counter_bonus": 0}
-		99: return {"id": "99", "type": "normal", "name": "Attack", "attack": 20, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
+		10: return {"id": "10", "type": "normal", "name": "Laser", "attack": 1, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 2}
+		11: return {"id": "11", "type": "normal", "name": "Energy Wave", "attack": 1, "defense": 0, "cost": 0, "gain": 1, "counter_bonus": 0}
+		12: return {"id": "12", "type": "normal", "name": "Pulsar", "attack": 1, "defense": 0, "cost": 1, "gain": 0, "counter_bonus": 5}
+		13: return {"id": "13", "type": "normal", "name": "Bonk", "attack": 1, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 2}
+		14: return {"id": "14", "type": "normal", "name": "Irradiate", "attack": 1, "defense": 0, "cost": 0, "gain": 1, "counter_bonus": 0}
+		15: return {"id": "15", "type": "normal", "name": "Cold Glow", "attack": 0, "defense": 1, "cost": 0, "gain": 1, "counter_bonus": 0}
+		16: return {"id": "16", "type": "normal", "name": "Ice Barrier", "attack": 0, "defense": 1, "cost": 0, "gain": 1, "counter_bonus": 0}
+		17: return {"id": "17", "type": "normal", "name": "Sun Guard", "attack": 1, "defense": 1, "cost": 1, "gain": 0, "counter_bonus": 2}
+		18: return {"id": "18", "type": "normal", "name": "Crunch", "attack": 2, "defense": 0, "cost": 1, "gain": 0, "counter_bonus": 4}
+		19: return {"id": "19", "type": "normal", "name": "Rainbow Shroud", "attack": 1, "defense": 2, "cost": 2, "gain": 1, "counter_bonus": 1}
+		20: return {"id": "20", "type": "normal", "name": "Aurora", "attack": 1, "defense": 2, "cost": 1, "gain": 0, "counter_bonus": 0}
+		21: return {"id": "21", "type": "power", "name": "Power Beam", "attack": 1, "defense": 0, "cost": 2, "gain": 0, "counter_bonus": 2}
+		22: return {"id": "22", "type": "power", "name": "Rust", "attack": 1, "defense": 1, "cost": 2, "gain": 0, "counter_bonus": 0}
+		23: return {"id": "23", "type": "power", "name": "Crystallize", "attack": 1, "defense": 1, "cost": 2, "gain": 0, "counter_bonus": 0}
+		24: return {"id": "24", "type": "power", "name": "Disrupt", "attack": 1, "defense": 0, "cost": 2, "gain": 0, "counter_bonus": 5}
+		25: return {"id": "25", "type": "power", "name": "Explosion", "attack": 2, "defense": 0, "cost": 3, "gain": 0, "counter_bonus": 0}
+		26: return {"id": "26", "type": "power", "name": "Crystal Laser", "attack": 1, "defense": 1, "cost": 2, "gain": 0, "counter_bonus": 0}
+		27: return {"id": "27", "type": "power", "name": "Distintegrate", "attack": 2, "defense": 0, "cost": 3, "gain": 0, "counter_bonus": 0}
+		28: return {"id": "28", "type": "power", "name": "Void Shield", "attack": 1, "defense": 2, "cost": 3, "gain": 0, "counter_bonus": 2}
+		29: return {"id": "29", "type": "power", "name": "Seeker Missile", "attack": 2, "defense": 0, "cost": 3, "gain": 0, "counter_bonus": 3}
+		30: return {"id": "30", "type": "energy", "name": "Energy Charge", "attack": 0, "defense": 0, "cost": 0, "gain": 3, "counter_bonus": 0}
+		99: return {"id": "99", "type": "normal", "name": "Attack", "attack": 1, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
 		
 func get_battler_info(battler_id):
 	match battler_id:
