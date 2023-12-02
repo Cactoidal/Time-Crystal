@@ -771,5 +771,12 @@ I do want to at least attempt to create 3D models of Avax-chan and Link-chan.  I
 
 With the vastly improved speed of transactions, I also want to create an animation sequence for player actions.
 
+## Day 25
+
+Well, I feel slightly more proficient in Blender than I did before, but I have a lot to learn before I can model things like clothes and hair in a reasonable amount of time.  Character modeling is something I'd like to get into, but with about a week left in the hackathon, now is not the time.
+
+The benefit of using a 3D model is the ease with which they can be animated using an animation library (like Mixamo).  But while I could just use generic 3D models, I'd prefer to keep things thematic with our current battlers.  They are already cute and well put-together, and even if they are static, I think they would look better than some completely unrelated characters.
+
+Which means I can spend some time now implementing the "action sequences" that take place after both players have committed and revealed their moves.  Ideally, this would involve some variable camera motion (to prevent repetitive sequences) and a quick exchange of attacks/defenses, the display of damage numbers, and an indicator that the next commit phase has started (or that the game is over).
 
 
