@@ -2,7 +2,7 @@
 
 [ext_resource path="res://CardFlip.gd" type="Script" id=1]
 [ext_resource path="res://00003-2597467123.png" type="Texture" id=2]
-[ext_resource path="res://power_card_base.png" type="Texture" id=3]
+[ext_resource path="res://normal_card.png" type="Texture" id=3]
 
 [sub_resource type="ViewportTexture" id=9]
 viewport_path = NodePath("TextureRect/Viewport")
@@ -108,7 +108,7 @@ margin_bottom = 40.0
 mouse_default_cursor_shape = 2
 
 [node name="Viewport" type="Viewport" parent="TextureRect"]
-size = Vector2( 300, 300 )
+size = Vector2( 300, 200 )
 own_world = true
 transparent_bg = true
 render_target_v_flip = true
@@ -154,12 +154,6 @@ skeleton = NodePath("../../../..")
 size = Vector2( 200, 200 )
 render_target_v_flip = true
 
-[node name="ColorRect" type="ColorRect" parent="TextureRect/Viewport/Card/Back/Viewport"]
-visible = false
-margin_right = 1000.0
-margin_bottom = 1000.0
-color = Color( 0.176471, 1, 0.00392157, 1 )
-
 [node name="TextureRect" type="TextureRect" parent="TextureRect/Viewport/Card/Back/Viewport"]
 margin_right = 40.0
 margin_bottom = 40.0
@@ -167,20 +161,42 @@ rect_scale = Vector2( 1, 1.8 )
 texture = ExtResource( 3 )
 
 [node name="Name" type="Label" parent="TextureRect/Viewport/Card/Back/Viewport"]
-margin_left = 35.0
-margin_top = 70.0
-margin_right = 73.0
-margin_bottom = 84.0
+margin_left = 15.0
+margin_top = 33.0
+margin_right = 53.0
+margin_bottom = 47.0
 rect_scale = Vector2( 2.5, 2.5 )
 text = "Name"
 
+[node name="ATKDEF" type="Label" parent="TextureRect/Viewport/Card/Back/Viewport"]
+margin_left = 23.0
+margin_top = 120.0
+margin_right = 102.0
+margin_bottom = 134.0
+rect_scale = Vector2( 2, 2 )
+text = "ATK1 | DEF1"
+
+[node name="Extra" type="Label" parent="TextureRect/Viewport/Card/Back/Viewport"]
+margin_left = 23.0
+margin_top = 160.0
+margin_right = 102.0
+margin_bottom = 174.0
+rect_scale = Vector2( 2, 2 )
+text = "IGNORE DEF"
+
 [node name="Energy" type="Label" parent="TextureRect/Viewport/Card/Back/Viewport"]
-margin_left = 160.0
-margin_top = 15.0
-margin_right = 198.0
-margin_bottom = 46.0
+margin_left = 166.0
+margin_top = 8.0
+margin_right = 204.0
+margin_bottom = 39.0
 rect_scale = Vector2( 2.5, 2.5 )
 text = "0"
+
+[node name="Overlay" type="ColorRect" parent="TextureRect/Viewport/Card/Back/Viewport"]
+visible = false
+margin_right = 200.0
+margin_bottom = 200.0
+color = Color( 0, 0, 0, 0.45098 )
 
 [node name="Tween" type="Tween" parent="."]
 

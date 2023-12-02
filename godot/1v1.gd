@@ -266,7 +266,6 @@ func _process(delta):
 			action_prompt_pause = 1.2
 			print("battle started")
 			for card in $Cards.get_children():
-				card.activated = true
 				card.glow(player_energy)
 		
 	if check_timer > 0:
@@ -424,7 +423,7 @@ func resolve_actions(opponent_actions):
 		$ActPrompt.modulate.a = 1
 		$Scroll/AwaitingOpponent.text = "CHOOSE ACTION...						CHOOSE ACTION...						CHOOSE ACTION...						CHOOSE ACTION...						"
 		for card in $Cards.get_children():
-			card.activated = true
+			card.glow(player_energy)
 	
 func end_game():
 	ethers.fade("return_to_world")

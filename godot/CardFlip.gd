@@ -16,6 +16,14 @@ var ethers
 func _ready():
 	$TextureRect/Viewport/Card/Back/Viewport/Name.text = card_info["name"]
 	$TextureRect/Viewport/Card/Back/Viewport/Energy.text = String(card_info["cost"])
+	$TextureRect/Viewport/Card/Back/Viewport/ATKDEF.text = "ATK" + String(card_info["attack"]) + " | DEF" + String(card_info["defense"])
+	if card_info["type"] == "power":
+		$TextureRect/Viewport/Card/Back/Viewport/Extra.text = "IGNORE DEF"
+		$TextureRect/Viewport/Card/Back/Viewport/TextureRect.texture = load("res://power_card.png")
+	elif card_info["gain"] > 0:
+		$TextureRect/Viewport/Card/Back/Viewport/Extra.text = "ENERGY +" + String(card_info["gain"])
+	elif card_info["counter_bonus"] > 0:
+		$TextureRect/Viewport/Card/Back/Viewport/Extra.text = "COUNTER x" + String(card_info["counter_bonus"])
 	rect_position = Vector2(500,300)
 	$Tween.interpolate_property(self, "rect_position", self.rect_position, card_destination, 4.2, Tween.TRANS_QUAD, Tween.EASE_OUT, 0)
 	$Tween.start()
@@ -29,6 +37,11 @@ func _process(delta):
 	if $TextureRect/Viewport/Card.rotation.y < 3.13:
 		$TextureRect/Viewport/Card.rotate_y(0.01)
 	
+	if activated == true:
+		$TextureRect/Viewport/Card/Back/Viewport/Overlay.visible = false
+	else:
+		$TextureRect/Viewport/Card/Back/Viewport/Overlay.visible = true
+	
 	if test_time > 0:
 		test_time -= delta
 		if test_time <= 0:
@@ -39,7 +52,7 @@ func _process(delta):
 
 
 var activated = false
-func _on_TextureButton_pressed():
+func _on_TextureButton_pressed():	
 	if activated == true:
 		$TextureRect/Confirm.visible = true
 		for card in get_parent().get_children():
@@ -59,7 +72,9 @@ func _on_Cancel_pressed():
 
 func glow(energy):
 	if energy >= card_info["cost"]:
-		print("playable")
+		activated = true
+	else:
+		activated = false
 
 
 func _on_Confirm_mouse_entered():

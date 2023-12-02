@@ -489,6 +489,7 @@ func check_player_cards_attempted(result, response_code, headers, body):
 		var target_hash = TimeCrystal.decode_bytes(raw_response).substr(8).trim_suffix(")")
 		print(target_hash)
 		if target_hash.length() > 3:
+			game_board.get_hash_monster()
 			game_board.get_node("TargetHash").text = "Target Hash:\n" + target_hash
 			game_board.target_hash = target_hash
 			game_board.extract_hand()
