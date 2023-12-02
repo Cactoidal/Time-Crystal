@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://world_rotate.gd" type="Script" id=1]
 [ext_resource path="res://1v1.gd" type="Script" id=2]
@@ -6,6 +6,105 @@
 [ext_resource path="res://avaxchan3D.png" type="Texture" id=4]
 [ext_resource path="res://TickerTextLabel.gd" type="Script" id=5]
 [ext_resource path="res://linkchan3D.png" type="Texture" id=6]
+
+[sub_resource type="Shader" id=1]
+code = "// Star Nest by Pablo Roman Andrioli
+// Ported to Godot by Lyagva
+// License: MIT
+shader_type canvas_item;
+
+uniform int iterations = 17;
+uniform float formuparam = 0.53;
+
+uniform int volsteps = 10;
+uniform float stepsize = 0.1;
+
+uniform float zoom   = 0.800;
+uniform float tile   = 0.850;
+uniform float speed  = 0.001;
+
+uniform float brightness = 0.0015;
+uniform float darkmatter = 0.300;
+uniform float distfading = 0.730;
+uniform float saturation = 0.850;
+
+uniform vec2 rotation;
+uniform sampler2D coloramp;
+uniform float colorampMix = .5;
+uniform bool isColoramp;
+
+void fragment()
+{
+	vec2 fragCoord = FRAGCOORD.xy;
+	vec2 iResolution = 1.0 / SCREEN_PIXEL_SIZE;
+	float iTime = TIME;
+
+	//get coords and direction
+	vec2 uv=fragCoord.xy/iResolution.xy-.5;
+	uv.y*=iResolution.y/iResolution.x;
+	vec3 dir=vec3(uv*zoom,1.);
+	float time=iTime*speed+.25;
+
+	//mouse rotation
+	float a1 = .5 + rotation.x / iResolution.x * 2.;
+	float a2 = .8 + rotation.y / iResolution.y * 2.;
+	mat2 rot1 = mat2(vec2(cos(a1), sin(a1)), vec2(-sin(a1), cos(a1)));
+	mat2 rot2 = mat2(vec2(cos(a2), sin(a2)), vec2(-sin(a2), cos(a2)));
+	dir.xz *= rot1;
+	dir.xy *= rot2;
+	vec3 from = vec3(1.,.5,0.5);
+	from += vec3(time * 2., time, -2.);
+	from.xz *= rot1;
+	from.xy *= rot2;
+
+	//volumetric rendering
+	float s = 0.1, fade = 1.;
+	vec3 v=vec3(0.);
+	for (int r=0; r<volsteps; r++) {
+		vec3 p=from+s*dir*.5;
+		p = abs(vec3(tile)-mod(p,vec3(tile*2.))); // tiling fold
+		float pa,a=pa=0.;
+		for (int i=0; i<iterations; i++) {
+			p=abs(p)/dot(p,p)-formuparam; // the magic formula
+			a+=abs(length(p)-pa); // absolute sum of average change
+			pa=length(p);
+		}
+		float dm=max(0.,darkmatter-a*a*.001); //dark matter
+		a*=a*a; // add contrast
+		if (r>6) fade*=1.-dm; // dark matter, don't render near
+		//v+=vec3(dm,dm*.5,0.);
+		v+=fade;
+		v+=vec3(s,s*s,s*s*s*s)*a*brightness*fade; // coloring based on distance
+		fade*=distfading; // distance fading
+		s+=stepsize;
+	}
+	v=mix(vec3(length(v)),v,saturation); //color adjust
+
+	COLOR = vec4(v*.01,1.);
+
+	if (isColoramp) {
+		COLOR += texture(coloramp, vec2(v.r * .01, 0.)) * colorampMix;
+	}
+	COLOR += vec4(-0.4,0.02,0.45,0);
+
+}"
+
+[sub_resource type="ShaderMaterial" id=2]
+shader = SubResource( 1 )
+shader_param/iterations = 17
+shader_param/formuparam = 0.46
+shader_param/volsteps = 10
+shader_param/stepsize = 0.1
+shader_param/zoom = 0.8
+shader_param/tile = 0.85
+shader_param/speed = 0.001
+shader_param/brightness = 0.002
+shader_param/darkmatter = 0.3
+shader_param/distfading = 0.73
+shader_param/saturation = 0.85
+shader_param/rotation = Vector2( 0, 0 )
+shader_param/colorampMix = 0.5
+shader_param/isColoramp = false
 
 [node name="3DBoard" type="Spatial"]
 
@@ -119,10 +218,24 @@ transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 3.37068, 2.14875, -3.514
 billboard = 1
 texture = ExtResource( 4 )
 
+[node name="Damage" type="Label3D" parent="WorldRotate/Opponent"]
+transform = Transform( 3.8, 0, 0, 0, 3.8, 0, 0, 0, 3.8, 0.50629, -2.40523, 0.322136 )
+billboard = 1
+render_priority = 2
+modulate = Color( 1, 1, 1, 0 )
+text = "-100 HP"
+
 [node name="Player" type="Sprite3D" parent="WorldRotate"]
 transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 5.18208, 2.14875, 3.07704 )
 billboard = 1
 texture = ExtResource( 6 )
+
+[node name="Damage" type="Label3D" parent="WorldRotate/Player"]
+transform = Transform( 3.8, 0, 0, 0, 3.8, 0, 0, 0, 3.8, 0.0336695, -1.88333, 0.434915 )
+billboard = 1
+render_priority = 2
+modulate = Color( 1, 1, 1, 0 )
+text = "-100 HP"
 
 [node name="UI" type="Control" parent="."]
 margin_right = 40.0
@@ -337,9 +450,10 @@ margin_right = 492.0
 margin_bottom = 569.0
 
 [node name="Blue" type="ColorRect" parent="UI"]
+material = SubResource( 2 )
 margin_right = 1041.0
 margin_bottom = 618.0
-color = Color( 0, 0.215686, 1, 1 )
+color = Color( 0, 0.0784314, 0.356863, 1 )
 
 [node name="Battler" type="Sprite" parent="UI/Blue"]
 modulate = Color( 1, 1, 1, 0 )
@@ -508,6 +622,40 @@ margin_bottom = 41.0
 text = "Energy
 0"
 align = 1
+
+[node name="ActPrompt" type="ColorRect" parent="UI"]
+modulate = Color( 1, 1, 1, 0 )
+margin_left = 430.0
+margin_top = 237.0
+margin_right = 736.0
+margin_bottom = 310.0
+mouse_filter = 2
+color = Color( 0, 0, 0, 0.576471 )
+
+[node name="Label" type="Label" parent="UI/ActPrompt"]
+margin_left = 57.0
+margin_top = 19.0
+margin_right = 135.0
+margin_bottom = 33.0
+rect_scale = Vector2( 2.5, 2.5 )
+text = "Take Action!"
+
+[node name="Resolution" type="ColorRect" parent="UI"]
+modulate = Color( 1, 1, 1, 0 )
+margin_left = 430.0
+margin_top = 237.0
+margin_right = 736.0
+margin_bottom = 310.0
+mouse_filter = 2
+color = Color( 0, 0, 0, 0.576471 )
+
+[node name="Label" type="Label" parent="UI/Resolution"]
+margin_left = 57.0
+margin_top = 19.0
+margin_right = 135.0
+margin_bottom = 33.0
+rect_scale = Vector2( 2.5, 2.5 )
+text = "Resolution!"
 
 [node name="Overlay" type="ColorRect" parent="UI"]
 visible = false
