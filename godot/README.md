@@ -792,5 +792,12 @@ And speaking of crystals, while I won't be modeling characters this time, I can 
 
 There was a mysterious problem where certain faces of the crystal would disappear when the camera was looking at them, which was fixed by [recalculating Normals](https://www.youtube.com/watch?v=p4yDKp2MtlI).
 
+I'll use this fascinating [ice shader](https://godotshaders.com/shader/spatial-ice-shader/) to shine it up in-game:
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/c9c35b55-d0eb-45e5-97e0-b4e4f7810601
+
+
+
+
 
 
