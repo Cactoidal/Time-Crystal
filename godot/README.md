@@ -779,4 +779,11 @@ The benefit of using a 3D model is the ease with which they can be animated usin
 
 Which means I can spend some time now implementing the "action sequences" that take place after both players have committed and revealed their moves.  Ideally, this would involve some variable camera motion (to prevent repetitive sequences) and a quick exchange of attacks/defenses, the display of damage numbers, and an indicator that the next commit phase has started (or that the game is over).
 
+## Day 26
+
+Still a bit more to do.  I've revisited the "main screen" and better incorporated the Time Crystal NFT:
+
+<img width="800" alt="34picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/d12e35fb-127f-4e31-b324-f79d8cd7604a">
+
+
 
