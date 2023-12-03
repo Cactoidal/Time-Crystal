@@ -14,10 +14,6 @@ Chainlink Hackathon Fall 2023
 * [AllSky Skybox](https://github.com/rpgwhitelock/AllSkyFree_Godot) by rpgwhitelock
 * [Star Nest Shader](https://godotshaders.com/shader/star-nest-2/) by Lyagva, ported from [Kali's work on Shadertoy](https://www.shadertoy.com/view/XlfGRj)
 * [Rainbow Shader](https://godotshaders.com/shader/moving-rainbow-gradient/) by Exuin
-* Link-chan and Avax-chan
-```
--Design: Anonymous artists
--Art: Stable Diffusion
-```
+* Link-chan and Avax-chan  (DESIGN: Anonymous artists | ART: Stable Diffusion)
 * Model: [Kohaku-XL by kblueleaf](https://civitai.com/models/162577/kohaku-xl-beta)
 * LoRA: [Pixel Art XL by NeriJS](https://civitai.com/models/120096?modelVersionId=135931)
