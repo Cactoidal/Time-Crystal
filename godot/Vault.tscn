@@ -1,8 +1,9 @@
-[gd_scene load_steps=20 format=2]
+[gd_scene load_steps=21 format=2]
 
 [ext_resource path="res://ConsoleBody.gd" type="Script" id=1]
 [ext_resource path="res://00003-2597467123.png" type="Texture" id=2]
 [ext_resource path="res://hexnormal.png" type="Texture" id=3]
+[ext_resource path="res://GlowCrystal.tscn" type="PackedScene" id=4]
 
 [sub_resource type="SpatialMaterial" id=15]
 
@@ -68,6 +69,7 @@ size = Vector2( 6.2, 6.2 )
 
 [node name="CSGCombiner" type="CSGCombiner" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.30104, 0 )
+visible = false
 use_collision = true
 
 [node name="CSGMesh" type="CSGMesh" parent="CSGCombiner"]
@@ -82,6 +84,7 @@ depth = 6.0
 
 [node name="Door" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.28568, 3.34058 )
+visible = false
 mesh = SubResource( 5 )
 
 [node name="StaticBody" type="StaticBody" parent="Door"]
@@ -99,7 +102,7 @@ mesh = SubResource( 7 )
 shape = SubResource( 9 )
 
 [node name="ConsoleBody" type="MeshInstance" parent="Balcony"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -3.80337, 1.29893, 0 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.47935, 1.29893, 0 )
 mesh = SubResource( 10 )
 script = ExtResource( 1 )
 
@@ -133,13 +136,11 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-margin_left = -47.5
-margin_top = -37.0
-margin_right = 47.5
-margin_bottom = 11.0
-text = "Hack console?
-
-Cost: 2 LINK"
+margin_left = -89.0
+margin_top = -33.0
+margin_right = 86.0
+margin_bottom = 15.0
+text = "Enter Matchmaking Queue?"
 
 [node name="Confirm" type="Button" parent="Balcony/ConsoleBody/ConfirmConsole"]
 margin_left = 16.0
@@ -159,6 +160,7 @@ text = "Cancel"
 
 [node name="Edifice" type="MeshInstance" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00937915, 1.54185, 3.44944 )
+visible = false
 mesh = SubResource( 17 )
 
 [node name="Viewport" type="Viewport" parent="Edifice"]
@@ -168,3 +170,6 @@ size = Vector2( 1000, 1000 )
 margin_right = 40.0
 margin_bottom = 40.0
 texture = ExtResource( 2 )
+
+[node name="Spatial" parent="." instance=ExtResource( 4 )]
+transform = Transform( 0.984631, -0.170314, 0.0386507, 0.174645, 0.960216, -0.217909, 0, 0.22131, 0.975203, -3.97283, 2.30765, -8.60389 )

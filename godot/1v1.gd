@@ -456,6 +456,6 @@ func get_card_info(card_id):
 		
 func get_battler_info(battler_id):
 	match battler_id:
-		1: return {"id":"1", "type":"CRYSTAL", "name":"LINK-chan", "HP": 100, "POW": 40, "DEF": 40, "image": load("res://linkchan.png"), "3Dimage": load("res://linkchan3D.png")}
-		2: return {"id":"2", "type":"CONSTRUCT", "name":"AVAX-chan", "HP": 200, "POW": 20, "DEF": 20, "image": load("res://avaxchan.png"), "3Dimage": load('res://avaxchan3D.png')}
+		1: return {"id":"1", "type":"CRYSTAL", "name":"LINK-chan", "HP": 100, "POW": 40, "DEF": 40, "image": load("res://linkchan2.png"), "3Dimage": load("res://linkchan23D.png")}
+		2: return {"id":"2", "type":"CONSTRUCT", "name":"AVAX-chan", "HP": 200, "POW": 20, "DEF": 20, "image": load("res://avaxchan2.png"), "3Dimage": load('res://avaxchan23D.png')}
 		

@@ -1,10 +1,11 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://ChainLink.gd" type="Script" id=1]
 [ext_resource path="res://Player.gd" type="Script" id=2]
 [ext_resource path="res://World.gd" type="Script" id=3]
 [ext_resource path="res://AllSkyFree_Sky_AnotherPlanet_Equirect.png" type="Texture" id=4]
 [ext_resource path="res://3DClick.gd" type="Script" id=5]
+[ext_resource path="res://GlowCrystal.tscn" type="PackedScene" id=6]
 
 [sub_resource type="SpatialMaterial" id=25]
 albedo_color = Color( 0, 0.298039, 1, 1 )
@@ -93,3 +94,7 @@ environment = SubResource( 31 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
 transform = Transform( 1, 0, 0, 0, 0.942519, -0.334152, 0, 0.334152, 0.942519, 0, 0, 0 )
+
+[node name="Spatial" parent="." instance=ExtResource( 6 )]
+transform = Transform( 0.258819, 0, -0.965926, 0, 1, 0, 0.965926, 0, 0.258819, -7, 0, -8 )
+visible = false

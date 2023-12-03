@@ -46,8 +46,8 @@ func _process(delta):
 			
 func check_for_crystal():
 	#temp skipped for now
-	#ethers.crystal_staked()
-	ethers.token_uri(1)
+	ethers.crystal_staked()
+	#ethers.token_uri(1)
 
 func update_crystal():
 	registered = true

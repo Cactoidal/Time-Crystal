@@ -2,7 +2,7 @@ extends Spatial
 
 var vault = load("res://Vault.tscn")
 var tile_block = load("res://TileBlock.tscn")
-var tile_count = 20
+var tile_count = 33
 var attach_point = Vector3(0,0,0)
 var attach_point2
 func _ready():
@@ -29,7 +29,7 @@ func _ready():
 				new_tile2.global_transform.origin = attach_point2
 				new_tile2.rotate_y(-1)
 				attach_point2 = new_tile2.get_node("AttachPoint").global_transform.origin
-		if tile == 19:
+		if tile == 32:
 			var new_vault = vault.instance()
 			add_child(new_vault)
 			new_vault.global_transform.origin = attach_point

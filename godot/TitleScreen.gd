@@ -18,7 +18,7 @@ var rpc_list
 
 
 #FUJI
-var time_crystal_contract = "0x24a878dD7b154547A291F756048f29693aE2F073"
+var time_crystal_contract = "0xb4AeBf6624F5E8D0453C545cdF9eA2D607eEb0C2"
 var chainlink_contract = "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846"
 
 #SEPOLIA
@@ -242,6 +242,7 @@ func start_game():
 		if child != $Fadeout && child != $HTTP:
 			child.queue_free()
 	var new_main = main_screen.instance()
+	new_main.ethers = self
 	add_child(new_main)
 	move_child(new_main, 0)
 	main_hub = new_main
@@ -406,6 +407,68 @@ func estimate_gas_attempted(result, response_code, headers, body):
 		#$MenuBackground/GasBalance.text = "CHECK RPC"
 	http_request_delete_gas.queue_free()
 	call(tx_function_name)
+	
+
+func crystal_staked():
+	var http_request = HTTPRequest.new()
+	$HTTP.add_child(http_request)
+	http_request_delete_tx_read = http_request
+	http_request.connect("request_completed", self, "get_crystal_staked_attempted")
+	
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	var calldata = TimeCrystal.crystal_staked(content, fuji_id, time_crystal_contract, my_rpc, user_address)
+	
+	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
+	
+	var error = http_request.request(my_rpc, 
+	[my_header], 
+	true, 
+	HTTPClient.METHOD_POST, 
+	JSON.print(tx))
+
+func get_crystal_staked_attempted(result, response_code, headers, body):
+	
+	var get_result = parse_json(body.get_string_from_ascii())
+
+	if response_code == 200:
+		var raw_response = get_result.duplicate()["result"]
+		var _crystal_id = TimeCrystal.decode_u256(raw_response)
+		main_hub.crystal_id = _crystal_id
+		if _crystal_id != "0":
+			token_uri(_crystal_id)
+
+func token_uri(_crystal_id):
+	var http_request = HTTPRequest.new()
+	$HTTP.add_child(http_request)
+	http_request_delete_tx_read = http_request
+	http_request.connect("request_completed", self, "get_token_uri_attempted")
+	
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	var calldata = TimeCrystal.token_uri(content, fuji_id, time_crystal_contract, my_rpc, int(_crystal_id))
+	
+	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
+	
+	var error = http_request.request(my_rpc, 
+	[my_header], 
+	true, 
+	HTTPClient.METHOD_POST, 
+	JSON.print(tx))
+
+func get_token_uri_attempted(result, response_code, headers, body):
+	
+	var get_result = parse_json(body.get_string_from_ascii())
+
+	if response_code == 200:
+		var raw_response = get_result.duplicate()["result"]
+		var _crystal_info = TimeCrystal.decode_hex_string(raw_response)
+		main_hub.crystal_info = _crystal_info
+		main_hub.update_crystal()
 
 
 
