@@ -790,5 +790,7 @@ And speaking of crystals, while I won't be modeling characters this time, I can 
 <img width="550" alt="35picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/5324c201-92ed-4c51-8258-e54c856d5bfb">
 <img width="700" alt="36picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/cd7f494c-ca97-4d21-b02e-9d4a2506283a">
 
+There was a mysterious problem where certain faces of the crystal would disappear when the camera was looking at them, which was fixed by [recalculating Normals](https://www.youtube.com/watch?v=p4yDKp2MtlI).
+
 
 
