@@ -785,5 +785,10 @@ Still a bit more to do.  I've revisited the "main screen" and better incorporate
 
 <img width="800" alt="34picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/d12e35fb-127f-4e31-b324-f79d8cd7604a">
 
+And speaking of crystals, while I won't be modeling characters this time, I can at least practice modeling with this giant, floating crystal:
+
+<img width="550" alt="35picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/5324c201-92ed-4c51-8258-e54c856d5bfb">
+<img width="700" alt="36picture" src="https://github.com/Cactoidal/Time-Crystal/assets/115384394/cd7f494c-ca97-4d21-b02e-9d4a2506283a">
+
 
 
