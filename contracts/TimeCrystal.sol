@@ -116,9 +116,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         REVEAL
     }
 
-     //Test
-    address public testWin = vrfCoordinator;
-
 
 
     //                 PLAYER GAME INTERACTIONS                 //
@@ -187,9 +184,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
         usedCSPRNGIvs[csprngIv] = true;
         inQueue[msg.sender] = true;
-
-        //Test
-        testWin = vrfCoordinator;
 
         FunctionsRequest.Request memory req;
         req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, source);
@@ -325,8 +319,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         currentOpponent[opponent] = address(0x0);
         hashCommit[opponent] = bytes("");
 
-        //Test
-        testWin = msg.sender;
     }
 
 
@@ -643,10 +635,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             currentOpponent[opponent] = address(0x0);
             hashCommit[opponent] = bytes("");
             
-
-
-            //Test 
-            testWin = player;
             }
 
         emit UpkeepFulfilled(performData);
