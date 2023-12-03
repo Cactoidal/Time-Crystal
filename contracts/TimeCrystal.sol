@@ -89,7 +89,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
     //          CRYSTAL NFT VARIABLES       //
 
     uint mintOver;
-    mapping (address => uint) crystalStaked;
+    mapping (address => uint) public crystalStaked;
     uint crystalId = 1;
     mapping (uint => uint[]) vrfSeeds;
     mapping (uint => uint) crystalEXP;
