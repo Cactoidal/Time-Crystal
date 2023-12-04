@@ -61,7 +61,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         source = _source;
         secretsLocation = _location;
         encryptedSecretsReference = _reference;
-        mintOver = block.number + 10000;
+        mintOver = block.number + 1000000;
         COORDINATOR = VRFCoordinatorV2Interface(0x2eD832Ba664535e5886b75D64C46EB9a228C2610);
         for (uint z = 0; z < _cards.length; z++) {
             cards[Strings.toString(_cards[z].cardNumber)] = _cards[z];
@@ -258,7 +258,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
     // End the game by providing the constituent values of your oracle-generated hash.
     // Automation will check whether you actually won, and if your played cards were truly in your hand.
     function declareVictory(string calldata secret) external {
-        //do I need to check the length of secret to prevent a length extension attack?
         require(inGame[msg.sender] == true);
         require(inQueue[msg.sender] == false);
         // Victory must be declared during the COMMIT phase, to prevent passing action strings 
@@ -663,7 +662,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
     function tokenURI(uint _crystal) public view override returns (string memory uri) {
         uri = "{";
-        uri = string.concat(uri, '"description": "test","name":');
+        uri = string.concat(uri, '"description": "A Time Crystal.","name":');
         uri = string.concat(uri, '"');
         uri = string.concat(uri, 'Time Crystal #');
         uri = string.concat(uri,Strings.toString(_crystal));
@@ -694,26 +693,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
 
      //              GODOT VIEW FUNCTIONS            //
-
-
-    // Public Getters:
-
-    //      keys(address)
-
-    //      Retrieves the SHA256 hash of the player's secret password, random cards, and inventory.
-    //      hands(address)
-
-    //      inQueue(address)
-
-    //      inGame(address)
-
-    //      currentOpponent(address)
-
-    //      playerActions(address)
-
-    //      eth.blockNumber 
-
-    //      testWin()
 
     function getHashMonster(address _player) public view returns (uint number) {
         uint hashNumber = uint(bytes32(hands[_player]));
