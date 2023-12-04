@@ -796,6 +796,18 @@ I'll use this fascinating [ice shader](https://godotshaders.com/shader/spatial-i
 
 https://github.com/Cactoidal/Time-Crystal/assets/115384394/c9c35b55-d0eb-45e5-97e0-b4e4f7810601
 
+## Day 27
+
+A simple exchange of laser beams, and a reference to the NFT's stats increasing once the match is over:
+
+https://github.com/Cactoidal/Time-Crystal/assets/115384394/12d8dcda-e3ca-426e-b252-5566332019de
+
+And that brings us close to the end.  What remains is to remove the "test opponent" in the contract, and try some live 1v1s.  I have a few other small edits to make to the contract, and after this final round of testing, it will be time to make the video.
+
+
+
+
+
 
 
 
