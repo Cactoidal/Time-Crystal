@@ -254,7 +254,7 @@ billboard = 1
 texture = ExtResource( 4 )
 
 [node name="Damage" type="Label3D" parent="WorldRotate/Opponent"]
-transform = Transform( 3.8, 0, 0, 0, 3.8, 0, 0, 0, 3.8, 1.08571, -2.40523, 0.322136 )
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, 1.08571, -2.40523, 0.322136 )
 billboard = 1
 render_priority = 2
 modulate = Color( 1, 1, 1, 0 )
@@ -266,7 +266,7 @@ billboard = 1
 texture = ExtResource( 6 )
 
 [node name="Damage" type="Label3D" parent="WorldRotate/Player"]
-transform = Transform( 3.8, 0, 0, 0, 3.8, 0, 0, 0, 3.8, 0.0336695, -1.88333, 0.434915 )
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, 0.0336695, -1.88333, 0.434915 )
 billboard = 1
 render_priority = 2
 modulate = Color( 1, 1, 1, 0 )
@@ -690,6 +690,44 @@ text = "Energy
 0"
 align = 1
 
+[node name="PlayerAction" type="ColorRect" parent="UI"]
+visible = false
+margin_left = 502.0
+margin_top = 473.0
+margin_right = 630.0
+margin_bottom = 523.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="Action" type="Label" parent="UI/PlayerAction"]
+anchor_left = 0.5
+anchor_right = 0.5
+margin_left = -22.5
+margin_top = 9.0
+margin_right = 23.5
+margin_bottom = 40.0
+text = "Action
+Action"
+align = 1
+
+[node name="OpponentAction" type="ColorRect" parent="UI"]
+visible = false
+margin_left = 502.0
+margin_top = 13.0
+margin_right = 630.0
+margin_bottom = 63.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="Action" type="Label" parent="UI/OpponentAction"]
+anchor_left = 0.5
+anchor_right = 0.5
+margin_left = -22.5
+margin_top = 9.0
+margin_right = 23.5
+margin_bottom = 40.0
+text = "Action
+Action"
+align = 1
+
 [node name="ActPrompt" type="ColorRect" parent="UI"]
 modulate = Color( 1, 1, 1, 0 )
 margin_left = 430.0
@@ -743,7 +781,11 @@ margin_left = 49.0
 margin_top = 29.0
 margin_right = 203.0
 margin_bottom = 86.0
-text = "You won!"
+text = "You won!
+
+Time Crystal Energy +50
+Time Crystal EXP +107"
+align = 1
 
 [node name="Return" type="Button" parent="UI/Overlay/EndGame"]
 margin_left = 77.0

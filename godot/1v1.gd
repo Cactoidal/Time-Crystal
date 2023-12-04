@@ -267,6 +267,8 @@ func _process(delta):
 		if to_new_turn_timer < 2.5:
 			if laser_deactivate == true:
 				get_parent().get_node("WorldRotate/Laser").visible = false
+				$PlayerAction.visible = false
+				$OpponentAction.visible = false
 				laser_deactivate = false
 		if to_new_turn_timer < 0:
 			start_next_commit_phase()
@@ -421,6 +423,10 @@ func resolve_actions(opponent_actions):
 	player_energy += 1 + player_action["gain"]
 	opponent_energy += 1 + opponent_action["gain"]
 	
+	$PlayerAction/Action.text = player_action["name"]
+	$OpponentAction/Action.text = opponent_action["name"]
+	$PlayerAction.visible = true
+	$OpponentAction.visible = true
 	get_parent().get_node("WorldRotate/Laser").visible = true
 	action_sequence_timer = 2
 	
