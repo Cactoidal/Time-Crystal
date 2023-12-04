@@ -17,8 +17,6 @@ import "./IERC677.sol";
 contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC721 {
     using FunctionsRequest for FunctionsRequest.Request;
 
- 
-
     bytes32 public donId;
     address private forwarder;
 
@@ -58,7 +56,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
     //address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
   
-    constructor(address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(vrfCoordinator) ConfirmedOwner(msg.sender) ERC721("Test", "TEST") {
+    constructor(address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(vrfCoordinator) ConfirmedOwner(msg.sender) ERC721("Time Crystal", "CRYSTAL") {
         donId = _donId;
         source = _source;
         secretsLocation = _location;
@@ -556,11 +554,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         
         if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
             
-            // TEST OPPONENT
-            matchmaker[0] = vrfCoordinator;
-            hands[vrfCoordinator] = abi.encodePacked(sha256("test"));
-
-            
             if (matchmaker[0] == address(0x0)) {
                 matchmaker[0] = player;
                 }
@@ -672,7 +665,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         uri = "{";
         uri = string.concat(uri, '"description": "test","name":');
         uri = string.concat(uri, '"');
-        uri = string.concat(uri, 'Test #');
+        uri = string.concat(uri, 'Time Crystal #');
         uri = string.concat(uri,Strings.toString(_crystal));
         uri = string.concat(uri,'","traits": [ {"trait_type":"Remaining');
         uri = string.concat(uri, '","value":"');
