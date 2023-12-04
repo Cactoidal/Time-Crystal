@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=16 format=2]
 
 [ext_resource path="res://world_rotate.gd" type="Script" id=1]
 [ext_resource path="res://1v1.gd" type="Script" id=2]
@@ -6,6 +6,41 @@
 [ext_resource path="res://avaxchan3D.png" type="Texture" id=4]
 [ext_resource path="res://TickerTextLabel.gd" type="Script" id=5]
 [ext_resource path="res://linkchan3D.png" type="Texture" id=6]
+[ext_resource path="res://star_particle.png" type="Texture" id=7]
+
+[sub_resource type="SpatialMaterial" id=3]
+flags_transparent = true
+flags_unshaded = true
+albedo_color = Color( 0.0156863, 1, 0, 1 )
+
+[sub_resource type="CylinderMesh" id=4]
+material = SubResource( 3 )
+top_radius = 0.1
+bottom_radius = 0.1
+height = 12.0
+
+[sub_resource type="SpatialMaterial" id=5]
+flags_transparent = true
+flags_unshaded = true
+params_billboard_mode = 1
+albedo_color = Color( 0, 1, 0.227451, 1 )
+albedo_texture = ExtResource( 7 )
+
+[sub_resource type="QuadMesh" id=6]
+material = SubResource( 5 )
+size = Vector2( 0.2, 0.2 )
+
+[sub_resource type="SpatialMaterial" id=7]
+render_priority = 1
+flags_transparent = true
+flags_unshaded = true
+params_billboard_mode = 1
+albedo_color = Color( 0, 1, 0.129412, 1 )
+albedo_texture = ExtResource( 7 )
+
+[sub_resource type="QuadMesh" id=8]
+material = SubResource( 7 )
+size = Vector2( 0.3, 0.3 )
 
 [sub_resource type="Shader" id=1]
 code = "// Star Nest by Pablo Roman Andrioli
@@ -219,7 +254,7 @@ billboard = 1
 texture = ExtResource( 4 )
 
 [node name="Damage" type="Label3D" parent="WorldRotate/Opponent"]
-transform = Transform( 3.8, 0, 0, 0, 3.8, 0, 0, 0, 3.8, 0.50629, -2.40523, 0.322136 )
+transform = Transform( 3.8, 0, 0, 0, 3.8, 0, 0, 0, 3.8, 1.08571, -2.40523, 0.322136 )
 billboard = 1
 render_priority = 2
 modulate = Color( 1, 1, 1, 0 )
@@ -236,6 +271,38 @@ billboard = 1
 render_priority = 2
 modulate = Color( 1, 1, 1, 0 )
 text = "-100 HP"
+
+[node name="Laser" type="MeshInstance" parent="WorldRotate"]
+transform = Transform( 0.48549, 0.11958, -5.22702e-09, 0, -2.18557e-08, -0.5, -0.11958, 0.48549, -2.12214e-08, 4.42444, 2.95036, -0.223362 )
+visible = false
+mesh = SubResource( 4 )
+skeleton = NodePath("../Player")
+
+[node name="CPUParticles" type="CPUParticles" parent="WorldRotate/Laser"]
+mesh = SubResource( 6 )
+emission_shape = 2
+emission_box_extents = Vector3( 1, 7, 1 )
+gravity = Vector3( 0, 1, 0 )
+tangential_accel = 10.0
+tangential_accel_random = 1.0
+
+[node name="CPUParticles2" type="CPUParticles" parent="WorldRotate/Laser"]
+transform = Transform( 0.97098, 0, -0.239161, 0.239161, -4.37114e-08, 0.97098, -1.0454e-08, -1, -4.24429e-08, 0.430717, -6.67289, -0.370821 )
+mesh = SubResource( 8 )
+emission_shape = 2
+emission_box_extents = Vector3( 1, 1, 1 )
+direction = Vector3( 1, 1, 0 )
+gravity = Vector3( 0, 1, 0 )
+radial_accel = 2.0
+
+[node name="CPUParticles3" type="CPUParticles" parent="WorldRotate/Laser"]
+transform = Transform( 0.97098, 0, -0.239161, 0.239161, -4.37114e-08, 0.97098, -1.0454e-08, -1, -4.24429e-08, 0.138579, 6.83222, -2.37082 )
+mesh = SubResource( 8 )
+emission_shape = 2
+emission_box_extents = Vector3( 1, 1, 1 )
+direction = Vector3( 1, 1, 0 )
+gravity = Vector3( 0, 1, 0 )
+radial_accel = 2.0
 
 [node name="UI" type="Control" parent="."]
 margin_right = 40.0
@@ -655,7 +722,7 @@ margin_top = 19.0
 margin_right = 135.0
 margin_bottom = 33.0
 rect_scale = Vector2( 2.5, 2.5 )
-text = "Resolution!"
+text = "Resolving..."
 
 [node name="Overlay" type="ColorRect" parent="UI"]
 visible = false

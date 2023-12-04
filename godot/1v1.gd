@@ -40,6 +40,9 @@ var player_def
 var opponent_pow
 var opponent_def
 
+var player_damage_dealt
+var opponent_damage_dealt
+
 func _ready():
 	
 	$RegisterPlayer.connect("pressed", self, "register_player")
@@ -157,8 +160,11 @@ var player_commit_found = false
 var in_commit_phase = false
 var resolution_pause = 0
 var in_reveal_phase = false
-var show_action_sequence = false
+var action_sequence_timer = 0
+var action_timer = 0
 var damage_number_pause = 0
+var laser_deactivate = false
+var to_new_turn_timer = 0
 
 var fade_in_ending = false
 
@@ -249,6 +255,22 @@ func _process(delta):
 					$Scroll/AwaitingOpponent.visible = true
 					check_timer = 2
 					print("draw sequence over")
+	
+	if action_sequence_timer > 0:
+		action_sequence_timer -= delta
+		if action_sequence_timer < 0:
+			show_outcome()
+			action_sequence_timer = 0
+	
+	if to_new_turn_timer > 0:
+		to_new_turn_timer -= delta
+		if to_new_turn_timer < 2.5:
+			if laser_deactivate == true:
+				get_parent().get_node("WorldRotate/Laser").visible = false
+				laser_deactivate = false
+		if to_new_turn_timer < 0:
+			start_next_commit_phase()
+			to_new_turn_timer = 0
 		
 		
 	
@@ -289,8 +311,7 @@ func _process(delta):
 				else:
 					did_player_commit()
 			
-			if show_action_sequence == true:
-				pass
+					
 				
 				
 			check_timer = 2
@@ -392,22 +413,32 @@ func resolve_actions(opponent_actions):
 		opponent_atk = opponent_pow * (opponent_action["attack"] + opponent_action["counter_bonus"])
 		opponent_block = 0
 	
-	var player_damage_dealt = int(clamp(player_atk - opponent_block, 10, 10000))
-	var opponent_damage_dealt = int(clamp(opponent_atk - player_block, 10, 10000))
-	
-	damage_number_pause = 2
-	get_parent().get_node("WorldRotate/Opponent/Damage").text = "-" + String(player_damage_dealt) + " HP"
-	get_parent().get_node("WorldRotate/Player/Damage").text = "-" + String(opponent_damage_dealt) + " HP"
-	get_parent().get_node("WorldRotate/Player/Damage").modulate.a = 1
-	get_parent().get_node("WorldRotate/Opponent/Damage").modulate.a = 1
+	player_damage_dealt = int(clamp(player_atk - opponent_block, 10, 10000))
+	opponent_damage_dealt = int(clamp(opponent_atk - player_block, 10, 10000))
 	
 	opponent_hp = int(clamp(opponent_hp - player_damage_dealt, 0, 10000))
 	player_hp = int(clamp(player_hp - opponent_damage_dealt, 0, 10000))
 	player_energy += 1 + player_action["gain"]
 	opponent_energy += 1 + opponent_action["gain"]
 	
-
+	get_parent().get_node("WorldRotate/Laser").visible = true
+	action_sequence_timer = 2
 	
+	
+
+func show_outcome():
+	damage_number_pause = 3
+	to_new_turn_timer = 4
+	laser_deactivate = true
+	
+	get_parent().get_node("WorldRotate/Opponent/Damage").text = "-" + String(player_damage_dealt) + " HP"
+	get_parent().get_node("WorldRotate/Player/Damage").text = "-" + String(opponent_damage_dealt) + " HP"
+	get_parent().get_node("WorldRotate/Player/Damage").modulate.a = 1
+	get_parent().get_node("WorldRotate/Opponent/Damage").modulate.a = 1
+	
+
+
+func start_next_commit_phase():
 	$PlayerStats/HP.text = "HP: " + String(player_hp) + " / " + String(player_max_hp)
 	$OpponentStats/HP.text = "HP: " + String(opponent_hp) + " / " + String(opponent_max_hp)
 	$PlayerStats/EnergySquare/Energy.text = "Energy\n" + String(player_energy)
@@ -424,6 +455,8 @@ func resolve_actions(opponent_actions):
 		$Scroll/AwaitingOpponent.text = "CHOOSE ACTION...						CHOOSE ACTION...						CHOOSE ACTION...						CHOOSE ACTION...						"
 		for card in $Cards.get_children():
 			card.glow(player_energy)
+			
+
 	
 func end_game():
 	ethers.fade("return_to_world")
@@ -447,7 +480,7 @@ func get_card_info(card_id):
 		23: return {"id": "23", "type": "power", "name": "Fracture", "attack": 1, "defense": 1, "cost": 2, "gain": 0, "counter_bonus": 0}
 		24: return {"id": "24", "type": "power", "name": "Disrupt", "attack": 1, "defense": 0, "cost": 2, "gain": 0, "counter_bonus": 5}
 		25: return {"id": "25", "type": "power", "name": "Explosion", "attack": 2, "defense": 0, "cost": 3, "gain": 0, "counter_bonus": 0}
-		26: return {"id": "26", "type": "power", "name": "Crystal Laser", "attack": 1, "defense": 1, "cost": 2, "gain": 0, "counter_bonus": 0}
+		26: return {"id": "26", "type": "power", "name": "Crystal\nLaser", "attack": 1, "defense": 1, "cost": 2, "gain": 0, "counter_bonus": 0}
 		27: return {"id": "27", "type": "power", "name": "Destroy", "attack": 2, "defense": 0, "cost": 3, "gain": 0, "counter_bonus": 0}
 		28: return {"id": "28", "type": "power", "name": "Void\nShield", "attack": 1, "defense": 2, "cost": 3, "gain": 0, "counter_bonus": 2}
 		29: return {"id": "29", "type": "power", "name": "Seeker\nMissile", "attack": 2, "defense": 0, "cost": 3, "gain": 0, "counter_bonus": 3}
