@@ -145,22 +145,22 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             require(crystal != 0);
         }
         
-        //inQueue[msg.sender] = true;
-       // uint256 requestId = COORDINATOR.requestRandomWords(
-        //    s_keyHash,
-        //    vrf_subscriptionId,
-        //    requestConfirmations,
-        //    vrfCallbackGasLimit,
-        //    10
-        //    );
+        inQueue[msg.sender] = true;
+        uint256 requestId = COORDINATOR.requestRandomWords(
+            s_keyHash,
+            vrf_subscriptionId,
+            requestConfirmations,
+            vrfCallbackGasLimit,
+            10
+            );
 
-        vrfSeeds[crystal] = [77777777777, 777777777777, 777777777777, 777777777777, 777777777777];
+        //vrfSeeds[crystal] = [77777777777, 777777777777, 777777777777, 777777777777, 777777777777];
 
         if (_data.length != 0) {
             string memory _key = abi.decode(_data, (string));
             keys[_sender] = _key;
             }
-        //vrfRequestIdbyRequester[requestId] = _sender;
+        vrfRequestIdbyRequester[requestId] = _sender;
     }
 
 
@@ -209,9 +209,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
     }
 
 
-    // For testing,
-    // Put in a mock opponent that mirrors my actions
-
     // Provide a hash of your action, kept secret until both players have committed
     function commitAction(bytes memory _actionHash) external {
         uint matchId = currentMatch[msg.sender];
@@ -223,9 +220,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
         hashCommit[msg.sender] = _actionHash;
         lastCommit[msg.sender] = block.number;
-
-        // TEST
-        hashCommit[currentOpponent[msg.sender]] = _actionHash;
 
         // If opponent has committed, change phase to REVEAL
         if (hashCommit[currentOpponent[msg.sender]].length != 0) {
@@ -248,18 +242,13 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         require(cards[action].cardNumber != 0);
 
         string memory revealed = string.concat(password, action);
-        //might need to fool with the abi.encode
+
         require(keccak256(hashCommit[msg.sender]) == keccak256(abi.encode(sha256(abi.encode(revealed)))));
 
         playerActions[msg.sender] = string.concat(playerActions[msg.sender], action);
 
         hashCommit[msg.sender] = bytes("");
         lastCommit[msg.sender] = block.number;
-
-        // TEST
-        address opponent = currentOpponent[msg.sender];
-        playerActions[opponent] = string.concat(playerActions[opponent], action);
-        hashCommit[opponent] = bytes("");
 
         // If opponent has revealed, change phase to COMMIT
         if (hashCommit[currentOpponent[msg.sender]].length == 0) {
@@ -608,8 +597,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             }
 
         else if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
-
-            // Declare winner and disburse reward / deposit
 
             // The encoded address "player" is the winner, while their opponent has lost
             address opponent = currentOpponent[player];
