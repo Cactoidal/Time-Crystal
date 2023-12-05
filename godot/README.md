@@ -804,6 +804,13 @@ https://github.com/Cactoidal/Time-Crystal/assets/115384394/12d8dcda-e3ca-426e-b2
 
 And that brings us close to the end.  What remains is to remove the "test opponent" in the contract, and try some live 1v1s.  I have a few other small edits to make to the contract, and after this final round of testing, it will be time to make the video.
 
+## Day 28
+
+My new diagram for explaining the key exchange, secret randomness, and birthday attack extraction:
+
+![39diagramv2resized](https://github.com/Cactoidal/Time-Crystal/assets/115384394/5c7c6e71-78e0-4d38-af89-62fb730641ef)
+
+
 
 
 
