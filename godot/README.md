@@ -810,6 +810,18 @@ My new diagram for explaining the key exchange, secret randomness, and birthday 
 
 ![39diagramv2resized](https://github.com/Cactoidal/Time-Crystal/assets/115384394/5c7c6e71-78e0-4d38-af89-62fb730641ef)
 
+And at last, after these four weeks, I have completed the live demo video:
+
+[https://www.youtube.com/watch?v=vdS1Kgold7U](https://www.youtube.com/watch?v=vdS1Kgold7U)
+
+I have some final touch-ups to do with the code and with Devpost, but that's it!  I'm quite pleased to have finished everything I set out to do, and I think I've clearly demonstrated the principle of oracle-generated secret randomness.
+
+I'm hoping that as my skill develops, and the technology continues to improve, I'll be able to produce even more sophisticated games.  I want to spend some time now working on my Blender skills, and playing around more with Godot.
+
+Thanks for reading, hope you've enjoyed.  Until next time!
+
+
+
 
 
 
