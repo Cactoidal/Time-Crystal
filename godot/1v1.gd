@@ -25,6 +25,8 @@ var guessHash
 var action_password
 var action_id
 
+var opponent_actions = ""
+
 
 
 # stats
@@ -62,15 +64,12 @@ func _ready():
 	$Overlay/EndGame/Return.connect("pressed", self, "end_game")
 	
 	camera = get_parent().get_node("WorldRotate/Pivot/BattleCamera")
-	#randomize()
-	#var randomizer = Crypto.new()
-	#var bytes = Crypto.new()
-	password = "hello".sha256_text().left(20)
+	randomize()
+	var randomizer = Crypto.new()
+	var bytes = Crypto.new()
+	password = (String(bytes.generate_random_bytes(16))).sha256_text().left(20)
 	action_password = password
-	#action_id = "99"
-	
-	
-	#password = (String(bytes.generate_random_bytes(16))).sha256_text().left(20)
+
 
 func join_matchmaking():
 	ethers.start_transaction("join_matchmaking", [password])
@@ -84,39 +83,35 @@ func check_hand():
 func get_opponent():
 	ethers.get_opponent()
 
-# * #	
 func get_hash_monster():
 	ethers.get_player_hash_monster()
 
-# * #
 func get_opponent_hash_monster():
-	#must retrieve opponent address first
 	ethers.get_opponent_hash_monster(opponent)
 	
 func commit_action(action):
 	action_id = action
-	#action_id = $CardEntry.text
 	var secret = action_password + action_id
 	ethers.start_transaction("commit_action", [secret])
 	in_commit_phase = true
 	$Resolution.modulate.a = 1
 	resolution_pause = 1.2
 
-# * #
 func did_player_commit():
 	ethers.check_commit(ethers.user_address)
 	
 func did_opponent_commit():
 	ethers.check_commit(opponent)
 
+func check_for_new_actions():
+	ethers.check_for_opponent_commit(opponent)
+
 func reveal_action():
 	ethers.start_transaction("reveal_action", [action_password, action_id])
 
-# * #
 func get_player_actions():
 	ethers.get_player_actions()
 
-# * #
 func get_opponent_actions():
 	ethers.get_opponent_actions(opponent)
 	
@@ -135,23 +130,16 @@ func fade_queue_scene(delta):
 	camera.global_transform.origin.z += delta/4.2
 	camera.get_parent().rotate_y(0.001)
 	
-	
 
-var hand_wait_simulation_timer = 1
-#var hand_wait_simulation_timer = 11
-var simulate_opponent_wait = false
-var opponent_wait_simulation_timer = 18
-#var opponent_wait_simulation_timer = 1
 
 var started = false
-var check_timer = 2
+var check_timer = 0.1
 var find_player_hand = true
 var battler_fade_in = false
 var draw_sequence = false
 var draw_timer = 1
 var find_opponent = false
 var battle_start_sequence = false
-#var battle_start_timer = 45
 var battle_start_timer = 60
 var battle_ongoing = false
 var fade_in_battler_stats = false
@@ -168,18 +156,7 @@ var to_new_turn_timer = 0
 
 var fade_in_ending = false
 
-#var revealed = true
 func _process(delta):
-#	if revealed == true:
-#		reveal_action()
-#		revealed = false
-#
-	if hand_wait_simulation_timer > 0:
-		hand_wait_simulation_timer -= delta
-		
-	
-	if opponent_wait_simulation_timer > 0 && simulate_opponent_wait == true:
-		opponent_wait_simulation_timer -= delta
 	
 	if battler_fade_in == true:
 		$Blue/Battler.modulate.a += delta
@@ -253,7 +230,7 @@ func _process(delta):
 					find_opponent = true
 					$Scroll/AwaitingOpponent.start_scroll = true
 					$Scroll/AwaitingOpponent.visible = true
-					check_timer = 2
+					check_timer = 0.1
 					print("draw sequence over")
 	
 	if action_sequence_timer > 0:
@@ -274,9 +251,6 @@ func _process(delta):
 			start_next_commit_phase()
 			to_new_turn_timer = 0
 		
-		
-	
-	
 	if battle_start_sequence == true:
 		$Scroll/AwaitingOpponent.text = "BATTLE STARTING...						BATTLE STARTING...						BATTLE STARTING...						BATTLE STARTING...						"
 		fade_queue_scene(delta)
@@ -296,27 +270,29 @@ func _process(delta):
 		check_timer -= delta
 		if check_timer < 0:
 			
-			if find_player_hand == true && hand_wait_simulation_timer <= 0:
+			if find_player_hand == true:
 				check_hand()
-				#get_hash_monster()
-				simulate_opponent_wait = true
+
 			
-			if find_opponent == true && opponent_wait_simulation_timer <= 0:
+			if find_opponent == true:
 				get_opponent()
 			
 			if battle_ongoing == true:
 				print("waiting for cards")
 			
-			if in_commit_phase == true || in_reveal_phase == true:
+			if in_commit_phase == true:
+				if player_commit_found == true:
+					check_for_new_actions()
+				else:
+					did_player_commit()
+			
+			if in_reveal_phase == true:
 				if player_commit_found == true:
 					did_opponent_commit()
 				else:
 					did_player_commit()
-			
-					
-				
-				
-			check_timer = 2
+
+			check_timer = 0.1
 	
 	if started == true:
 		if got == false:
@@ -331,11 +307,6 @@ func _process(delta):
 				var sixth_card = combination.substr(10,2)
 				hand = [int(first_card), int(second_card), int(third_card), int(fourth_card), int(fifth_card), int(sixth_card)]
 				draw_sequence = true
-			
-				$YourHand.text = "Your Hand: " + first_card + ", " + second_card + ", " + third_card + ", " + fourth_card + ", " + fifth_card + ", " + sixth_card
-				#$YourHand.text = "Your Hand:\n" + combination
-				
-				$HandCards.text = "Hand Cards:\n\n" + get_card_info(int(first_card))["name"] + "\n" + get_card_info(int(second_card))["name"] + "\n" + get_card_info(int(third_card))["name"] + "\n" + get_card_info(int(fourth_card))["name"] + "\n" + get_card_info(int(fifth_card))["name"] + "\n" + get_card_info(int(sixth_card))["name"]
 
 var got = false
 func extract_hand():
@@ -343,7 +314,6 @@ func extract_hand():
 	thread = Thread.new()
 	thread.start(self, "extract")
 	
-
 func extract():
 	for number1 in deck:
 			for number2 in deck:
@@ -467,7 +437,6 @@ func start_next_commit_phase():
 func end_game():
 	ethers.fade("return_to_world")
 
-#add the correct cost/gain/counter values
 func get_card_info(card_id):
 	match card_id:
 		10: return {"id": "10", "type": "normal", "name": "Laser", "attack": 1, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 2}
@@ -484,12 +453,12 @@ func get_card_info(card_id):
 		21: return {"id": "21", "type": "power", "name": "Power\nBeam", "attack": 1, "defense": 0, "cost": 2, "gain": 0, "counter_bonus": 2}
 		22: return {"id": "22", "type": "power", "name": "Rust", "attack": 1, "defense": 1, "cost": 2, "gain": 0, "counter_bonus": 0}
 		23: return {"id": "23", "type": "power", "name": "Fracture", "attack": 1, "defense": 1, "cost": 2, "gain": 0, "counter_bonus": 0}
-		24: return {"id": "24", "type": "power", "name": "Disrupt", "attack": 1, "defense": 0, "cost": 2, "gain": 0, "counter_bonus": 5}
+		24: return {"id": "24", "type": "power", "name": "Disrupt", "attack": 1, "defense": 0, "cost": 2, "gain": 0, "counter_bonus": 0}
 		25: return {"id": "25", "type": "power", "name": "Explosion", "attack": 2, "defense": 0, "cost": 3, "gain": 0, "counter_bonus": 0}
 		26: return {"id": "26", "type": "power", "name": "Crystal\nLaser", "attack": 1, "defense": 1, "cost": 2, "gain": 0, "counter_bonus": 0}
 		27: return {"id": "27", "type": "power", "name": "Destroy", "attack": 2, "defense": 0, "cost": 3, "gain": 0, "counter_bonus": 0}
-		28: return {"id": "28", "type": "power", "name": "Void\nShield", "attack": 1, "defense": 2, "cost": 3, "gain": 0, "counter_bonus": 2}
-		29: return {"id": "29", "type": "power", "name": "Seeker\nMissile", "attack": 2, "defense": 0, "cost": 3, "gain": 0, "counter_bonus": 3}
+		28: return {"id": "28", "type": "power", "name": "Void\nShield", "attack": 1, "defense": 2, "cost": 3, "gain": 0, "counter_bonus": 0}
+		29: return {"id": "29", "type": "power", "name": "Seeker\nMissile", "attack": 2, "defense": 0, "cost": 3, "gain": 0, "counter_bonus": 0}
 		30: return {"id": "30", "type": "energy", "name": "Energy\nCharge", "attack": 0, "defense": 0, "cost": 0, "gain": 3, "counter_bonus": 0}
 		99: return {"id": "99", "type": "normal", "name": "Attack", "attack": 1, "defense": 0, "cost": 0, "gain": 0, "counter_bonus": 0}
 		
@@ -497,4 +466,3 @@ func get_battler_info(battler_id):
 	match battler_id:
 		1: return {"id":"1", "type":"CRYSTAL", "name":"LINK-chan", "HP": 100, "POW": 40, "DEF": 40, "image": load("res://linkchan2.png"), "3Dimage": load("res://linkchan23D.png")}
 		2: return {"id":"2", "type":"CONSTRUCT", "name":"AVAX-chan", "HP": 200, "POW": 20, "DEF": 20, "image": load("res://avaxchan2.png"), "3Dimage": load('res://avaxchan23D.png')}
-		
