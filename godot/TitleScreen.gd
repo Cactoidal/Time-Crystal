@@ -4,45 +4,29 @@ var user_address
 var user_balance = "0"
 var user_LINK_balance = "0"
 
-var sepolia_id = 11155111
-
 var fuji_id = 43113
-
-var sepolia_rpc = "https://ethereum-sepolia.publicnode.com"
 
 var my_rpc = "http://127.0.0.1:9650/ext/bc/C/rpc"
 var my_header = "Content-Type: application/json"
 
-var rpc_list
-
-
-
-#FUJI
-var time_crystal_contract = "0xb4AeBf6624F5E8D0453C545cdF9eA2D607eEb0C2"
+var time_crystal_contract = "0xcA57f7b1FDfD3cbD513954938498Fe6a9bc8FF63"
 var chainlink_contract = "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846"
-
-#SEPOLIA
-#var time_crystal_contract = "0x6305A40371d5371fE181A9138b05873C002d98d5"
-#var chainlink_contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789"
 
 var signed_data = ""
 
 var tx_count 
 var gas_price
 var confirmation_timer = 0
-var tx_ongoing = false
 var tx_function_name = ""
 var tx_parameter = ["None"]
 
 var menu_open = false
 var left_title = false
 var exiting = false
-#placeholder
+
 var main_screen = load("res://MainScreen.tscn")
 var game_world = load("res://World.tscn")
 var card_game = load("res://1v1Board.tscn")
-#var card_game = load("res://3DBoard.tscn")
-#var card_game = load("res://CardGame.tscn")
 
 var main_hub
 var game_board
@@ -65,8 +49,6 @@ func _ready():
 	$OptionsMenu/Close.connect("pressed", self, "close_menu")
 	check_keystore()
 	check_aes_key()
-	#apparently breaks the game if an invalid rpc is input
-	get_rpc()  
 	get_address()
 	get_balance()
 
@@ -93,25 +75,7 @@ func _process(delta):
 		if $Fadeout.color.a <= 0:
 			exiting = false
 			fadein = false
-	
-	
-	if confirmation_timer > 0:
-		confirmation_timer -= delta
-		if confirmation_timer < 0:
-			tx_ongoing = false
-			
-			check_cards_switch = true
-	
-	if check_cards_switch == true:
-		check_cards_timer -= delta
-		if check_cards_timer <= 0:
-			#check_player_cards()
-			#check_opponent_cards()
-			check_cards_timer = 16
-		
-		
-				
-		
+
 
 
 func check_keystore():
@@ -139,37 +103,7 @@ func check_aes_key():
 		file.open("user://aes", File.WRITE)
 		file.store_buffer(content)
 		file.close()
-	
-func get_rpc():
-	var file = File.new()
-	if file.file_exists("user://rpc") != true:
-		var initial_rpc_list = {"1": "https://ethereum-sepolia.publicnode.com", "2": "https://endpoints.omniatech.io/v1/eth/sepolia/public", "3": "https://1rpc.io/sepolia"}
-		file.open("user://rpc", File.WRITE)
-		file.store_line(JSON.print(initial_rpc_list))
-	file.close()
-	
-	var file2 = File.new()
-	file2.open("user://rpc", File.READ)
-	var content = file2.get_as_text()
-	rpc_list = parse_json(content).duplicate()
-	sepolia_rpc = rpc_list["1"]
-	$OptionsMenu/RPC1.text = rpc_list["1"]
-	$OptionsMenu/RPC2.text = rpc_list["2"]
-	$OptionsMenu/RPC3.text = rpc_list["3"]
-	file2.close()
 
-func default_rpc():
-	$OptionsMenu/RPC1.text = "https://ethereum-sepolia.publicnode.com"
-	$OptionsMenu/RPC2.text = "https://endpoints.omniatech.io/v1/eth/sepolia/public"
-	$OptionsMenu/RPC3.text = "https://1rpc.io/sepolia"
-	
-func set_rpc():
-	var new_rpc_list = {"1": $OptionsMenu/RPC1.text, "2": $OptionsMenu/RPC2.text, "3": $OptionsMenu/RPC3.text}
-	var file = File.new()
-	file.open("user://rpc", File.WRITE)
-	file.store_line(JSON.print(new_rpc_list))
-	file.close()
-	sepolia_rpc = $OptionsMenu/RPC1.text
 
 func attempt_play():
 	if menu_open == false:
@@ -183,7 +117,6 @@ func open_options_menu():
 		menu_open = true
 		$MenuOverlay.visible = true
 		$OptionsMenu.visible = true
-		get_rpc()
 
 func open_gas_menu():
 	if menu_open == false:
@@ -235,8 +168,6 @@ func fade(action, params="None"):
 			destination = params
 		fadeout = true
 
-
-
 func start_game():
 	for child in get_children():
 		if child != $Fadeout && child != $HTTP:
@@ -280,16 +211,10 @@ func enter_matchmaking_queue():
 	var children_length = get_children().size()
 	move_child(new_game, children_length - 2)
 	new_game.global_transform.origin.x += 1000
-	#game_board = new_game
-	#new_game.ethers = self
 	game_board = new_game.get_node("UI")
 	new_game.get_node("UI").ethers = self
 	
-	
-	# Disabled for now, turn back on later
-	#game_board.register_player()
 	game_board.join_matchmaking()
-	
 	
 	game_board.get_parent().get_node("WorldRotate/Pivot/BattleCamera").make_current()
 	$World/Player/Head/Camera.visible = false
@@ -301,13 +226,9 @@ func enter_matchmaking_queue():
 	
 	
 func start_transaction(function_name, param=["None"]):
-	if tx_ongoing == false:
-		tx_function_name = function_name
-		tx_parameter = param
-		#tx_ongoing = true
-		get_tx_count()
-	else:
-		print("Transaction Ongoing")
+	tx_function_name = function_name
+	tx_parameter = param
+	get_tx_count()
 
 # # #    BLOCKCHAIN INTERACTION    # # # 
 
@@ -370,12 +291,10 @@ func get_tx_count_attempted(result, response_code, headers, body):
 	var get_result = parse_json(body.get_string_from_ascii())
 	
 	if response_code == 200:
-		#$Send.text = "Confirming..."
 		var count = get_result["result"].hex_to_int()
 		tx_count = count
 	else:
 		pass
-		#$MenuBackground/GasBalance.text = "CHECK RPC"
 	http_request_delete_count.queue_free()
 	estimate_gas()
 
@@ -404,7 +323,6 @@ func estimate_gas_attempted(result, response_code, headers, body):
 		gas_price = int(float(estimate) * 1.12)
 	else:
 		pass
-		#$MenuBackground/GasBalance.text = "CHECK RPC"
 	http_request_delete_gas.queue_free()
 	call(tx_function_name)
 	
@@ -558,8 +476,77 @@ func check_player_cards_attempted(result, response_code, headers, body):
 			game_board.extract_hand()
 			game_board.find_player_hand = false
 			game_board.get_node("Scroll/AwaitingOracle").visible = false
-		#game_board.get_node("YourHand").text = "Your Hand:\n" + TimeCrystal.decode_u256_array_from_bytes(raw_response)
-		#print(parse_json(TimeCrystal.decode_hex_string(raw_response)["1"]))
+
+func check_for_opponent_commit(opponent):
+	var http_request = HTTPRequest.new()
+	$HTTP.add_child(http_request)
+	http_request_delete_tx_read = http_request
+	http_request.connect("request_completed", self, "check_for_opponent_commit_attempted")
+	
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	var calldata = TimeCrystal.check_commit(content, fuji_id, time_crystal_contract, my_rpc, opponent)
+	
+	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
+	
+	var error = http_request.request(my_rpc, 
+	[my_header], 
+	true, 
+	HTTPClient.METHOD_POST, 
+	JSON.print(tx))
+
+func check_for_opponent_commit_attempted(result, response_code, headers, body):
+	var get_result = parse_json(body.get_string_from_ascii())
+
+	if response_code == 200:
+		var raw_response = get_result.duplicate()["result"]
+		var commit_status = TimeCrystal.decode_bool(raw_response)
+		if commit_status == "true":
+			print("found opponent commit")
+			game_board.in_commit_phase = false
+			game_board.player_commit_found = false
+			game_board.in_reveal_phase = true
+			game_board.reveal_action()
+			
+		else:
+			check_for_new_actions()
+
+func check_for_new_actions():
+	var http_request = HTTPRequest.new()
+	$HTTP.add_child(http_request)
+	http_request_delete_tx_read = http_request
+	http_request.connect("request_completed", self, "check_for_new_actions_attempted")
+	
+	var file = File.new()
+	file.open("user://keystore", File.READ)
+	var content = file.get_buffer(32)
+	file.close()
+	var calldata = TimeCrystal.see_actions(content, fuji_id, time_crystal_contract, my_rpc, game_board.opponent)
+	
+	var tx = {"jsonrpc": "2.0", "method": "eth_call", "params": [{"to": time_crystal_contract, "input": calldata}, "latest"], "id": 7}
+	
+	var error = http_request.request(my_rpc, 
+	[my_header], 
+	true, 
+	HTTPClient.METHOD_POST, 
+	JSON.print(tx))
+
+func check_for_new_actions_attempted(result, response_code, headers, body):
+	var get_result = parse_json(body.get_string_from_ascii())
+
+	if response_code == 200:
+		var raw_response = get_result.duplicate()["result"]
+		var opponent_actions = TimeCrystal.decode_hex_string(raw_response)
+		if opponent_actions != game_board.opponent_actions:
+			# Opponent has revealed before player could commit
+			print("found opponent reveal")
+			game_board.in_commit_phase = false
+			game_board.player_commit_found = false
+			game_board.in_reveal_phase = true
+			game_board.reveal_action()
+
 
 func check_commit(_address):
 	var http_request = HTTPRequest.new()
@@ -593,10 +580,12 @@ func check_commit_attempted(result, response_code, headers, body):
 		if commit_status == "true" && game_board.in_commit_phase == true:
 			# Detect player commit 
 			if game_board.player_commit_found == false:
+				print("found player commit")
 				game_board.player_commit_found = true
 				check_commit(game_board.opponent)
 			else:
 				# Then, detect opponent commit
+				print("found opponent commit")
 				game_board.in_commit_phase = false
 				game_board.player_commit_found = false
 				game_board.in_reveal_phase = true
@@ -606,25 +595,15 @@ func check_commit_attempted(result, response_code, headers, body):
 		if commit_status == "false" && game_board.in_reveal_phase == true:
 			# Detect player reveal
 			if game_board.player_commit_found == false:
+				print("found player reveal")
 				game_board.player_commit_found = true
-				check_commit(game_board.opponent)
 			else:
 				# Then, detect opponent reveal and resolve actions
+				print("found opponent reveal")
 				print("resolving reveal phase")
 				game_board.player_commit_found = false
 				game_board.in_reveal_phase = false
 				game_board.get_opponent_actions()
-			
-#		if commit_status == "true" && game_board.in_commit_phase == true:
-#			print("entering reveal phase")
-#			game_board.in_commit_phase = false
-#			game_board.in_reveal_phase = true
-#			game_board.reveal_action()
-#
-#		if commit_status == "false" && game_board.in_reveal_phase == true:
-#			print("resolving reveal phase")
-#			game_board.in_reveal_phase = false
-#			game_board.get_opponent_actions()
 			
 		game_board.get_node("OpponentCommit").text = "Opponent Commit?\n" + TimeCrystal.decode_bool(raw_response)
 
@@ -657,6 +636,7 @@ func get_opponent_actions_attempted(result, response_code, headers, body):
 		var raw_response = get_result.duplicate()["result"]
 		var opponent_actions = TimeCrystal.decode_hex_string(raw_response)
 		game_board.get_node("OpponentCard").text = "Opponent Played:\n" + TimeCrystal.decode_hex_string(raw_response)
+		game_board.opponent_actions = opponent_actions
 		game_board.resolve_actions(opponent_actions)
 
 
@@ -718,7 +698,8 @@ func get_opponent_attempted(result, response_code, headers, body):
 		var opponent_address = TimeCrystal.decode_address(raw_response)
 		game_board.opponent = opponent_address
 		print(opponent_address)
-		get_opponent_hash_monster(opponent_address)
+		if opponent_address != "0x0000000000000000000000000000000000000000":
+			get_opponent_hash_monster(opponent_address)
 	
 
 func get_opponent_hash_monster(opponent_address):
@@ -886,16 +867,10 @@ func send_transaction_attempted(result, response_code, headers, body):
 
 	if response_code == 200:
 		pass
-		#tx_ongoing = true
-		#confirmation_timer = 7
 	else:
 		pass
-		#$Send.text = "TX ERROR"
 	
 	http_request_delete_tx_write.queue_free()
-
-
-
 
 
 #       BUTTON SELECTOR POSITIONS       #
