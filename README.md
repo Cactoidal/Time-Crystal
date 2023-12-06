@@ -15,6 +15,7 @@ Chainlink Hackathon Fall 2023
 * [Star Nest Shader](https://godotshaders.com/shader/star-nest-2/) by Lyagva, ported from [Kali's work on Shadertoy](https://www.shadertoy.com/view/XlfGRj)
 * [Rainbow Shader](https://godotshaders.com/shader/moving-rainbow-gradient/) by Exuin
 * [Ice Shader](https://godotshaders.com/shader/spatial-ice-shader/) by NekotoArts
+* [FPS Controller](https://github.com/GarbajYT/godot_updated_fps_controller/blob/main/FPS_controller_3.3/FPS.gd) by Garbaj
 * Link-chan and Avax-chan  (DESIGN: Anonymous artists | ART: Stable Diffusion)
 * Model: [Kohaku-XL by kblueleaf](https://civitai.com/models/162577/kohaku-xl-beta)
 * LoRA: [Pixel Art XL by NeriJS](https://civitai.com/models/120096?modelVersionId=135931)
