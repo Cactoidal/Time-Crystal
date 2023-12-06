@@ -3,7 +3,7 @@ CONTRACTS AND CHAINLINK
 
 * [TimeCrystal.sol](https://github.com/Cactoidal/Time-Crystal/blob/main/contracts/TimeCrystal.sol) - Contains all game logic, secured by Chainlink Functions, VRF, and Automation (Log Trigger and Forwarder)
   
-* [get_hand.js](https://github.com/Cactoidal/Time-Crystal/blob/main/contracts/get_hand.js) - Functions source code for decrypting player secrets and drawing cards from a secret deck
+* [get_hand.js](https://github.com/Cactoidal/Time-Crystal/blob/main/contracts/get_hand.js) - Functions source code for decrypting player secrets and drawing random secret cards
 
 RUST
 
