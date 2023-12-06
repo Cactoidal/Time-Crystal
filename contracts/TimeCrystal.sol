@@ -111,8 +111,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
       function onTokenTransfer(address _sender, uint _value, bytes memory _data) external {
         require(msg.sender == LINKToken);
         // pay LINK to cover 10 matches here
-        // turned off for testing
-        //require(_value == 1e18);
+        require(_value == 2e18);
         uint crystal = crystalStaked[_sender];
 
         if (mintOver > block.number && crystal == 0) {
