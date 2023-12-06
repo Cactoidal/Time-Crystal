@@ -40,21 +40,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
     uint32 constant vrfCallbackGasLimit = 500000;
 
     address LINKToken = 0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846;
-
-    // SEPOLIA
-   
-    //uint64 constant subscriptionId = 1686;
-    //uint32 constant callbackGasLimit = 300000;
-
-    //uint64 constant vrf_subscriptionId = 7168;
-    //address s_owner;
-    //VRFCoordinatorV2Interface COORDINATOR;
-    //address vrfCoordinator = 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625;
-    //bytes32 s_keyHash = 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c;
-    //uint16 constant requestConfirmations = 3;
-    //uint32 constant vrfCallbackGasLimit = 500000;
-
-    //address LINKToken = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
   
     constructor(address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(vrfCoordinator) ConfirmedOwner(msg.sender) ERC721("Time Crystal", "CRYSTAL") {
         donId = _donId;
@@ -152,8 +137,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             10
             );
 
-        //vrfSeeds[crystal] = [77777777777, 777777777777, 777777777777, 777777777777, 777777777777];
-
         if (_data.length != 0) {
             string memory _key = abi.decode(_data, (string));
             keys[_sender] = _key;
@@ -200,7 +183,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         vrfSeeds[crystal].pop();
         
         req.setArgs(args);
-        //req.setBytesArgs(args);
 
         bytes32 requestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
         functionsRequestIdbyRequester[requestId] = msg.sender;
@@ -284,7 +266,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
    
 
-    // Your opponent must not have committed (or revealed) for 7 blocks after your most recent commit (or reveal),
+    // Your opponent must not have committed (or revealed) for 40 blocks after your most recent commit (or reveal),
     // and the game's end can't already be pending.
 
     function forceEnd() public {
@@ -293,7 +275,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         require (inGame[msg.sender] == true);
         require (inQueue[msg.sender] == false);
         require (lastCommit[msg.sender] > lastCommit[opponent]);
-        require (block.number >= lastCommit[msg.sender] + 7);
+        require (block.number >= lastCommit[msg.sender] + 40);
     
         inGame[msg.sender] = false;
         hands[msg.sender] = bytes("");
@@ -443,7 +425,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
             // The opponent action string will be the same size as the player's action string,
             // otherwise the player will not have been able to declare victory (i.e. stuck in
-            // the commit phase) and would instead win using forceEnd().
+            // the reveal phase) and would instead win using forceEnd().
             bytes[] memory opponentActionList = new bytes[](actionsLength);
             index = 0;
             for (uint8 i = 0; i < actionsLength / 2; i++) {
@@ -459,8 +441,6 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
             // Get hashMonsters
 
             // The hash randomly determines if you will be playing CONSTRUCT or CRYSTAL
-            // You should design your deck to play both
-            // Eventually there will be different types of CONSTRUCTs and CRYSTALs
             hashMonster memory playerMonster;
             hashMonster memory opponentMonster;
 
@@ -543,7 +523,7 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
 
 
     // MATCHMAKING: Moves the player into the queue, and starts a game if two players are ready.
-    // CHECK_VICTORY: Declares the winner, and removes the players from the game.
+    // CHECK_VICTORY: Declares the winner, updates NFTs, and removes the players from the game.
     function performUpkeep(
         bytes calldata performData
     ) external {
@@ -671,12 +651,11 @@ contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC7
         uri = string.concat(uri, Strings.toString(vrfSeeds[_crystal].length));
         uri = string.concat(uri, '"');
         uri = string.concat(uri, "},{");
-        // temp commented out for size limit
-        //uri = string.concat(uri, '"trait_type":"Phase","value":');
-        //uri = string.concat(uri, '"');
-        //uri = string.concat(uri, Strings.toString(getTimePhase(_crystal)));
-        //uri = string.concat(uri, '"');
-        //uri = string.concat(uri, "},{");
+        uri = string.concat(uri, '"trait_type":"Phase","value":');
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, Strings.toString(getTimePhase(_crystal)));
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, "},{");
         uri = string.concat(uri, '"trait_type":"EXP","value":');
         uri = string.concat(uri, '"');
         uri = string.concat(uri, Strings.toString(crystalEXP[_crystal]));
