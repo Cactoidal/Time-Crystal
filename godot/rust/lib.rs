@@ -167,8 +167,9 @@ let base64_player_key = openssl::base64::encode_block(&encrypted_player_key);
 
 let key_bytes = AbiEncode::encode(base64_player_key);
 
-let calldata = contract.transfer_and_call(contract_address, (2*10^18).into(), key_bytes.into()).calldata().unwrap();
-//let calldata = contract.register_player_key(base64_player_key).calldata().unwrap();
+let cost: U256 = U256::exp10(18) * 2;
+
+let calldata = contract.transfer_and_call(contract_address, cost, key_bytes.into()).calldata().unwrap();
 
 let tx = Eip1559TransactionRequest::new()
     .from(user_address)
