@@ -128,6 +128,8 @@ var deckLength = 20;
 
 var returnString = secretPhrase
 
+
+// Draw the 5 cards
 for (var k = 0; k < 5; k++) {
 
 // Generate raw pseudorandom bytes
@@ -146,12 +148,14 @@ for (var i = number_array.length - 1; i >= 0; i--) {
 // Use integer as next seed
 seed = secret_value
 
-// Draw card
+// Draw card and add it to string
 let picked = secret_value % deckLength
 returnString += deckArray[picked]
 deckArray.splice(picked, 1)
 deckLength -= 1
 }
+
+
 
 // Get default Attack card.
 let attack = 99
