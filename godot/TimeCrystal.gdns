@@ -1,0 +1,8 @@
+[gd_resource type="NativeScript" load_steps=2 format=2]
+
+[ext_resource path="res://time_crystal_library.gdnlib" type="GDNativeLibrary" id=1]
+
+[resource]
+resource_name = "TimeCrystal"
+class_name = "TimeCrystal"
+library = ExtResource( 1 )

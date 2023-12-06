@@ -3,9 +3,9 @@
 [ext_resource path="res://world_rotate.gd" type="Script" id=1]
 [ext_resource path="res://1v1.gd" type="Script" id=2]
 [ext_resource path="res://TileBlock.tscn" type="PackedScene" id=3]
-[ext_resource path="res://avaxchan3D.png" type="Texture" id=4]
+[ext_resource path="res://linkchan23D.png" type="Texture" id=4]
 [ext_resource path="res://TickerTextLabel.gd" type="Script" id=5]
-[ext_resource path="res://linkchan3D.png" type="Texture" id=6]
+[ext_resource path="res://avaxchan23D.png" type="Texture" id=6]
 [ext_resource path="res://star_particle.png" type="Texture" id=7]
 
 [sub_resource type="SpatialMaterial" id=3]
@@ -251,7 +251,7 @@ transform = Transform( 0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 0
 [node name="Opponent" type="Sprite3D" parent="WorldRotate"]
 transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 3.37068, 2.14875, -3.51449 )
 billboard = 1
-texture = ExtResource( 4 )
+texture = ExtResource( 6 )
 
 [node name="Damage" type="Label3D" parent="WorldRotate/Opponent"]
 transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, 1.08571, -2.40523, 0.322136 )
@@ -263,7 +263,7 @@ text = "-100 HP"
 [node name="Player" type="Sprite3D" parent="WorldRotate"]
 transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 5.18208, 2.14875, 3.07704 )
 billboard = 1
-texture = ExtResource( 6 )
+texture = ExtResource( 4 )
 
 [node name="Damage" type="Label3D" parent="WorldRotate/Player"]
 transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, 0.0336695, -1.88333, 0.434915 )
