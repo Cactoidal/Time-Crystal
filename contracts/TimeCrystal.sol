@@ -1,297 +1,750 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
-import "fhevm/lib/TFHE.sol";
-import "fhevm/abstracts/EIP712WithModifier.sol";
+import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
+import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
+import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
 
-contract FHEGame is EIP712WithModifier {
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./ILogAutomation.sol";
+import "./IERC677.sol";
 
-    mapping (address => euint8) public secretNumber;
-    bool public success;
-    uint epochStart;
-    //uint constant epochDivisor = 5000;
-    uint constant epochDivisor = 50;
-    mapping (uint => mapping (uint8 => euint16)) public epochResource;
-    mapping (uint => mapping (uint8 => bool)) public epochMineStarted;
-    mapping (uint => mapping (uint8 => ebool)) public epochMinedOut;
-    mapping (address => euint32) playerPoints;
+contract TimeCrystal is FunctionsClient, ConfirmedOwner, VRFConsumerBaseV2, ERC721 {
+    using FunctionsRequest for FunctionsRequest.Request;
+
+    bytes32 public donId;
+    address private forwarder;
+
+    bytes public s_lastError;
+
+    string public source;
+    FunctionsRequest.Location public secretsLocation;
+    bytes encryptedSecretsReference;
+
+    // FUJI
+
+    uint64 constant subscriptionId = 1573;
+    uint32 constant callbackGasLimit = 300000;
+
+    uint64 constant vrf_subscriptionId = 806;
+    address s_owner;
+    VRFCoordinatorV2Interface COORDINATOR;
+    address vrfCoordinator = 0x2eD832Ba664535e5886b75D64C46EB9a228C2610;
+    bytes32 s_keyHash = 0x354d2f95da55398f44b7cff77da56283d9c6c829a4bdf1bbcaf2ad6a4d081f61;
+    uint16 constant requestConfirmations = 3;
+    uint32 constant vrfCallbackGasLimit = 500000;
+
+    address LINKToken = 0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846;
+  
+    constructor(address router, bytes32 _donId, string memory _source, FunctionsRequest.Location _location, bytes memory _reference, cardTraits[] memory _cards) FunctionsClient(router) VRFConsumerBaseV2(vrfCoordinator) ConfirmedOwner(msg.sender) ERC721("Time Crystal", "CRYSTAL") {
+        donId = _donId;
+        source = _source;
+        secretsLocation = _location;
+        encryptedSecretsReference = _reference;
+        mintOver = block.number + 1000000;
+        COORDINATOR = VRFCoordinatorV2Interface(0x2eD832Ba664535e5886b75D64C46EB9a228C2610);
+        for (uint z = 0; z < _cards.length; z++) {
+            cards[Strings.toString(_cards[z].cardNumber)] = _cards[z];
+        }
+    }
 
 
+      //            CHAINLINK AUTOMATION, FUNCTIONS, AND VRF VARIABLES        //
+
+    mapping (address => string) keys;
+    mapping (string => bool) public usedCSPRNGIvs;
+    uint ivNonce;
+
+    mapping (bytes32 => address) public functionsRequestIdbyRequester;
+    mapping (uint => address) public vrfRequestIdbyRequester;
+    mapping (address => upkeepType) pendingUpkeep;
+
+     enum upkeepType {
+        MATCHMAKING,
+        CHECK_VICTORY
+    }
+
+    //          CRYSTAL NFT VARIABLES       //
+
+    uint mintOver;
+    mapping (address => uint) public crystalStaked;
+    uint crystalId = 1;
+    mapping (uint => uint[]) vrfSeeds;
+    mapping (uint => uint) crystalEXP;
+    mapping (uint => uint) crystalEnergy;
+    mapping (uint => uint) crystalTimeSeed;
+
+
+    //          GAME STATE VARIABLES        //
+
+    mapping (address => bytes) public hands;
     address[2] matchmaker;
-    mapping (address => uint) queueStartTime;
-    mapping (address => bool) waitingForMatch;
+    uint matchIndex;
+    mapping (address => uint) public currentMatch;
+    mapping (address => string) public playerActions;
     mapping (address => bool) public inGame;
+    mapping (address => bool) public inQueue;
     mapping (address => address) public currentOpponent;
-    mapping (address => euint8) baseResources;
-    mapping (address => euint8) currentResources;
-    mapping (address => euint8[3]) traps;
-    mapping (address => bool) hasSetTraps;
-    mapping (address => bool) activeMiner;
-    mapping (address => bool) readyToEnd;
-    mapping (address => uint) lastAction;
+    mapping (address => bytes) public hashCommit;
+    mapping (address => uint) public lastCommit;
+    mapping (uint => gamePhase) public currentPhase;
+
+    enum gamePhase {
+        COMMIT,
+        REVEAL
+    }
+
+
+
+    //                 PLAYER GAME INTERACTIONS                 //
+
+
+    // transferAndCall executes the following:
+    // Registers the player AES key.  RSA-encrypted AES key is provided as a base64 string.
+    // Calls VRF. 10 VRF values are banked for use as seeds when asking Chainlink Functions for a random hand.
+    // This is also the payment gateway for the player.  Players provide LINK upfront to cover the cost of services.
+      function onTokenTransfer(address _sender, uint _value, bytes memory _data) external {
+        require(msg.sender == LINKToken);
+        // pay LINK to cover 10 matches here
+        require(_value == 2e18);
+        uint crystal = crystalStaked[_sender];
+
+        if (mintOver > block.number && crystal == 0) {
+            uint newId = crystalId;
+            _mint(address(this), newId);
+            crystalStaked[_sender] = newId;
+            crystal = newId;
+            crystalTimeSeed[newId] = block.timestamp;
+            crystalEnergy[newId] = 100;
+            crystalId++;
+        }
+        else {
+            require(crystal != 0);
+        }
+        
+        inQueue[msg.sender] = true;
+        uint256 requestId = COORDINATOR.requestRandomWords(
+            s_keyHash,
+            vrf_subscriptionId,
+            requestConfirmations,
+            vrfCallbackGasLimit,
+            10
+            );
+
+        if (_data.length != 0) {
+            string memory _key = abi.decode(_data, (string));
+            keys[_sender] = _key;
+            }
+        vrfRequestIdbyRequester[requestId] = _sender;
+    }
+
+
+    // Prepare for a match by asking the Functions oracle for a SHA256 hash containing secret information.
+    // AES-encrypted secret password, and iv are provided as base64 strings.
+    // In addition, another (unique) iv must be passed for use by the CSPRNG key.
+    // The Functions callback will trigger the Automation DON, pushing the player into the matchmaking queue.
+    function getHand(string calldata secrets, string calldata secretsIv, string calldata csprngIv) external {
+        require (inGame[msg.sender] == false);
+        require (inQueue[msg.sender] == false);
+        require (hands[msg.sender].length == 0);
+        require (usedCSPRNGIvs[csprngIv] == false);
+
+        uint crystal = crystalStaked[msg.sender];
+
+        uint[] memory seeds = vrfSeeds[crystal];
+
+        if (seeds.length == 0) {
+            revert("Call VRF");
+        }
+
+        usedCSPRNGIvs[csprngIv] = true;
+        inQueue[msg.sender] = true;
+
+        FunctionsRequest.Request memory req;
+        req.initializeRequest(FunctionsRequest.Location.Inline, FunctionsRequest.CodeLanguage.JavaScript, source);
+        req.secretsLocation = secretsLocation;
+        req.encryptedSecretsReference = encryptedSecretsReference;
+
+        string[] memory args = new string[](6);
+        args[0] = keys[msg.sender];
+        args[1] = secrets;
+        args[2] = secretsIv;
+        args[3] = Strings.toString(seeds[seeds.length - 1]);
+        args[4] = csprngIv;
+        args[5] = Strings.toString(ivNonce);
+        //args[6] = on-chain deck
+        ivNonce++;
+        vrfSeeds[crystal].pop();
+        
+        req.setArgs(args);
+
+        bytes32 requestId = _sendRequest(req.encodeCBOR(), subscriptionId, callbackGasLimit, donId);
+        functionsRequestIdbyRequester[requestId] = msg.sender;
+    }
+
+
+    // Provide a hash of your action, kept secret until both players have committed
+    function commitAction(bytes memory _actionHash) external {
+        uint matchId = currentMatch[msg.sender];
+
+        require(inGame[msg.sender] == true);
+        require(inQueue[msg.sender] == false);
+        require(currentPhase[matchId] == gamePhase.COMMIT);
+        require(hashCommit[msg.sender].length == 0);
+
+        hashCommit[msg.sender] = _actionHash;
+        lastCommit[msg.sender] = block.number;
+
+        // If opponent has committed, change phase to REVEAL
+        if (hashCommit[currentOpponent[msg.sender]].length != 0) {
+            currentPhase[matchId] = gamePhase.REVEAL;
+        }
+    }
+
+
+
+    // Provide the secret password and action used to create the commit hash
+    // Action is appended to action string for later evaluation 
+    // Action must have a valid mapping in the cards list
+    function revealAction(string memory password, string memory action) external {
+        uint matchId = currentMatch[msg.sender];
+
+        require(inGame[msg.sender] == true);
+        require(inQueue[msg.sender] == false);
+        require(currentPhase[matchId] == gamePhase.REVEAL);
+        require(bytes(password).length == 20);
+        require(cards[action].cardNumber != 0);
+
+        string memory revealed = string.concat(password, action);
+
+        require(keccak256(hashCommit[msg.sender]) == keccak256(abi.encode(sha256(abi.encode(revealed)))));
+
+        playerActions[msg.sender] = string.concat(playerActions[msg.sender], action);
+
+        hashCommit[msg.sender] = bytes("");
+        lastCommit[msg.sender] = block.number;
+
+        // If opponent has revealed, change phase to COMMIT
+        if (hashCommit[currentOpponent[msg.sender]].length == 0) {
+            currentPhase[matchId] = gamePhase.COMMIT;
+        }
+    }
+
+
+    // End the game by providing the constituent values of your oracle-generated hash.
+    // Automation will check whether you actually won, and if your played cards were truly in your hand.
+    function declareVictory(string calldata secret) external {
+        require(inGame[msg.sender] == true);
+        require(inQueue[msg.sender] == false);
+        // Victory must be declared during the COMMIT phase, to prevent passing action strings 
+        // of different lengths to the Automation DON
+        require(currentPhase[currentMatch[msg.sender]] == gamePhase.COMMIT);
+
+        // Must provide secret password + extracted cards to match the oracle-committed hand hash
+        require(keccak256(hands[msg.sender]) == keccak256(abi.encodePacked(sha256(abi.encodePacked(secret)))));
+
+        // The game immediately ends and goes to Automation to determine the winner
+        address opponent = currentOpponent[msg.sender];
+
+        inQueue[opponent] = true;
+        inGame[opponent] = false;
+        inQueue[msg.sender] = true;
+        inGame[msg.sender] = false;
+
+        // pendingUpkeep is set for both players, as either could potentially win
+        pendingUpkeep[msg.sender] = upkeepType.CHECK_VICTORY;
+        pendingUpkeep[opponent] = upkeepType.CHECK_VICTORY;
+
+        emit AwaitingAutomation(msg.sender, bytes32(bytes(secret)));
+    }
+
    
 
-    // For Testing
-    address testOpponent;
+    // Your opponent must not have committed (or revealed) for 40 blocks after your most recent commit (or reveal),
+    // and the game's end can't already be pending.
 
-    constructor() EIP712WithModifier("Authorization token", "1") {
-        epochStart = block.number;
-        testOpponent = address(this);
-    }
-
-    function joinMatch() public {
-        require(inGame[msg.sender] == false);
-        require(waitingForMatch[msg.sender] == false);
-
-        //  For Testing   //
-        matchmaker[0] = testOpponent;
-        queueStartTime[testOpponent] = block.number + 10000; 
-        baseResources[testOpponent] = TFHE.randEuint8();
-        ebool lowOpponentResources = TFHE.lt(baseResources[testOpponent], 100);
-        baseResources[testOpponent] = TFHE.cmux(lowOpponentResources, TFHE.add(baseResources[msg.sender], 99), baseResources[msg.sender]);
-        ebool highOpponentResources = TFHE.gt(baseResources[testOpponent], 200);
-        baseResources[testOpponent] = TFHE.cmux(highOpponentResources, TFHE.sub(baseResources[msg.sender], 99), baseResources[msg.sender]);
-        ///////////
-
-        // Initialize "base resource" value.  It cannot be too low or too high
-        // This value will be used as a comparator later, and is meant to obscure the player's in-game status
-        baseResources[msg.sender] = TFHE.randEuint8();
-        ebool lowResources = TFHE.lt(baseResources[msg.sender], 100);
-        baseResources[msg.sender] = TFHE.cmux(lowResources, TFHE.add(baseResources[msg.sender], 99), baseResources[msg.sender]);
-        ebool highResources = TFHE.gt(baseResources[msg.sender], 200);
-        baseResources[msg.sender] = TFHE.cmux(highResources, TFHE.sub(baseResources[msg.sender], 99), baseResources[msg.sender]);
-
-        // If matchmaking queue is empty, become player 1
-        address currentPlayer1 = matchmaker[0];
-        if (currentPlayer1 == address(0x0)) {
-            matchmaker[0] = msg.sender;
-            waitingForMatch[msg.sender] = true;
-            queueStartTime[msg.sender] = block.number + 50;
-        }
-        // If someone has been sitting in the queue for 50 blocks, they are kicked out and replaced
-        else if (queueStartTime[currentPlayer1] < block.number) {
-            waitingForMatch[currentPlayer1] = false;
-            matchmaker[0] = msg.sender;
-            waitingForMatch[msg.sender] = true;
-            queueStartTime[msg.sender] = block.number + 50;
-        }
-        // Otherwise, become player 2.  Both players now enter the game, and their "current resource"
-        // value is set.  This value will be used as a comparator later, to determine
-        // how many points the player obtained during the game.
-        else {
-            waitingForMatch[currentPlayer1] = false;
-            matchmaker[1] = msg.sender;
-
-            currentOpponent[msg.sender] = currentPlayer1;
-            currentOpponent[currentPlayer1] = msg.sender;
-
-            inGame[currentPlayer1] = true;
-            inGame[msg.sender] = true;
-
-            currentResources[currentPlayer1] = baseResources[currentPlayer1];
-            currentResources[msg.sender] = baseResources[msg.sender];
-
-            lastAction[currentPlayer1] = block.number;
-            lastAction[msg.sender] = block.number;
-
-            matchmaker[0] = address(0x0);
-            matchmaker[1] = address(0x0);
-        }
-
-    }
-
-    // Choose 3 spots on the board to trap
-    function setTraps(bytes calldata _trap1, bytes calldata _trap2, bytes calldata _trap3) public {
-        require(inGame[msg.sender] == true);
-        require(hasSetTraps[msg.sender] == false);
-        euint8 trap1 = TFHE.asEuint8(_trap1);
-        euint8 trap2 = TFHE.asEuint8(_trap2);
-        euint8 trap3 = TFHE.asEuint8(_trap3);
-        traps[msg.sender] = [trap1,trap2,trap3];
-        hasSetTraps[msg.sender] = true;
-        activeMiner[msg.sender] = true;
-        lastAction[msg.sender] = block.number;
-    }
-
-
-    // Choose a spot to mine.  If the mine has a trap, you will lose 33 points.  Otherwise, you gain 1 point.
-    function tryMine(uint8 location) public {
+    function forceEnd() public {
         address opponent = currentOpponent[msg.sender];
-        euint8 resources = currentResources[msg.sender];
-        require(activeMiner[msg.sender] == true);
-        require(hasSetTraps[opponent] == true);
-        euint8 detectTrappedBase = TFHE.randEuint8();
-        ebool lowRand = TFHE.eq(detectTrappedBase, 0);
-        detectTrappedBase = TFHE.cmux(lowRand, TFHE.add(detectTrappedBase, 3), detectTrappedBase);
-        euint8 detectTrapped = detectTrappedBase;
-        for (uint i; i < 3; i++) {
-            ebool trapped = TFHE.eq(traps[opponent][i], location);
-            detectTrapped = TFHE.cmux(trapped, TFHE.sub(detectTrapped, 1), detectTrapped);
-        }
-        ebool wasTrapped = TFHE.lt(detectTrapped, detectTrappedBase);
-        currentResources[msg.sender] = TFHE.cmux(wasTrapped, TFHE.sub(resources, 33), TFHE.add(resources, 1));
-        lastAction[msg.sender] = block.number;
-    }
 
-    // If you are happy with your score, you may signal that you are ready to end the game.
-    function stopMining() public {
-        require(inGame[msg.sender] == true);
-        require(activeMiner[msg.sender] == true);
-        activeMiner[msg.sender] = false;
-        readyToEnd[msg.sender] = true;
-    }
-
-    // Player scores are obtained by comparing and subtracting the "base resource" from the "current resource".
-    // The player scores are then compared to determine the winner.
-    // Both players are reinitialized.
-    function endGame() public {
-        address opponent = currentOpponent[msg.sender];
-        require(readyToEnd[msg.sender] == true);
-        require(readyToEnd[opponent] == true);
-        inGame[msg.sender] = false;
-        inGame[opponent] = false;
-        readyToEnd[msg.sender] = false;
-        readyToEnd[opponent] = false;
-        hasSetTraps[msg.sender] = false;
-        hasSetTraps[opponent] = false;
-
-        euint8 playerBaseScore = baseResources[msg.sender];
-        euint8 playerCurrentScore = currentResources[msg.sender];
-        euint8 opponentBaseScore = baseResources[opponent];
-        euint8 opponentCurrentScore = currentResources[opponent];
-
-        ebool playerScoreAboveZero = TFHE.gt(playerCurrentScore, playerBaseScore);
-        euint8 playerScore = TFHE.cmux(playerScoreAboveZero, TFHE.sub(playerCurrentScore, playerBaseScore), TFHE.sub(playerBaseScore, playerBaseScore));
-
-        ebool opponentScoreAboveZero = TFHE.gt(opponentCurrentScore, opponentBaseScore);
-        euint8 opponentScore = TFHE.cmux(opponentScoreAboveZero, TFHE.sub(opponentCurrentScore, opponentBaseScore), TFHE.sub(opponentBaseScore, opponentBaseScore));
-
-        ebool playerWon = TFHE.gt(playerScore, opponentScore);
-        playerPoints[msg.sender] = TFHE.cmux(playerWon, TFHE.add(playerPoints[msg.sender], playerScore), playerPoints[msg.sender]);
-        ebool opponentWon = TFHE.gt(opponentScore, playerScore);
-        playerPoints[opponent] = TFHE.cmux(opponentWon, TFHE.add(playerPoints[opponent], opponentScore), playerPoints[opponent]);
-
-    }
-
-    // If a player has not acted for 20 blocks, you may end the game.
-    // You gain points if you have more than 0.
-    function forceEndGame() public {
-        address opponent = currentOpponent[msg.sender];
         require (inGame[msg.sender] == true);
-        require (readyToEnd[opponent] == false);
-        require (lastAction[msg.sender] > lastAction[opponent]);
-        require (block.number >= lastAction[msg.sender] + 20);
-
-        inGame[msg.sender] = false;
-        inGame[opponent] = false;
-        readyToEnd[msg.sender] = false;
-        readyToEnd[opponent] = false;
-        hasSetTraps[msg.sender] = false;
-        hasSetTraps[opponent] = false;
-        activeMiner[msg.sender] = false;
-        activeMiner[opponent] = false;
-
-        ebool playerScoreAboveZero = TFHE.gt(currentResources[msg.sender], baseResources[msg.sender]);
-        euint8 playerScore = TFHE.cmux(playerScoreAboveZero, TFHE.sub(currentResources[msg.sender], baseResources[msg.sender]), TFHE.sub(baseResources[msg.sender], baseResources[msg.sender]));
-        playerPoints[msg.sender] = TFHE.add(playerPoints[msg.sender], playerScore);
-
-
-    }
-
-
-
-    function setNumber(bytes calldata _number) public {
-        euint8 number = TFHE.asEuint8(_number);
-        secretNumber[msg.sender] = number;
-        success = true;
-    }
-
-    function getEpoch() public view returns (uint) {
-        return ( (block.number + 50) - epochStart) / epochDivisor;
-    }
-
-/*
-
-    function mine(bytes calldata _location) public {
-        uint epoch = getEpoch();
-        euint8 location = TFHE.asEuint8(_location);
-        euint16 availableResources = epochResource[epoch][location];
-        // If location resources are 0, but not yet mined out, generate random resources
-        availableResources = TFHE.cmux(epochMinedOut[epoch][location], availableResources, TFHE.randEuint16());
-        // Random mine amount
-        euint16 mineAmount = TFHE.div(TFHE.randEuint16(), 5);
-        // Check if there are enough resources for the mine amount
-        ebool enoughResources = TFHE.le(mineAmount, availableResources);
-        // If there aren't enough, mine amount is reduced to the available resource amount
-        mineAmount = TFHE.cmux(enoughResources, mineAmount, availableResources);
-        // Subtract mine amount from resources
-        availableResources = TFHE.cmux(enoughResources, TFHE.sub(availableResources, mineAmount), TFHE.sub(availableResources, availableResources));
-        // If there are no resources left, the location is mined out
-        epochMinedOut[epoch][location] = TFHE.eq(availableResources, 0);
-        // Give player the mine amount
-        playerBalance[msg.sender] = TFHE.add(playerBalance[msg.sender], mineAmount);
-        // Adjust the location resources
-        epochResource[epoch][location] = availableResources;
-
-        success = true;
-    }
-*/
-
-     function mine(uint8 location) public {
-        uint epoch = getEpoch();
-        euint16 availableResources = epochResource[epoch][location];
-        // If location resources are 0, but not yet mined out, generate random resources
-        availableResources = TFHE.cmux(epochMinedOut[epoch][location], availableResources, TFHE.randEuint16());
-        // Random mine amount
-        euint16 mineAmount = TFHE.div(TFHE.randEuint16(), 5);
-        // Check if there are enough resources for the mine amount
-        ebool enoughResources = TFHE.le(mineAmount, availableResources);
-        // If there aren't enough, mine amount is reduced to the available resource amount
-        mineAmount = TFHE.cmux(enoughResources, mineAmount, availableResources);
-        // Subtract mine amount from resources
-        availableResources = TFHE.cmux(enoughResources, TFHE.sub(availableResources, mineAmount), TFHE.sub(availableResources, availableResources));
-        // If there are no resources left, the location is mined out
-        epochMinedOut[epoch][location] = TFHE.eq(availableResources, 0);
-        // Give player the mine amount
-        playerPoints[msg.sender] = TFHE.add(playerPoints[msg.sender], mineAmount);
-        // Adjust the location resources
-        epochResource[epoch][location] = availableResources;
-
-        success = true;
-    }
-    /*
-    function mine2(uint8 location) public {
-        uint epoch = getEpoch();
-        epochResource[epoch][location] = TFHE.randEuint16();
-    }
-*/
-     function mine2(uint8 location) public {
-        uint epoch = getEpoch();
-        euint16 availableResources = epochResource[epoch][location];
-        ebool resourcesUnavailable = TFHE.eq(availableResources, 0);
-        epochResource[epoch][location] = TFHE.cmux(resourcesUnavailable, TFHE.randEuint16(), availableResources);
-    }
-
-    function mine3() public view returns (euint16) {
-        return TFHE.randEuint16();
-
-    }
-
-    function startMine(uint8 location) public {
-        uint epoch = getEpoch();
-        require(!epochMineStarted[epoch][location]);
-        epochMineStarted[epoch][location] = true;
-        epochResource[epoch][location] = TFHE.randEuint16();
-    }
-
+        require (inQueue[msg.sender] == false);
+        require (lastCommit[msg.sender] > lastCommit[opponent]);
+        require (block.number >= lastCommit[msg.sender] + 40);
     
+        inGame[msg.sender] = false;
+        hands[msg.sender] = bytes("");
+        currentOpponent[msg.sender] = address(0x0);
+        hashCommit[msg.sender] = bytes("");
+
+        inGame[opponent] = false;
+        hands[opponent] = bytes("");
+        currentOpponent[opponent] = address(0x0);
+        hashCommit[opponent] = bytes("");
+
+    }
 
 
+
+
+    //              VRF REQUEST FULFILLMENT              //
+
+    // Banks 10 VRF values
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual override {
+        address requester = vrfRequestIdbyRequester[requestId];
+        vrfSeeds[crystalStaked[requester]] = randomWords;
+        inQueue[requester] = false;
+        emit VRFFulfilled(requestId);
+    }
+
+
+
+
+
+    //            FUNCTIONS REQUEST FULFILLMENT            //
+
+
+    // Provides a secret hand, drawn from a secretly shuffled deck.
+    // Asks Chainlink Automation to move the player into matchmaking.
+    function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
+
+        address player = functionsRequestIdbyRequester[requestId];
+
+        // Response is a SHA256 hash against which the player will run a birthday attack
+        // to extract the encoded secret random cards.
+        hands[player] = response;
+
+        // Moves player to matchmaking queue.
+        if (err.length == 0) {
+            pendingUpkeep[player] = upkeepType.MATCHMAKING;
+            emit AwaitingAutomation(player, "");
+            }
+        else {
+            s_lastError = err;
+            inQueue[player] = false;
+        }
+        emit RequestFulfilled(requestId, response);
   }
 
 
 
 
 
+    //       AUTOMATION AND GAMEPLAY VALIDATION          //
+
+    enum cType {
+    NORMAL,
+    POWER,
+    ENERGY
+  }
+
+    struct cardTraits {
+    uint8 cardNumber;
+    string cardName;
+    cType cardType;
+    uint8 attack;
+    uint8 defense;
+    uint8 energyCost;
+    uint8 energyGain;
+    uint8 counterBonus;
+  }
+
+    mapping (string => cardTraits) cards;
+
+    struct hashMonster {
+        uint HP;
+        uint POW;
+        uint DEF;
+    }
+
+    function checkLog(
+    Log calldata log,
+    bytes memory checkData
+  ) external view returns (bool upkeepNeeded, bytes memory performData) {
+        address player = address(uint160(uint256(log.topics[1])));
+        upkeepNeeded = true;
+        bool valid = true;
+        if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
+            performData = abi.encode(player);
+        }
 
 
+        if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
+            // Opponent set as default winner
+            performData = abi.encode(currentOpponent[player]);
+            bytes memory _cards = bytes32ToBytes(log.topics[2]);
+
+            bytes memory _actions = bytes(playerActions[player]);
+            bytes memory _opponentActions = bytes(playerActions[currentOpponent[player]]);
+
+            uint actionsLength = _actions.length;
+            
+            // Check if actions are valid
+
+            // The strings will always contain valid cards because of the require statement
+            // in revealAction().  The question is whether those cards were actually
+            // in the player's hand.
+            bytes[6] memory cardList;
+            bytes[] memory actionList = new bytes[](actionsLength);
+           
+            uint8 index = 20;
+            for (uint8 i = 0; i < 6; i++) {
+                bytes memory newCard = new bytes(2);
+                newCard[0] = _cards[index];
+                index += 1;
+                newCard[1] = _cards[index];
+                index += 1;
+                cardList[i] = (newCard);
+                }
+            index = 0;
+            for (uint8 i = 0; i < actionsLength / 2; i++) {
+                bytes memory action = new bytes(2);
+                action[0] = _actions[index];
+                index += 1;
+                action[1] = _actions[index];
+                index += 1;
+                actionList[i] = (action);
+                bool inHand = false;
+                for (uint8 d; d < 6; d++) {
+                    if (keccak256(action) == keccak256(cardList[d])) {
+                        inHand = true;
+                        }
+                    }
+                if (inHand == false) {
+                    valid = false;
+                    }
+
+                }
+                
+            // Get opponent actions
+
+            // The opponent action string will be the same size as the player's action string,
+            // otherwise the player will not have been able to declare victory (i.e. stuck in
+            // the reveal phase) and would instead win using forceEnd().
+            bytes[] memory opponentActionList = new bytes[](actionsLength);
+            index = 0;
+            for (uint8 i = 0; i < actionsLength / 2; i++) {
+                bytes memory action = new bytes(2);
+                action[0] = _opponentActions[index];
+                index += 1;
+                action[1] = _opponentActions[index];
+                index += 1;
+                opponentActionList[i] = (action);
+                }
+
+
+            // Get hashMonsters
+
+            // The hash randomly determines if you will be playing CONSTRUCT or CRYSTAL
+            hashMonster memory playerMonster;
+            hashMonster memory opponentMonster;
+
+            playerMonster = getHashMonsterStats(getHashMonster(player));
+            opponentMonster = getHashMonsterStats(getHashMonster(currentOpponent[player]));
+
+            // Check Actions against hashMonster
+            // POWER attacks ignore DEF
+            // COUNTER attacks will do extra damage after being hit by a POWER attack
+
+            // Winner's HP is NOT checked, because a cheating opponent could have reduced your HP to 0
+            // and attempted to wait you out instead of proving.  However, the opponent's defensive effects 
+            // will be fully accounted for when checking their HP.  A cheater will lose 100% of the time
+            // if you just keep attacking them until their HP is 0.
+            if (valid == true) {
+
+                uint totalDamage;
+                uint bankedEnergy;
+
+                for (uint8 r; r < actionsLength / 2; r++) {
+
+                    cardTraits memory playerCard = cards[string(actionList[r])];
+                    cardTraits memory opponentCard = cards[string(opponentActionList[r])];
+
+                    // Check energy cost
+                    if (playerCard.energyCost > bankedEnergy) {
+                        valid = false;
+                        }
+                    else {
+                        bankedEnergy -= playerCard.energyCost;
+                        }
+
+                    // Calculate damage.  POWER attacks ignore defense, but take more damage from counter cards.
+                    uint opponentDEF = opponentMonster.DEF * opponentCard.defense;
+                    uint playerATK = playerMonster.POW * playerCard.attack;
+                    uint damageDealt;
+
+                    // Opponents can be countered if they used a POWER attack.
+                    if (opponentCard.cardType == cType.POWER) {
+                        playerATK = playerMonster.POW * (playerCard.attack + playerCard.counterBonus);
+                        }
+
+                    // NORMAL attacks are reduced by defense.  Damage floor is 10.
+                    if (playerCard.cardType == cType.NORMAL) {
+                        if (opponentDEF > playerATK) {
+                            damageDealt = 10;
+                            }
+                        else {
+                            damageDealt = (playerATK - opponentDEF);
+                            }
+                        }
+                    // POWER attacks ignore defense.
+                    else if (playerCard.cardType == cType.POWER) {
+                        damageDealt = playerATK;
+                        }
+
+                    totalDamage += damageDealt;
+
+                    // Gain 1 passive energy per turn, plus energy from cards.
+                    bankedEnergy += (playerCard.energyGain + 1);
+
+                    // Pure ENERGY cards do not have a damage calculation.
+
+                    }
+
+                if (totalDamage < opponentMonster.HP) {
+                    valid = false;
+                    }
+
+                if (valid == true) {
+                    // Player wins
+                    performData = abi.encode(player);
+                    }
+                }
+
+            }
+            return (upkeepNeeded, performData);
+        }
+ 
+
+
+    // MATCHMAKING: Moves the player into the queue, and starts a game if two players are ready.
+    // CHECK_VICTORY: Declares the winner, updates NFTs, and removes the players from the game.
+    function performUpkeep(
+        bytes calldata performData
+    ) external {
+        require(msg.sender == forwarder);
+
+        (address player) = abi.decode(performData, (address));
+        
+        if (pendingUpkeep[player] == upkeepType.MATCHMAKING) {
+            
+            if (matchmaker[0] == address(0x0)) {
+                matchmaker[0] = player;
+                }
+            else {
+                matchmaker[1] = player;
+
+                address _player1 = matchmaker[0];
+                address _player2 = matchmaker[1];
+                
+                uint newMatchId = matchIndex;
+
+                currentMatch[_player1] = newMatchId;
+                currentOpponent[_player1] = matchmaker[1];
+                playerActions[_player1] = "";
+                inQueue[_player1] = false;
+                inGame[_player1] = true;
+
+                currentMatch[_player2] = newMatchId;
+                currentOpponent[_player2] = matchmaker[0];
+                playerActions[_player2] = "";
+                inQueue[_player2] = false;
+                inGame[_player2] = true;
+                
+                // To prevent force-ending immediately before a player can act
+                lastCommit[_player1] = block.number;
+                lastCommit[_player2] = block.number;
+                currentPhase[newMatchId] = gamePhase.COMMIT;
+
+                matchmaker[0] = address(0x0);
+                matchmaker[1] = address(0x0); 
+
+                matchIndex++;
+                }
+            }
+
+        else if (pendingUpkeep[player] == upkeepType.CHECK_VICTORY) {
+
+            // The encoded address "player" is the winner, while their opponent has lost
+            address opponent = currentOpponent[player];
+            uint playerCrystal = crystalStaked[player];
+            uint opponentCrystal = crystalStaked[opponent];
+            
+            // Both players gain EXP, the winning crystal absorbs half the energy of the opponent crystal
+            crystalEXP[playerCrystal] += 100 + getTimePhase(playerCrystal);
+            crystalEXP[opponentCrystal] += 20 + getTimePhase(opponentCrystal);
+            crystalEnergy[playerCrystal] += (crystalEnergy[opponentCrystal] / 2);
+            crystalEnergy[opponentCrystal] /= 2; 
+
+            // Reinitialize both players
+            inQueue[player] = false;
+            inGame[player] = false;
+            hands[player] = bytes("");
+            currentOpponent[msg.sender] = address(0x0);
+            hashCommit[msg.sender] = bytes("");
+
+            inQueue[opponent] = false;
+            inGame[opponent] = false;
+            hands[opponent] = bytes("");
+            currentOpponent[opponent] = address(0x0);
+            hashCommit[opponent] = bytes("");
+            
+            }
+
+        emit UpkeepFulfilled(performData);
+
+        }
+
+    //https://ethereum.stackexchange.com/questions/40920/convert-bytes32-to-bytes
+    function bytes32ToBytes(bytes32 data) internal pure returns (bytes memory) {
+        uint i = 0;
+        while (i < 32 && uint8(data[i]) != 0) {
+            ++i;
+        }
+        bytes memory result = new bytes(i);
+        i = 0;
+        while (i < 32 && data[i] != 0) {
+            result[i] = data[i];
+            ++i;
+        }
+        return result;
+    }
+
+
+    //                  NFT FUNCTIONS                   //
+
+    function unstake() external {
+        require(!inQueue[msg.sender]);
+        require(!inGame[msg.sender]);
+        uint crystal = crystalStaked[msg.sender];
+        require(crystal != 0);
+        crystalStaked[msg.sender] = 0;
+        transferFrom(address(this), msg.sender, crystal);
+    }
+
+    function stake(uint _crystal) external {
+        require (crystalStaked[msg.sender] == 0);
+        require (ownerOf(_crystal) == msg.sender);
+        crystalStaked[msg.sender] = _crystal;
+        approve(address(this), _crystal);
+        transferFrom(msg.sender, address(this), _crystal);
+    }
+
+    function getTimePhase(uint _crystal) public view returns (uint) {
+        uint seed = block.timestamp - crystalTimeSeed[_crystal];
+        return seed % 7;
+    }
+
+    function tokenURI(uint _crystal) public view override returns (string memory uri) {
+        uri = "{";
+        uri = string.concat(uri, '"description": "A Time Crystal.","name":');
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, 'Time Crystal #');
+        uri = string.concat(uri,Strings.toString(_crystal));
+        uri = string.concat(uri,'","traits": [ {"trait_type":"Remaining');
+        uri = string.concat(uri, '","value":"');
+        uri = string.concat(uri, Strings.toString(vrfSeeds[_crystal].length));
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, "},{");
+        uri = string.concat(uri, '"trait_type":"Phase","value":');
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, Strings.toString(getTimePhase(_crystal)));
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, "},{");
+        uri = string.concat(uri, '"trait_type":"EXP","value":');
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, Strings.toString(crystalEXP[_crystal]));
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, "},{");
+        uri = string.concat(uri, '"trait_type":"Energy","value":');
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, Strings.toString(crystalEnergy[_crystal]));
+        uri = string.concat(uri, '"');
+        uri = string.concat(uri, "} ] }");
+        return uri;
+    }
+
+
+
+     //              GODOT VIEW FUNCTIONS            //
+
+    function getHashMonster(address _player) public view returns (uint number) {
+        uint hashNumber = uint(bytes32(hands[_player]));
+        for (uint z; z < 10; z++) {
+            number = hashNumber;
+            while ( number >= 10) {
+                number /= 10;
+                }
+                if (number == z) {
+                    return number;
+                    }
+                }
+
+    }
+
+    function getHashMonsterStats(uint id) public pure returns (hashMonster memory monster) {
+        if (id <= 4) {
+            // Construct
+            monster.HP = 200;
+            monster.POW = 20;
+            monster.DEF = 20;
+                }
+        else {
+            // Crystal
+            monster.HP = 100;
+            monster.POW = 40;
+            monster.DEF = 40;
+                }
+        return monster;
+
+    }
+
+
+    function checkCommit(address _player) external view returns (bool) {
+        return (hashCommit[_player].length != 0);
+    }
+
+    function hasSeedsRemaining(address _player) public view returns (bool) {
+        if (vrfSeeds[crystalStaked[_player]].length > 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+ 
+
+
+
+    //          MAINTENANCE FUNCTIONS AND EVENTS            //
+
+
+    function setDonId(bytes32 newDonId) external onlyOwner {
+        donId = newDonId;
+  }
+
+    function updateSecret(bytes calldata _secrets) external onlyOwner {
+        encryptedSecretsReference = _secrets;
+  }
+   
+    function setForwarderAddress(
+        address _forwarder
+    ) public onlyOwner {
+       forwarder = _forwarder;
+    }
+
+    function withdrawLink() external {
+        IERC20(LINKToken).transfer(owner(), IERC20(LINKToken).balanceOf(address(this)));
+    }
+
+    event VRFFulfilled(uint indexed _id);
+    event RequestFulfilled(bytes32 indexed _id, bytes indexed _response);
+    event AwaitingAutomation(address indexed _player, bytes32 indexed _cards);
+    event UpkeepFulfilled(bytes indexed _performData);
+
+  
+}
