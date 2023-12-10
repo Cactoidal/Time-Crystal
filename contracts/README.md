@@ -1,4 +1,4 @@
-CONTRACTS AND CHAINLINK
+CONTRACTS AND CHAINLINK 
 
 
 * [TimeCrystal.sol](https://github.com/Cactoidal/Time-Crystal/blob/main/contracts/TimeCrystal.sol) - Contains all game logic, secured by Chainlink Functions, VRF, and Automation (Log Trigger and Forwarder)
